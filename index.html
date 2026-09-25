@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Elgaly Express - Despacho & Rotina Dimensional</title>
+  
+  <!-- Fontes Oficiais: Darumadrop One e Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darumadrop+One&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Google Identity Services (GSI) para Login com Google -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- Folha de Estilos Modular -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       CABEÇALHO OFICIAL COM LOGO, PERFIL E NAVEGAÇÃO
+       ========================================================================== -->
+  <header>
+    <div class="header-top-bar">
+      <!-- Logotipo Oficial Centralizado -->
+      <a href="#inicio" class="logo-wrapper" title="Elgaly Express - Início">
+        <img src="images/elgalylogo.png" alt="Elgaly Express" class="logo" id="mainLogo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
+        <div id="logoFallback" class="logo-fallback">ELGALY EXPRESS</div>
+      </a>
+
+      <!-- Área de Autenticação / Perfil no Topo -->
+      <div class="header-auth-box">
+        <button class="btn-header-auth" id="btnOpenAuth">
+          🔑 Entrar / Cadastrar
+        </button>
+        <a href="#perfil" class="user-badge-pill" id="headerUserBadge">
+          <span>⚡</span>
+          <span id="headerUserNick">recruta.express.com</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Navegação em Abas (Single Page App) -->
+    <nav>
+      <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
+      <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+      <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
+      <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil EEX</a>
+      <button class="nav-btn nav-cta action-new-task">⚡ + Nova Encomenda</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    
+    <!-- ==========================================================================
+         VISUALIZAÇÃO 1: INÍCIO (PAINEL GERAL & CUMPRIMENTO)
+         ========================================================================== -->
+    <div class="app-view active-view" id="view-inicio">
+      
+      <!-- Hero Banner com Saudação Dinâmica -->
+      <section class="hero floating-anim">
+        <h1 id="homeGreetingTitle">SEM TEMPO PARA DESCANSO!</h1>
+        <p class="lead" id="homeGreetingSubtitle">
+          Entregando cartas, organizando encomendas e invocando entidades ancestrais em toda a ilha de Elgaly Edge!
+        </p>
+        
+        <div>
+          <div class="sticker-tag pulse-anim">
+            Frete Grátis com 99% de Chance de Sobrevivência!
+          </div>
+        </div>
+
+        <!-- Indicadores Rápidos -->
+        <div class="hero-quick-stats">
+          <div class="quick-stat-card">
+            <span class="stat-icon">⏳</span>
+            <span class="stat-value" id="statActiveTasks">0</span>
+            <span class="stat-label">Em Rota (Pendentes)</span>
+          </div>
+          <div class="quick-stat-card">
+            <span class="stat-icon">✅</span>
+            <span class="stat-value" id="statCompletedTasks">0</span>
+            <span class="stat-label">Entregas Feitas</span>
+          </div>
+          <div class="quick-stat-card">
+            <span class="stat-icon">🔥</span>
+            <span class="stat-value" id="statHabitStreak">0/0</span>
+            <span class="stat-label">Hábitos de Hoje</span>
+          </div>
+          <div class="quick-stat-card">
+            <span class="stat-icon">⚠️</span>
+            <span class="stat-value" id="statOverdueTasks" style="color: var(--red-alert);">0</span>
+            <span class="stat-label">Em Atraso</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Resumo Rápido da Rota -->
+      <section class="home-summary-box">
+        <div class="home-summary-header">
+          <div>
+            <h3>Hoje na Sua Rota de Despacho</h3>
+            <span style="font-weight: 700; color: var(--purple-main);" id="homeDateDisplay">Hoje</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-comic btn-secondary action-new-habit">+ Hábito</button>
+            <button class="btn-comic action-new-task">+ Encomenda</button>
+          </div>
+        </div>
+
+        <div class="home-urgent-grid" id="homeUrgentList">
+          <!-- Preenchido pelo app.js -->
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==========================================================================
+         VISUALIZAÇÃO 2: ROTINA DIÁRIA (CHECK-IN DE HÁBITOS)
+         ========================================================================== -->
+    <div class="app-view" id="view-rotina">
+      <section class="site-section">
+        <div class="section-header-block">
+          <h2 class="section-title">CHECK-IN DO ENTREGADOR</h2>
+          <div class="section-subtitle">Tarefas Diárias & Hábitos Contínuos</div>
+        </div>
+
+        <div class="daily-routine-box">
+          <div class="daily-header">
+            <div class="daily-date-title">
+              <h3 id="currentDateDisplay">Hoje</h3>
+              <span>Sincronizado com os Vórtices Temporais</span>
+            </div>
+
+            <div class="daily-progress-wrap">
+              <div class="progress-label-bar">
+                <span>Progresso dos Hábitos</span>
+                <span id="dailyProgressText">0 de 0 (0%)</span>
+              </div>
+              <div class="custom-progress-bar">
+                <div class="custom-progress-fill" id="dailyProgressFill"></div>
+              </div>
+            </div>
+
+            <button class="btn-comic btn-secondary action-new-habit">+ Adicionar Hábito</button>
+          </div>
+
+          <!-- Grade de Hábitos (Zerada para o usuário iniciar) -->
+          <div class="daily-habits-grid" id="dailyHabitsGrid">
+            <!-- Hábitos inseridos dinamicamente pelo app.js -->
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================================================================
+         VISUALIZAÇÃO 3: ENCOMENDAS COM PRAZO (FACULDADE & PESSOAL)
+         ========================================================================== -->
+    <div class="app-view" id="view-encomendas">
+      <section class="site-section">
+        <div class="section-header-block">
+          <h2 class="section-title">CENTRAL DE ENCOMENDAS</h2>
+          <div class="section-subtitle">Prazos, Trabalhos da Faculdade & Missões Pessoais</div>
+        </div>
+
+        <!-- Barra de Controle, Filtros e Busca Integrada -->
+        <div class="tasks-control-bar">
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="todas">🌟 Todas</button>
+            <button class="filter-btn" data-filter="faculdade">🎓 Faculdade</button>
+            <button class="filter-btn" data-filter="pessoal">👤 Pessoal</button>
+            <button class="filter-btn" data-filter="pendentes">⏳ Pendentes</button>
+            <button class="filter-btn" data-filter="concluidas">✅ Concluídas</button>
+          </div>
+
+          <div class="task-search-wrap">
+            <input type="text" id="taskSearchInput" class="task-search-input" placeholder="🔍 Buscar por código ou nome...">
+          </div>
+
+          <button class="btn-comic btn-purple action-new-task">
+            + Nova Encomenda
+          </button>
+        </div>
+
+        <!-- Grade de Encomendas (Zerada para o usuário iniciar) -->
+        <div class="tasks-grid" id="tasksGrid">
+          <!-- Tarefas inseridas dinamicamente pelo app.js -->
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================================================================
+         VISUALIZAÇÃO 4: CENTRAL DE RELATÓRIOS & PDF
+         ========================================================================== -->
+    <div class="app-view" id="view-relatorios">
+      <section class="site-section">
+        <div class="section-header-block">
+          <h2 class="section-title">DESPACHO & AUDITORIA OPERACIONAL</h2>
+          <div class="section-subtitle">Avaliação Periódica de Pontualidade & Agilidade</div>
+        </div>
+
+        <div class="report-panel">
+          
+          <!-- Seletor de Período: 7, 15 ou 30 Dias -->
+          <div class="report-timeframe-picker">
+            <button class="timeframe-btn active" data-days="7">📅 Últimos 7 Dias (Semanal)</button>
+            <button class="timeframe-btn" data-days="15">📅 Últimos 15 Dias (Quinzenal)</button>
+            <button class="timeframe-btn" data-days="30">📅 Últimos 30 Dias (Mensal)</button>
+          </div>
+
+          <!-- Banner de Rank do Entregador -->
+          <div class="rank-banner">
+            <div class="rank-info">
+              <h3 id="reportRankTitle">Rank S: Entregador Lendário</h3>
+              <p id="reportRankDesc">Carregando análise dimensional do seu desempenho...</p>
+            </div>
+            <div class="rank-badge-stamp" id="reportRankStamp">
+              RANK S
+            </div>
+          </div>
+
+          <!-- Estatísticas Principais -->
+          <div class="report-stats-grid">
+            <div class="report-stat-card">
+              <div class="val" id="reportStatTotal">0/0</div>
+              <div class="desc">Entregas Concluídas</div>
+            </div>
+            <div class="report-stat-card">
+              <div class="val" id="reportStatOnTime" style="color: #059669;">100%</div>
+              <div class="desc">Taxa de Pontualidade</div>
+            </div>
+            <div class="report-stat-card">
+              <div class="val" id="reportStatSpeed" style="color: #2563eb;">0</div>
+              <div class="desc">Agilidade Antecipada</div>
+            </div>
+            <div class="report-stat-card">
+              <div class="val" id="reportStatHabits" style="color: #d97706;">0 dias</div>
+              <div class="desc">Dias com Rotina 100%</div>
+            </div>
+          </div>
+
+          <!-- Barra de Agilidade -->
+          <div class="speed-analysis-box">
+            <h4>Medidor de Velocidade das Entregas</h4>
+            <div class="speed-bars-list">
+              <div class="speed-row">
+                <div class="speed-row-label">
+                  <span>⚡ Rápido / Antecipado</span>
+                  <span id="speedTxtFast">0 encomendas (0%)</span>
+                </div>
+                <div class="speed-bar-track">
+                  <div class="speed-bar-fill fast" id="speedBarFast"></div>
+                </div>
+              </div>
+
+              <div class="speed-row">
+                <div class="speed-row-label">
+                  <span>⏰ Concluído no Prazo Regular</span>
+                  <span id="speedTxtOntime">0 encomendas (0%)</span>
+                </div>
+                <div class="speed-bar-track">
+                  <div class="speed-bar-fill warning" id="speedBarOntime"></div>
+                </div>
+              </div>
+
+              <div class="speed-row">
+                <div class="speed-row-label">
+                  <span>🐢 Atrasado ou Pendente Vencido</span>
+                  <span id="speedTxtLate">0 encomendas (0%)</span>
+                </div>
+                <div class="speed-bar-track">
+                  <div class="speed-bar-fill late" id="speedBarLate"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparativo Faculdade vs Pessoal -->
+          <div class="category-breakdown-grid">
+            <div class="cat-breakdown-card facul">
+              <h5 style="color: #1e3a8a;">🎓 Setor Acadêmico (Faculdade)</h5>
+              <ul id="reportFaculStats">
+                <li><span>Total de Entregas:</span> <strong>0</strong></li>
+                <li><span>Concluídas:</span> <strong>0</strong></li>
+                <li><span>Pontualidade:</span> <strong>100%</strong></li>
+              </ul>
+            </div>
+
+            <div class="cat-breakdown-card pessoal">
+              <h5 style="color: #78350f;">🌟 Setor Pessoal & Quadrinhos</h5>
+              <ul id="reportPessoalStats">
+                <li><span>Total de Entregas:</span> <strong>0</strong></li>
+                <li><span>Concluídas:</span> <strong>0</strong></li>
+                <li><span>Pontualidade:</span> <strong>100%</strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Ação de Exportação com Logotipo no PDF -->
+          <div class="pdf-export-action-bar">
+            <button class="btn-generate-pdf" id="btnExportPDF">
+              📄 Emitir Relatório Oficial Elgaly Express (PDF)
+            </button>
+            <div style="margin-top: 10px; font-size: 0.95rem; font-weight: 700; color: #6b7280;">
+              Documento oficial em A4 com o logotipo oficial, dados do agente e carimbo de aprovação.
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================================================================
+         VISUALIZAÇÃO 5: PERFIL EEX (CRACHÁ DE ENTREGADOR ANOS 2000)
+         ========================================================================== -->
+    <div class="app-view" id="view-perfil">
+      <section class="site-section">
+        <div class="section-header-block">
+          <h2 class="section-title">PASSAPORTE DO ENTREGADOR EEX</h2>
+          <div class="section-subtitle">Credencial Operacional & Carreira Dimensional</div>
+        </div>
+
+        <div class="profile-section-wrap">
+          <div class="retro-id-badge" id="profileBadgeCard">
+            <!-- Preenchido pelo app.js -->
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ==========================================================================
+       MODAL DE AUTENTICAÇÃO / LOGIN COM GOOGLE & CADASTRO ANOS 2000
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalAuth">
+    <div class="modal-content">
+      <button class="modal-close" id="modalAuthClose" aria-label="Fechar">&times;</button>
+      <h2>Terminal de Acesso EEX</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Entre com sua conta Google ou crie seu apelido oficial <strong>.express.com</strong>!
+      </p>
+
+      <!-- Botão Oficial do Google Identity Services -->
+      <div class="google-auth-wrapper">
+        <p>Acesse rapidamente com um clique:</p>
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+             data-callback="handleGoogleSignIn"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="sign_in_with"
+             data-shape="pill"
+             data-logo_alignment="left">
+        </div>
+        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 6px;">
+          (No GitHub Pages, você também pode usar o formulário direto abaixo sem precisar de chaves API!)
+        </div>
+      </div>
+
+      <div class="auth-divider-comic">
+        <span>OU ATIVE SEU CRACHÁ DIRETO</span>
+      </div>
+
+      <!-- Formulário de Registro Rápido com Nickname Anos 2000 -->
+      <form class="comic-form" id="formDirectRegister">
+        <div class="form-group">
+          <label for="regName">👤 Seu Nome ou Nome de Artista:</label>
+          <input type="text" id="regName" required placeholder="Ex: Juan Silva, Livin...">
+        </div>
+
+        <div class="form-group">
+          <label for="regNick">🏷️ Escolha seu Apelido EEX (Vibe Anos 2000):</label>
+          <input type="text" id="regNick" required placeholder="Ex: juanio">
+          <small style="font-weight: 700; color: var(--magenta-bright); font-size: 0.85rem; margin-top: 2px;">
+            Seu endereço oficial será: <strong id="nickPreview">seu-nick.express.com</strong>
+          </small>
+        </div>
+
+        <button type="submit" class="btn-comic btn-secondary" style="margin-top: 10px;">
+          🚀 Ativar Passaporte EEX
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVA / EDITAR ENCOMENDA
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalTask">
+    <div class="modal-content">
+      <button class="modal-close" id="modalTaskClose" aria-label="Fechar">&times;</button>
+      <h2 id="modalTaskTitle">Nova Encomenda Dimensional</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Cadastre um trabalho acadêmico ou compromisso pessoal com data limite.
+      </p>
+
+      <form class="comic-form" id="formTask">
+        <input type="hidden" id="taskId">
+
+        <div class="form-group">
+          <label for="taskTitle">📦 Título da Encomenda / Tarefa:</label>
+          <input type="text" id="taskTitle" required placeholder="Ex: Lista de Cálculo II, Desenho HQ...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskCategory">🏷️ Setor / Categoria:</label>
+            <select id="taskCategory" required>
+              <option value="faculdade">🎓 Faculdade (Acadêmico)</option>
+              <option value="pessoal">🌟 Pessoal (HQ / Vida)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="taskPriority">⚡ Prioridade Dimensional:</label>
+            <select id="taskPriority" required>
+              <option value="baixa">Baixa (Sem pressa)</option>
+              <option value="media" selected>Média (Normal)</option>
+              <option value="alta">Alta (Prioritário)</option>
+              <option value="cosmica">Cósmica (Nível Apocalipse!)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDueDate">⏰ Data e Hora Limite (Prazo):</label>
+          <input type="datetime-local" id="taskDueDate">
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">📝 Observações & Instruções:</label>
+          <textarea id="taskDescription" rows="3" placeholder="Detalhes, links ou instruções adicionais..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-comic" style="margin-top: 10px;">
+          Salvar Encomenda
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVO HÁBITO DIÁRIO
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalHabit">
+    <div class="modal-content">
+      <button class="modal-close" id="modalHabitClose" aria-label="Fechar">&times;</button>
+      <h2>Novo Hábito Diário</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Adicione uma rotina diária para acompanhar sua sequência (streak).
+      </p>
+
+      <form class="comic-form" id="formHabit">
+        <div class="form-group">
+          <label for="habitTitle">☀️ Nome do Hábito:</label>
+          <input type="text" id="habitTitle" required placeholder="Ex: Revisar anotações, Desenhar 30m, Água...">
+        </div>
+
+        <div class="form-group">
+          <label for="habitCategory">🏷️ Categoria:</label>
+          <select id="habitCategory" required>
+            <option value="faculdade">🎓 Faculdade</option>
+            <option value="pessoal" selected>🌟 Pessoal</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-comic btn-secondary" style="margin-top: 10px;">
+          Adicionar à Rotina Diária
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       RODAPÉ OFICIAL (COM ENDEREÇO DA HQ ELGALY EXPRESS)
+       ========================================================================== -->
+  <footer>
+    <div class="footer-box">
+      <p class="footer-copy">© 1998 - 2026 | Elgaly Express: Serviços de Entrega</p>
+      <p class="footer-address">Avenida Tennant Rockstead, 67, Nova Amerit - NA (Nova Arcanis)</p>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       SCRIPTS (RELATIVOS PARA GITHUB PAGES COM FALLBACK CDN)
+       ========================================================================== -->
+  <script src="./vendor/jspdf.umd.min.js"></script>
+  <script>
+    if (!window.jspdf && !window.jsPDF) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+    }
+  </script>
+
+  <script src="./vendor/confetti.browser.min.js"></script>
+  <script>
+    if (typeof confetti === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Lógica da Aplicação -->
+  <script src="./report.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
