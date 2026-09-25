@@ -1,6 +1,6 @@
 # 📦 Elgaly Express - Sistema de Rotina & Despacho Dimensional
 
-Aplicação web inspirada na história em quadrinhos autoral **Elgaly Express**! Desenvolvida para organizar suas rotinas da **Faculdade** e da **Vida Pessoal**, com acompanhamento de hábitos diários, cálculo de agilidade/prazos, passaporte de entregador anos 2000 (`nickname.express.com`) com **Sincronização em Nuvem (Firebase Cloud Firestore)** e emissão de relatórios oficiais em **PDF** com logotipo oficial.
+Aplicação web inspirada no universo ficcional **Elgaly Express**! Desenvolvida para organizar suas rotinas da **Faculdade** e da **Vida Pessoal**, com acompanhamento de hábitos diários, cálculo de agilidade/prazos, passaporte de entregador anos 2000 (`nickname.express.com`) com **Sincronização em Nuvem (Firebase Cloud Firestore)** e emissão de relatórios oficiais em **PDF** com logotipo oficial.
 
 ---
 

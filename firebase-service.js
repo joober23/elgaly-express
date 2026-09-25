@@ -1,6 +1,6 @@
 /**
  * ELGALY EXPRESS - SERVIÇO DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
- * Gerencia Login com Google e Banco de Dados Cloud Firestore em tempo real.
+ * Gerencia Login com Google, Perfis Customizados e Banco de Dados Cloud Firestore em tempo real.
  */
 
 // Configuração oficial do projeto Firebase
@@ -57,22 +57,33 @@ const FirebaseService = {
   setupAuthStateListener() {
     this.auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        // Usuário logado no Firebase (via Google)
         const email = firebaseUser.email || '';
-        const suggestedNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'entregador').toLowerCase().replace(/\s+/g, '.');
-        const eexEmail = AuthManager.formatEexNickname(suggestedNick);
+        const defaultNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'entregador').toLowerCase().replace(/\s+/g, '.');
+        const defaultEexEmail = AuthManager.formatEexNickname(defaultNick);
 
-        const userData = {
+        let userData = {
           id: firebaseUser.uid,
           uid: firebaseUser.uid,
           name: firebaseUser.displayName || 'Agente Google',
-          nickname: suggestedNick,
-          eexEmail: eexEmail,
+          nickname: defaultNick,
+          eexEmail: defaultEexEmail,
           avatar: firebaseUser.photoURL || 'images/elgalylogo.png',
+          location: 'Nova Amerit - NA (Nova Arcanis)',
           email: email,
           isGoogle: true,
           joinedAt: new Date().toISOString()
         };
+
+        // Verifica se o usuário já possui um perfil customizado salvo no Firestore
+        try {
+          const profileDoc = await this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').get();
+          if (profileDoc.exists) {
+            const cloudProfile = profileDoc.data();
+            userData = { ...userData, ...cloudProfile };
+          }
+        } catch (e) {
+          console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');
+        }
 
         AuthManager.currentUser = userData;
         AuthManager.saveCurrent();
@@ -80,12 +91,13 @@ const FirebaseService = {
         // Inicia sincronização em tempo real do banco de dados na nuvem
         this.startRealtimeSync(firebaseUser.uid);
         AppUI.renderAll();
-        AppUI.showToast(`☁️ Conectado na Nuvem: ${eexEmail}`);
+        AppUI.showToast(`☁️ Conectado na Nuvem: ${userData.eexEmail}`);
       } else {
         // Usuário deslogado do Firebase
         this.stopRealtimeSync();
         if (AuthManager.currentUser && AuthManager.currentUser.isGoogle) {
-          AuthManager.loginAsGuest();
+          AuthManager.currentUser = null;
+          AuthManager.saveCurrent();
           AppUI.renderAll();
         }
       }
@@ -110,7 +122,6 @@ const FirebaseService = {
       if (modal) modal.classList.remove('active');
     } catch (err) {
       console.error('Erro ao fazer login com Google:', err);
-      // Se popup for bloqueado pelo navegador do celular, tenta com redirecionamento
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
         try {
           const provider = new firebase.auth.GoogleAuthProvider();
@@ -150,7 +161,6 @@ const FirebaseService = {
         cloudTasks.push({ id: doc.id, ...doc.data() });
       });
 
-      // Ordenar por data de criação decrescente
       cloudTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       TaskManager.tasks = cloudTasks;
       TaskManager.saveLocally();
@@ -200,6 +210,12 @@ const FirebaseService = {
   // OPERAÇÕES DE ESCRITA NO FIRESTORE
   // ========================================================
 
+  async saveProfileToCloud(profile) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    await this.db.collection('users').doc(uid).collection('system').doc('profile').set(profile, { merge: true });
+  },
+
   async saveTaskToCloud(task) {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
@@ -231,7 +247,6 @@ const FirebaseService = {
   }
 };
 
-// Inicializa o serviço do Firebase
 document.addEventListener('DOMContentLoaded', () => {
   FirebaseService.init();
 });

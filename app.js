@@ -1,7 +1,7 @@
 /**
  * ELGALY EXPRESS - APLICAÇÃO DE ROTINAS & DESPACHO
  * Gerenciador de tarefas, hábitos, autenticação EEX (.express.com), sincronização Firebase,
- * Navbar inteligente (esconde ao rolar) e Menu Lateral Mobile.
+ * Portão obrigatório de login, upload de fotos de perfil e edição de localização.
  */
 
 // ==========================================================================
@@ -10,7 +10,7 @@
 // ==========================================================================
 const AuthManager = {
   currentUser: null,
-  users: {},
+  users: {}, // { 'teleportsready.express.com': userData }
 
   init() {
     const savedUsers = localStorage.getItem('elgaly_express_users');
@@ -20,11 +20,17 @@ const AuthManager = {
 
     const savedCurrent = localStorage.getItem('elgaly_express_current_user');
     if (savedCurrent) {
-      try { this.currentUser = JSON.parse(savedCurrent); } catch (e) { this.currentUser = null; }
-    }
-
-    if (!this.currentUser) {
-      this.loginAsGuest();
+      try { 
+        const parsed = JSON.parse(savedCurrent);
+        // Só considera logado se não for um convidado genérico
+        if (parsed && parsed.id && parsed.id !== 'guest') {
+          this.currentUser = parsed;
+        } else {
+          this.currentUser = null;
+        }
+      } catch (e) { 
+        this.currentUser = null; 
+      }
     }
   },
 
@@ -41,21 +47,7 @@ const AuthManager = {
     return clean;
   },
 
-  loginAsGuest() {
-    const guestUser = {
-      id: 'guest',
-      name: 'Entregador Novato',
-      nickname: 'recruta',
-      eexEmail: 'recruta.express.com',
-      avatar: 'images/elgalylogo.png',
-      isGoogle: false,
-      joinedAt: new Date().toISOString()
-    };
-    this.currentUser = guestUser;
-    this.saveCurrent();
-  },
-
-  registerUser(name, rawNick, avatarUrl = '') {
+  registerUser(name, rawNick, avatarUrl = '', location = 'Nova Amerit - NA (Nova Arcanis)') {
     const eexEmail = this.formatEexNickname(rawNick);
     const userId = eexEmail.replace('.express.com', '');
 
@@ -65,26 +57,83 @@ const AuthManager = {
       nickname: userId,
       eexEmail: eexEmail,
       avatar: avatarUrl || 'images/elgalylogo.png',
+      location: location.trim() || 'Nova Amerit - NA (Nova Arcanis)',
       isGoogle: false,
       joinedAt: new Date().toISOString()
     };
 
-    this.users[userId] = newUser;
+    this.users[eexEmail] = newUser;
     this.currentUser = newUser;
     this.saveUsers();
     this.saveCurrent();
     return newUser;
   },
 
+  loginWithEex(rawNick) {
+    const eexEmail = this.formatEexNickname(rawNick);
+    if (this.users[eexEmail]) {
+      this.currentUser = this.users[eexEmail];
+      this.saveCurrent();
+      return this.currentUser;
+    }
+
+    // Se ainda não cadastrado na lista local, cria o crachá direto
+    const userId = eexEmail.replace('.express.com', '');
+    const newUser = {
+      id: userId,
+      name: userId,
+      nickname: userId,
+      eexEmail: eexEmail,
+      avatar: 'images/elgalylogo.png',
+      location: 'Nova Amerit - NA (Nova Arcanis)',
+      isGoogle: false,
+      joinedAt: new Date().toISOString()
+    };
+
+    this.users[eexEmail] = newUser;
+    this.currentUser = newUser;
+    this.saveUsers();
+    this.saveCurrent();
+    return newUser;
+  },
+
+  async updateUserProfile(updatedFields) {
+    if (!this.currentUser) return;
+    this.currentUser = { ...this.currentUser, ...updatedFields };
+    this.saveCurrent();
+
+    if (this.currentUser.eexEmail) {
+      this.users[this.currentUser.eexEmail] = this.currentUser;
+      this.saveUsers();
+    }
+
+    // Sincroniza perfil com Firestore se usuário do Google
+    if (this.currentUser.isGoogle && typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveProfileToCloud({
+        name: this.currentUser.name,
+        location: this.currentUser.location,
+        avatar: this.currentUser.avatar
+      });
+    }
+
+    return this.currentUser;
+  },
+
   async logout() {
     if (typeof FirebaseService !== 'undefined' && this.currentUser && this.currentUser.isGoogle) {
       await FirebaseService.logout();
     }
-    this.loginAsGuest();
-    TaskManager.init();
-    HabitManager.init();
+    this.currentUser = null;
+    localStorage.removeItem('elgaly_express_current_user');
+    TaskManager.tasks = [];
+    HabitManager.habits = [];
+    HabitManager.history = {};
     AppUI.renderAll();
     AppUI.showToast('Você saiu da sua conta.');
+  },
+
+  isLoggedIn() {
+    return this.currentUser !== null;
   },
 
   getCurrentUser() {
@@ -102,7 +151,6 @@ const AuthManager = {
 
 // ==========================================================================
 // GERENCIADOR DE TAREFAS / ENCOMENDAS (TaskManager)
-// Suporta armazenamento local E sincronização em tempo real na nuvem (Firestore)
 // ==========================================================================
 const TaskManager = {
   tasks: [],
@@ -113,6 +161,11 @@ const TaskManager = {
   },
 
   init() {
+    if (!AuthManager.isLoggedIn()) {
+      this.tasks = [];
+      return;
+    }
+
     const key = this.getStorageKey();
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -128,6 +181,7 @@ const TaskManager = {
   },
 
   saveLocally() {
+    if (!AuthManager.isLoggedIn()) return;
     localStorage.setItem(this.getStorageKey(), JSON.stringify(this.tasks));
   },
 
@@ -158,7 +212,6 @@ const TaskManager = {
     this.tasks.unshift(newTask);
     this.saveLocally();
 
-    // Sincroniza com Firebase se logado
     if (typeof FirebaseService !== 'undefined') {
       await FirebaseService.saveTaskToCloud(newTask);
     }
@@ -215,11 +268,10 @@ const TaskManager = {
 
 // ==========================================================================
 // GERENCIADOR DE ROTINA DIÁRIA (HabitManager)
-// Suporta armazenamento local E sincronização em tempo real na nuvem (Firestore)
 // ==========================================================================
 const HabitManager = {
   habits: [],
-  history: {}, // { 'YYYY-MM-DD': ['habit-1', 'habit-2'] }
+  history: {},
 
   getHabitsKey() {
     const user = AuthManager.getCurrentUser();
@@ -232,6 +284,12 @@ const HabitManager = {
   },
 
   init() {
+    if (!AuthManager.isLoggedIn()) {
+      this.habits = [];
+      this.history = {};
+      return;
+    }
+
     const savedHabits = localStorage.getItem(this.getHabitsKey());
     const savedHistory = localStorage.getItem(this.getHistoryKey());
 
@@ -251,15 +309,17 @@ const HabitManager = {
   },
 
   saveHabitsLocally() {
+    if (!AuthManager.isLoggedIn()) return;
     localStorage.setItem(this.getHabitsKey(), JSON.stringify(this.habits));
   },
 
   saveHistoryLocally() {
+    if (!AuthManager.isLoggedIn()) return;
     localStorage.setItem(this.getHistoryKey(), JSON.stringify(this.history));
   },
 
   getTodayKey() {
-    return new Date().toISOString().split('T')[0];
+    return new Date().toLocaleDateString('en-CA');
   },
 
   getAllHabits() {
@@ -339,7 +399,7 @@ const HabitManager = {
     for (let i = 1; i <= 365; i++) {
       const pastDate = new Date();
       pastDate.setDate(today.getDate() - i);
-      const dateKey = pastDate.toISOString().split('T')[0];
+      const dateKey = pastDate.toLocaleDateString('en-CA');
       const list = this.history[dateKey] || [];
       if (list.includes(habitId)) {
         streak++;
@@ -353,13 +413,15 @@ const HabitManager = {
 
 // ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
-// Com Navbar Inteligente (Auto-hide no desktop) e Menu Lateral (Mobile Drawer)
+// Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
 const AppUI = {
   currentTab: 'inicio',
   currentFilter: 'todas',
   searchQuery: '',
   lastScrollTop: 0,
+  uploadedAvatarBase64: null,
+  editAvatarBase64: null,
 
   init() {
     AuthManager.init();
@@ -374,28 +436,24 @@ const AppUI = {
     this.renderAll();
 
     setInterval(() => {
-      this.renderTasks();
-      this.renderHomeOverview();
+      if (AuthManager.isLoggedIn()) {
+        this.renderTasks();
+        this.renderHomeOverview();
+      }
     }, 60000);
   },
 
-  /**
-   * 1. Navbar Inteligente: Esconde ao rolar para baixo no desktop, reaparece ao rolar para cima!
-   */
   initSmartNavbar() {
     const header = document.querySelector('header');
     if (!header) return;
 
     window.addEventListener('scroll', () => {
-      // Apenas ativa no desktop (> 768px)
       if (window.innerWidth <= 768) {
         header.classList.remove('header-hidden');
         return;
       }
 
       const st = window.pageYOffset || document.documentElement.scrollTop;
-      
-      // Evita esconder se estiver bem perto do topo
       if (st <= 80) {
         header.classList.remove('header-hidden');
         this.lastScrollTop = st;
@@ -403,10 +461,8 @@ const AppUI = {
       }
 
       if (st > this.lastScrollTop && st > 120) {
-        // Rolando para baixo: esconde
         header.classList.add('header-hidden');
       } else {
-        // Rolando para cima: mostra
         header.classList.remove('header-hidden');
       }
 
@@ -414,9 +470,6 @@ const AppUI = {
     }, { passive: true });
   },
 
-  /**
-   * 2. Menu Lateral Mobile: Gaveta lateral deslizante em telas menores
-   */
   initMobileDrawer() {
     const btnToggleDrawer = document.getElementById('btnMobileMenu');
     const drawer = document.getElementById('mobileDrawer');
@@ -427,7 +480,7 @@ const AppUI = {
       if (drawer && overlay) {
         drawer.classList.add('active');
         overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // impede scroll de fundo
+        document.body.style.overflow = 'hidden';
       }
     };
 
@@ -443,7 +496,6 @@ const AppUI = {
     if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeDrawer);
     if (overlay) overlay.addEventListener('click', closeDrawer);
 
-    // Fechar gaveta ao clicar em qualquer link da navegação mobile
     document.querySelectorAll('.drawer-nav-link').forEach(link => {
       link.addEventListener('click', () => {
         closeDrawer();
@@ -467,7 +519,6 @@ const AppUI = {
   switchTab(tabName) {
     this.currentTab = tabName;
 
-    // Atualizar links desktop e mobile
     document.querySelectorAll('.nav-link, .drawer-nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.tab === tabName);
     });
@@ -486,76 +537,88 @@ const AppUI = {
   },
 
   bindEvents() {
-    // Links de navegação desktop
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        window.location.hash = link.dataset.tab;
-      });
-    });
-
-    // Filtros de Tarefas
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    // 1. Alternador de abas no Portal de Autenticação Obrigatório
+    document.querySelectorAll('.auth-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.auth-pane').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
-        this.currentFilter = btn.dataset.filter;
-        this.renderTasks();
+        const targetPane = document.getElementById(btn.dataset.pane);
+        if (targetPane) targetPane.classList.add('active');
       });
     });
 
-    // Busca de Encomendas
-    const searchInput = document.getElementById('taskSearchInput');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        this.searchQuery = e.target.value.trim();
-        this.renderTasks();
-      });
-    }
-
-    // Modal de Login / Registro
-    const btnsOpenAuth = document.querySelectorAll('.action-open-auth');
-    const modalAuth = document.getElementById('modalAuth');
-    const modalAuthClose = document.getElementById('modalAuthClose');
-    const formDirectRegister = document.getElementById('formDirectRegister');
-    const btnGoogleLogin = document.getElementById('btnGoogleLoginCustom');
-
-    btnsOpenAuth.forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (modalAuth) modalAuth.classList.add('active');
-      });
-    });
-
-    if (modalAuthClose && modalAuth) {
-      modalAuthClose.addEventListener('click', () => {
-        modalAuth.classList.remove('active');
-      });
-    }
-
-    // Botão Oficial do Google via Firebase
-    if (btnGoogleLogin) {
-      btnGoogleLogin.addEventListener('click', () => {
-        if (typeof FirebaseService !== 'undefined') {
-          FirebaseService.loginWithGoogle();
+    // 2. Upload de Foto no Cadastro (do dispositivo para Base64)
+    const regAvatarInput = document.getElementById('regAvatarInput');
+    const regAvatarPreview = document.getElementById('regAvatarPreview');
+    if (regAvatarInput) {
+      regAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            this.uploadedAvatarBase64 = event.target.result;
+            if (regAvatarPreview) regAvatarPreview.src = this.uploadedAvatarBase64;
+          };
+          reader.readAsDataURL(file);
         }
       });
     }
 
+    // 3. Upload de Foto na Edição do Perfil
+    const editAvatarInput = document.getElementById('editAvatarInput');
+    const editAvatarPreview = document.getElementById('editAvatarPreview');
+    if (editAvatarInput) {
+      editAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            this.editAvatarBase64 = event.target.result;
+            if (editAvatarPreview) editAvatarPreview.src = this.editAvatarBase64;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // 4. Formulário de Cadastro sem Google
+    const formDirectRegister = document.getElementById('formDirectRegister');
     if (formDirectRegister) {
       formDirectRegister.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('regName').value;
         const nick = document.getElementById('regNick').value;
+        const location = document.getElementById('regLocation').value;
+        const avatar = this.uploadedAvatarBase64 || 'images/elgalylogo.png';
+
         if (nick) {
-          AuthManager.registerUser(name, nick);
+          AuthManager.registerUser(name, nick, avatar, location);
           TaskManager.init();
           HabitManager.init();
-          modalAuth.classList.remove('active');
           this.renderAll();
-          this.showToast(`Passaporte EEX ativado: ${AuthManager.getCurrentUser().eexEmail}!`);
+          this.showToast(`🚀 Bem-vindo, Agente ${AuthManager.getCurrentUser().eexEmail}!`);
         }
       });
     }
 
+    // 5. Formulário de Login com EEX ID
+    const formEexLogin = document.getElementById('formEexLogin');
+    if (formEexLogin) {
+      formEexLogin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nickInput = document.getElementById('loginEexNick').value;
+        if (nickInput) {
+          AuthManager.loginWithEex(nickInput);
+          TaskManager.init();
+          HabitManager.init();
+          this.renderAll();
+          this.showToast(`🚀 Bem-vindo de volta, ${AuthManager.getCurrentUser().eexEmail}!`);
+        }
+      });
+    }
+
+    // Preview ao vivo do nick .express.com
     const regNickInput = document.getElementById('regNick');
     const nickPreview = document.getElementById('nickPreview');
     if (regNickInput && nickPreview) {
@@ -565,7 +628,67 @@ const AppUI = {
       });
     }
 
-    // Botões de Nova Encomenda
+    // 6. Botão de Login Google (via Firebase)
+    const btnsGoogle = document.querySelectorAll('.action-google-login');
+    btnsGoogle.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (typeof FirebaseService !== 'undefined') {
+          FirebaseService.loginWithGoogle();
+        }
+      });
+    });
+
+    // 7. Modal de Edição de Perfil
+    const modalEditProfile = document.getElementById('modalEditProfile');
+    const modalEditProfileClose = document.getElementById('modalEditProfileClose');
+    const formEditProfile = document.getElementById('formEditProfile');
+
+    if (modalEditProfileClose && modalEditProfile) {
+      modalEditProfileClose.addEventListener('click', () => {
+        modalEditProfile.classList.remove('active');
+      });
+    }
+
+    if (formEditProfile) {
+      formEditProfile.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newName = document.getElementById('editProfileName').value;
+        const newLocation = document.getElementById('editProfileLocation').value;
+        const updateData = {
+          name: newName.trim(),
+          location: newLocation.trim()
+        };
+        if (this.editAvatarBase64) {
+          updateData.avatar = this.editAvatarBase64;
+        }
+
+        await AuthManager.updateUserProfile(updateData);
+        modalEditProfile.classList.remove('active');
+        this.renderAll();
+        this.showToast('Crachá e informações atualizadas!');
+      });
+    }
+
+    // 8. Filtros de Tarefas
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentFilter = btn.dataset.filter;
+        this.renderTasks();
+      });
+    });
+
+    // 9. Busca de Encomendas
+    const searchInput = document.getElementById('taskSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.searchQuery = e.target.value.trim();
+        this.renderTasks();
+      });
+    }
+
+    // 10. Botões de Nova Encomenda
     const btnsNewTask = document.querySelectorAll('.action-new-task');
     const modalTask = document.getElementById('modalTask');
     const formTask = document.getElementById('formTask');
@@ -573,6 +696,7 @@ const AppUI = {
 
     btnsNewTask.forEach(btn => {
       btn.addEventListener('click', () => {
+        if (!AuthManager.isLoggedIn()) return;
         this.openTaskModal();
       });
     });
@@ -608,7 +732,7 @@ const AppUI = {
       });
     }
 
-    // Botões de Novo Hábito
+    // 11. Botões de Novo Hábito
     const btnsNewHabit = document.querySelectorAll('.action-new-habit');
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
@@ -616,6 +740,7 @@ const AppUI = {
 
     btnsNewHabit.forEach(btn => {
       btn.addEventListener('click', () => {
+        if (!AuthManager.isLoggedIn()) return;
         document.getElementById('habitTitle').value = '';
         modalHabit.classList.add('active');
       });
@@ -675,7 +800,33 @@ const AppUI = {
     if (elHomeDate) elHomeDate.textContent = dateFormatted;
   },
 
+  /**
+   * Renderiza tudo e gerencia o Portão Obrigatório de Autenticação
+   */
   renderAll() {
+    const isLoggedIn = AuthManager.isLoggedIn();
+    const authGateway = document.getElementById('authGateway');
+    const appViewsContainer = document.getElementById('appViewsContainer');
+    const desktopNav = document.querySelector('nav.desktop-nav');
+    const btnMobileMenu = document.getElementById('btnMobileMenu');
+
+    if (!isLoggedIn) {
+      // Bloqueia acesso ao app e exibe portal de login
+      if (authGateway) authGateway.style.display = 'block';
+      if (appViewsContainer) appViewsContainer.style.display = 'none';
+      if (desktopNav) desktopNav.style.display = 'none';
+      if (btnMobileMenu) btnMobileMenu.style.display = 'none';
+      this.renderSavedUsersList();
+      this.renderHeaderProfile();
+      return;
+    }
+
+    // Usuário logado: libera a navegação e views
+    if (authGateway) authGateway.style.display = 'none';
+    if (appViewsContainer) appViewsContainer.style.display = 'block';
+    if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
+    if (btnMobileMenu && window.innerWidth <= 768) btnMobileMenu.style.display = 'inline-flex';
+
     this.renderHeaderProfile();
     this.renderHomeOverview();
     this.renderDailyRoutine();
@@ -684,24 +835,65 @@ const AppUI = {
     ReportEngine.renderReportPreview();
   },
 
+  /**
+   * Renderiza lista de contas salvas no dispositivo para acesso com 1 clique
+   */
+  renderSavedUsersList() {
+    const container = document.getElementById('savedUsersList');
+    if (!container) return;
+
+    const users = Object.values(AuthManager.users);
+    if (users.length === 0) {
+      container.innerHTML = `
+        <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; padding: 6px;">
+          Nenhum crachá salvo neste navegador ainda. Crie o seu na aba ao lado!
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '<div style="font-size: 0.85rem; font-weight: 800; color: var(--purple-main); margin-bottom: 6px;">Ou escolha um crachá salvo neste aparelho:</div>';
+    users.forEach(u => {
+      const btn = document.createElement('button');
+      btn.className = 'saved-user-chip';
+      btn.innerHTML = `
+        <img src="${u.avatar}" alt="Avatar" class="saved-user-avatar">
+        <div class="saved-user-text">
+          <strong>${u.name}</strong>
+          <span>${u.eexEmail}</span>
+        </div>
+      `;
+      btn.addEventListener('click', () => {
+        AuthManager.currentUser = u;
+        AuthManager.saveCurrent();
+        TaskManager.init();
+        HabitManager.init();
+        this.renderAll();
+        this.showToast(`Entrando como ${u.eexEmail}...`);
+      });
+      container.appendChild(btn);
+    });
+  },
+
   renderHeaderProfile() {
     const user = AuthManager.getCurrentUser();
-    const btnsAuth = document.querySelectorAll('.action-open-auth');
     const userBadges = document.querySelectorAll('.header-user-badge');
     const userNickTexts = document.querySelectorAll('.header-user-nick');
+    const userAvatarHeaders = document.querySelectorAll('.header-user-avatar');
 
-    if (!user || user.id === 'guest') {
-      btnsAuth.forEach(b => b.style.display = 'inline-flex');
+    if (!user) {
       userBadges.forEach(b => b.style.display = 'none');
     } else {
-      btnsAuth.forEach(b => b.style.display = 'none');
       userBadges.forEach(b => b.style.display = 'inline-flex');
       userNickTexts.forEach(t => t.textContent = user.eexEmail);
+      userAvatarHeaders.forEach(img => img.src = user.avatar);
     }
   },
 
   renderHomeOverview() {
     const user = AuthManager.getCurrentUser();
+    if (!user) return;
+
     const tasks = TaskManager.getAllTasks();
     const habits = HabitManager.getAllHabits();
     const todayHabits = HabitManager.getTodayCompleted();
@@ -715,19 +907,11 @@ const AppUI = {
       if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
       else if (hora >= 18 || hora < 5) saudacao = 'Boa noite';
 
-      if (user && user.id !== 'guest') {
-        greetingTitle.textContent = `${saudacao}, Agente ${user.eexEmail}!`;
-      } else {
-        greetingTitle.textContent = `${saudacao}! Sem Tempo Para Descanso!`;
-      }
+      greetingTitle.textContent = `${saudacao}, ${user.name}!`;
     }
 
     if (greetingSubtitle) {
-      if (user && user.id !== 'guest') {
-        greetingSubtitle.textContent = `Seu terminal operacional de despacho da Ilha de Elgaly Edge está ativo. ${user.isGoogle ? 'Sincronizado na Nuvem com o Firebase ☁️!' : ''}`;
-      } else {
-        greetingSubtitle.textContent = `Entregando cartas, organizando encomendas e invocando entidades ancestrais em toda a ilha de Elgaly Edge!`;
-      }
+      greetingSubtitle.textContent = `Terminal de despacho conectado em ${user.location}. ${user.isGoogle ? 'Sincronizado na Nuvem (Firebase) ☁️' : 'Perfil Local EEX 💾'}`;
     }
 
     const pendingTasks = tasks.filter(t => !t.completed).length;
@@ -755,7 +939,7 @@ const AppUI = {
         urgentList.innerHTML = `
           <div class="empty-state-card">
             <h4>Tudo tranquilo por enquanto! 📦</h4>
-            <p>Você não possui nenhuma encomenda pendente no momento. Aproveite para criar novas tarefas ou focar na sua rotina diária!</p>
+            <p>Você não possui nenhuma encomenda pendente no momento. Aproveite para planejar suas próximas missões ou focar na sua rotina diária!</p>
           </div>
         `;
       } else {
@@ -792,7 +976,7 @@ const AppUI = {
       container.innerHTML = `
         <div class="empty-state">
           <h3>Nenhum Hábito Cadastrado Ainda!</h3>
-          <p>Adicione hábitos diários como beber água, revisar matérias da faculdade ou desenhar a HQ para acompanhar sua sequência!</p>
+          <p>Adicione hábitos diários como beber água, revisar matérias da faculdade ou focar em projetos pessoais para acompanhar sua sequência!</p>
           <button class="btn-comic action-new-habit" style="margin-top: 15px;">+ Criar Primeiro Hábito</button>
         </div>
       `;
@@ -1057,6 +1241,8 @@ const AppUI = {
 
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
+    if (!user) return;
+
     const tasks = TaskManager.getAllTasks();
     const habits = HabitManager.getAllHabits();
 
@@ -1064,7 +1250,6 @@ const AppUI = {
     if (!profileCard) return;
 
     const completedTasks = tasks.filter(t => t.completed).length;
-    const isGuest = !user || user.id === 'guest';
 
     profileCard.innerHTML = `
       <div class="retro-badge-header">
@@ -1074,16 +1259,16 @@ const AppUI = {
 
       <div class="retro-badge-body">
         <div class="retro-avatar-box">
-          <img src="${user ? user.avatar : 'images/elgalylogo.png'}" alt="Avatar" class="retro-avatar-img">
+          <img src="${user.avatar || 'images/elgalylogo.png'}" alt="Avatar" class="retro-avatar-img" id="passAvatarDisplay">
         </div>
         <div class="retro-user-details">
-          <h3>${user ? user.name : 'Entregador Visitante'}</h3>
-          <div class="eex-retro-email">${user ? user.eexEmail : 'recruta.express.com'}</div>
+          <h3>${user.name}</h3>
+          <div class="eex-retro-email">${user.eexEmail}</div>
           <p style="font-size: 0.9rem; color: #4b5563; margin-top: 5px;">
-            Setor de Operações: <strong>Nova Amerit - NA (Nova Arcanis)</strong>
+            Setor de Operações: <strong>${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</strong>
           </p>
           <p style="font-size: 0.85rem; color: #6b7280;">
-            Tipo de Acesso: ${user && user.isGoogle ? '☁️ Sincronizado na Nuvem (Firebase / Google)' : '💾 Perfil Local EEX'}
+            Tipo de Acesso: ${user.isGoogle ? '☁️ Sincronizado na Nuvem (Firebase / Google)' : '💾 Perfil Local EEX'}
           </p>
         </div>
       </div>
@@ -1091,30 +1276,51 @@ const AppUI = {
       <div class="retro-badge-stats">
         <div class="badge-stat">
           <strong>${tasks.length}</strong>
-          <span>Total Despachado</span>
+          <span>TOTAL DESPACHADO</span>
         </div>
         <div class="badge-stat">
           <strong style="color: var(--green-dark);">${completedTasks}</strong>
-          <span>Entregues</span>
+          <span>ENTREGUES</span>
         </div>
         <div class="badge-stat">
           <strong>${habits.length}</strong>
-          <span>Hábitos Ativos</span>
+          <span>HÁBITOS ATIVOS</span>
         </div>
       </div>
 
-      <div class="retro-badge-actions">
-        ${isGuest ? `
-          <button class="btn-comic btn-secondary action-open-auth">
-            🔑 Cadastrar ou Fazer Login com Google
-          </button>
-        ` : `
-          <button class="btn-comic btn-outline" onclick="AuthManager.logout()">
-            Sair da Conta (${user.eexEmail})
-          </button>
-        `}
+      <div class="retro-badge-actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-comic btn-secondary" id="btnOpenEditProfile">
+          ✎ Editar Perfil & Foto
+        </button>
+        <button class="btn-comic btn-outline" onclick="AuthManager.logout()">
+          Sair da Conta (${user.eexEmail})
+        </button>
       </div>
     `;
+
+    const btnEdit = document.getElementById('btnOpenEditProfile');
+    if (btnEdit) {
+      btnEdit.addEventListener('click', () => {
+        this.openEditProfileModal();
+      });
+    }
+  },
+
+  openEditProfileModal() {
+    const user = AuthManager.getCurrentUser();
+    if (!user) return;
+
+    const modal = document.getElementById('modalEditProfile');
+    const nameInput = document.getElementById('editProfileName');
+    const locInput = document.getElementById('editProfileLocation');
+    const avatarPreview = document.getElementById('editAvatarPreview');
+
+    if (nameInput) nameInput.value = user.name;
+    if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
+    if (avatarPreview) avatarPreview.src = user.avatar || 'images/elgalylogo.png';
+    this.editAvatarBase64 = null;
+
+    if (modal) modal.classList.add('active');
   },
 
   openTaskModal(task = null) {

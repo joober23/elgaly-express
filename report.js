@@ -164,7 +164,7 @@ const ReportEngine = {
     for (let i = 0; i < days; i++) {
       const d = new Date();
       d.setDate(now.getDate() - i);
-      const dateKey = d.toISOString().split('T')[0];
+      const dateKey = d.toLocaleDateString('en-CA');
       const dayRecord = habitHistory[dateKey] || [];
       completedHabitsCount += dayRecord.length;
       if (habits.length > 0 && dayRecord.length >= habits.length) {
@@ -586,7 +586,7 @@ const ReportEngine = {
     }
 
     // ==========================================
-    // 7. RODAPÉ OFICIAL (COM ENDEREÇO DA HQ)
+    // 7. RODAPÉ OFICIAL (ELGALY EXPRESS)
     // ==========================================
     doc.setFillColor(58, 21, 77);
     doc.rect(0, pageHeight - 16, pageWidth, 16, 'F');

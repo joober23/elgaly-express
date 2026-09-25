@@ -1,7 +1,7 @@
 /* ==========================================================================
    ELGALY EXPRESS - SISTEMA DE ROTINA & DESPACHO DIMENSIONAL
-   Paleta de Cores e Estética Neo-Brutalista / Comic Book Oficial
-   Navbar Inteligente (Auto-hide no Desktop) & Menu Lateral (Mobile Drawer)
+   Paleta de Cores e Estética Neo-Brutalista Oficial
+   Navbar Inteligente, Menu Lateral Mobile, Auth Gateway e Edição de Perfil
    ========================================================================== */
 
 :root {
@@ -61,7 +61,7 @@ body {
 h1, h2, h3, h4, h5, h6, 
 .comic-font, nav a, .sticker-tag, .btn-comic, 
 .stat-value, .filter-btn, .char-tag, .eex-retro-email,
-.drawer-nav a {
+.drawer-nav a, .auth-tab-btn {
   font-family: var(--font-main);
   letter-spacing: 0.5px;
 }
@@ -81,7 +81,6 @@ header {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Esconde suavemente no desktop ao rolar para baixo */
 header.header-hidden {
   transform: translateY(-100%);
 }
@@ -95,7 +94,6 @@ header.header-hidden {
   position: relative;
 }
 
-/* Botão Hambúrguer Mobile */
 .btn-mobile-menu {
   display: none;
   background: var(--yellow-bright);
@@ -145,34 +143,10 @@ header img.logo:hover {
   padding: 5px 10px;
 }
 
-/* Widget de Perfil no Header */
 .header-auth-box {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.btn-header-auth {
-  background: var(--yellow-bright);
-  color: var(--black);
-  border: 3px solid var(--black);
-  border-radius: 14px;
-  padding: 6px 14px;
-  font-size: 1rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 3px 3px 0px var(--black);
-  transition: transform 0.15s, box-shadow 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-}
-
-.btn-header-auth:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0px var(--black);
-  background: #ffdf00;
 }
 
 .header-user-badge {
@@ -180,7 +154,7 @@ header img.logo:hover {
   color: var(--white);
   border: 3px solid var(--black);
   border-radius: 14px;
-  padding: 5px 12px;
+  padding: 4px 12px;
   font-size: 0.95rem;
   font-family: var(--font-main);
   box-shadow: 3px 3px 0px var(--black);
@@ -195,6 +169,15 @@ header img.logo:hover {
 .header-user-badge:hover {
   transform: scale(1.04);
   background: var(--purple-main);
+}
+
+.header-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--black);
+  object-fit: cover;
+  background: var(--white);
 }
 
 /* Navegação Desktop (Abas) */
@@ -352,6 +335,158 @@ nav.desktop-nav a.active {
   border-top: 3px dashed var(--black);
   text-align: center;
   background: #ffeef6;
+}
+
+/* ==========================================================================
+   PORTÃO DE AUTENTICAÇÃO OBRIGATÓRIO (AUTH GATEWAY)
+   ========================================================================== */
+.auth-gateway-container {
+  max-width: 580px;
+  margin: 30px auto;
+  background: var(--card-bg);
+  border: 6px solid var(--black);
+  border-radius: 26px;
+  padding: 30px 24px;
+  box-shadow: 10px 10px 0px var(--black);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.auth-gateway-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.auth-gateway-header h2 {
+  font-size: 2.3rem;
+  color: var(--purple-dark);
+  line-height: 1.15;
+}
+
+.auth-gateway-header p {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4b5563;
+  margin-top: 6px;
+}
+
+.auth-tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 3px solid var(--black);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.auth-tab-btn {
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 14px;
+  padding: 8px 16px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--black);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.auth-tab-btn.active {
+  background: var(--magenta-bright);
+  color: var(--white);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--black);
+}
+
+.auth-pane {
+  display: none;
+}
+
+.auth-pane.active {
+  display: block;
+  animation: fadeInView 0.25s ease;
+}
+
+/* Upload de Avatar Preview */
+.avatar-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 8px 0;
+}
+
+.avatar-preview-box {
+  width: 68px;
+  height: 68px;
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 3px 3px 0px var(--black);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-input-comic {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Chips de Usuários Salvos no Dispositivo */
+.saved-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 15px;
+  border-top: 2px dashed var(--black);
+  padding-top: 12px;
+}
+
+.saved-user-chip {
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px var(--black);
+  text-align: left;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.saved-user-chip:hover {
+  background: #fdf2f8;
+  transform: translateX(4px);
+}
+
+.saved-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid var(--black);
+  object-fit: cover;
+}
+
+.saved-user-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--purple-dark);
+}
+
+.saved-user-text span {
+  font-size: 0.8rem;
+  color: var(--magenta-bright);
+  font-weight: 700;
 }
 
 /* ==========================================================================
@@ -1250,7 +1385,7 @@ nav.desktop-nav a.active {
 
 /* ==========================================================================
    PERFIL DO ENTREGADOR (CRACHÁ RETRO ANOS 2000)
-   ========================================================================= */
+   ========================================================================== */
 .profile-section-wrap {
   display: flex;
   justify-content: center;
@@ -1315,7 +1450,7 @@ nav.desktop-nav a.active {
 .retro-avatar-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .retro-user-details h3 {
@@ -1512,7 +1647,6 @@ nav.desktop-nav a.active {
 .btn-comic.btn-purple { background: var(--purple-dark); color: var(--white); }
 .btn-comic.btn-outline { background: var(--white); color: var(--black); }
 
-/* Botão Oficial do Google via Firebase */
 .google-auth-wrapper {
   background: var(--white);
   border: 3px solid var(--black);
@@ -1598,7 +1732,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   FOOTER OFICIAL COM ENDEREÇO DA HQ ELGALY EXPRESS
+   FOOTER OFICIAL ELGALY EXPRESS
    ========================================================================== */
 footer {
   text-align: center;
@@ -1637,7 +1771,6 @@ footer {
     padding: 12px 14px;
   }
 
-  /* No mobile, oculta a navbar horizontal e mostra o botão hambúrguer */
   nav.desktop-nav {
     display: none !important;
   }
@@ -1658,11 +1791,6 @@ footer {
 
   header img.logo {
     max-width: 170px;
-  }
-
-  .btn-header-auth {
-    font-size: 0.85rem;
-    padding: 5px 10px;
   }
 
   .hero h1 {
