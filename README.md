@@ -1,67 +1,66 @@
 # 📦 Elgaly Express - Sistema de Rotina & Despacho Dimensional
 
-Aplicação web inspirada na história em quadrinhos autoral **Elgaly Express**! Desenvolvida para organizar suas rotinas da **Faculdade** e da **Vida Pessoal**, com acompanhamento de hábitos diários, cálculo de agilidade/prazos, passaporte de entregador anos 2000 (`nickname.express.com`) com suporte a login com Google e emissão de relatórios oficiais em **PDF** com o logotipo oficial para períodos de **7, 15 ou 30 dias**.
+Aplicação web inspirada na história em quadrinhos autoral **Elgaly Express**! Desenvolvida para organizar suas rotinas da **Faculdade** e da **Vida Pessoal**, com acompanhamento de hábitos diários, cálculo de agilidade/prazos, passaporte de entregador anos 2000 (`nickname.express.com`) com **Sincronização em Nuvem (Firebase Cloud Firestore)** e emissão de relatórios oficiais em **PDF** com logotipo oficial.
 
 ---
 
-## 🎨 Principais Novidades desta Versão
-1. **Totalmente Zerado (Clean Slate)**: Inicia sem dados prévios para você cadastrar suas próprias matérias, trabalhos e rotinas do zero!
-2. **Logotipo Oficial no PDF**: O relatório gerado em PDF agora estampa o logotipo oficial da Elgaly Express no cabeçalho.
-3. **Passaporte EEX Anos 2000 (`nickname.express.com`)**:
-   - Faça login com Google ou ative seu apelido direto pelo formulário.
-   - Todo usuário ganha seu identificador retro (ex: `juanio.express.com`).
-   - Dados segregados por usuário: amigos e colegas podem usar no mesmo navegador ou em dispositivos diferentes com perfis individuais!
-4. **Visualizações em Abas (Single Page App - SPA)**:
-   - 🏠 **Início**: Cumprimento personalizado com seu apelido (`Olá, juanio.express.com!`), status da rota de hoje e indicadores rápidos.
-   - ☀️ **Rotina Diária**: Check-in de hábitos com histórico e contador de streak (🔥).
-   - 📦 **Encomendas & Prazos**: Central com busca rápida integrada, filtros por faculdade/pessoal e cálculo automático de agilidade.
-   - 📊 **Relatórios & PDF**: Painel analítico de 7, 15 ou 30 dias com Ranks (Rank S+, A, B, C) e download do relatório oficial em PDF.
-   - 👤 **Perfil EEX**: Crachá de entregador anos 2000 com estatísticas de carreira.
-5. **100% Responsivo no Celular (Mobile Ready)**: Otimizado para telas de smartphones, com toque fluido e navegação deslizante.
-6. **Rodapé Oficial da HQ**:
-   > *© 1998 - 2026 | Elgaly Express: Serviços de Entrega*  
-   > *Avenida Tennant Rockstead, 67, Nova Amerit - NA (Nova Arcanis)*
+## ⚡ Novidades desta Versão
+
+### 1. ☁️ Sincronização em Tempo Real (Firebase + Google)
+- Integrado oficialmente com o seu projeto Firebase (`elgaly-express-230108`).
+- **Sincronização PC ⇄ Celular**: Tudo o que você cadastrar, marcar ou editar no computador aparece instantaneamente no seu celular sem precisar recarregar a página!
+- **Modo Offline**: Se estiver sem internet, o app guarda as alterações no cache e sincroniza com a nuvem assim que você se reconectar.
+
+### 2. 🖥️ Navbar Inteligente no Computador (Auto-Hide)
+- Ao rolar a página para baixo no desktop, o cabeçalho se esconde suavemente para dar espaço total de leitura.
+- Ao rolar minimamente para cima, o cabeçalho reaparece instantaneamente.
+
+### 3. 📱 Menu Lateral Deslizante no Celular (Mobile Drawer)
+- Em telas menores (smartphones), a barra de navegação se transforma em um **menu lateral estilo gaveta**.
+- Botão hambúrguer estilizado (**☰**) no topo esquerdo que abre o painel deslizante com animação e efeito de fundo desfocado.
+
+### 4. 📄 Relatório em PDF com Logotipo Oficial
+- Emita relatórios para **7, 15 ou 30 dias** com o logotipo da Elgaly Express em alta resolução, carimbo de Rank (Rank S, A, B, C) e manifesto de tarefas.
 
 ---
 
-## 🌐 Como Colocar Online no GitHub Pages (Passo a Passo)
+## 🌐 Como Colocar no GitHub Pages & Autorizar o Firebase
 
-Para acessar no celular ou compartilhar com amigos:
+### Passo 1: Enviar os arquivos para o GitHub
+Abra a pasta `C:\Users\livin\.gemini\antigravity\scratch\elgaly-express` e envie:
+```bash
+git init
+git add .
+git commit -m "Adiciona sincronizacao Firebase e menu lateral mobile"
+git branch -M main
+git remote add origin https://github.com/SEU_USUARIO/elgaly-express.git
+git push -u origin main
+```
+No GitHub, vá em **Settings** > **Pages** > escolha a branch `main` e salve!
 
-1. **Crie um repositório no GitHub**:
-   - Acesse [github.com/new](https://github.com/new) e crie um repositório público (ex: `elgaly-express`).
-2. **Envie os arquivos da pasta**:
-   - Abra a pasta do projeto: `C:\Users\livin\.gemini\antigravity\scratch\elgaly-express`
-   - Inicialize o git e suba os arquivos:
-     ```bash
-     git init
-     git add .
-     git commit -m "Lançamento oficial Elgaly Express"
-     git branch -M main
-     git remote add origin https://github.com/SEU_USUARIO/elgaly-express.git
-     git push -u origin main
-     ```
-3. **Ative o GitHub Pages**:
-   - No seu repositório no GitHub, vá em **Settings** > **Pages** (no menu lateral esquerdo).
-   - Em **Source**, selecione **Deploy from a branch**.
-   - Em **Branch**, selecione `main` e a pasta `/(root)`, depois clique em **Save**.
-4. **Pronto!** Em cerca de 1 a 2 minutos, seu site estará online em:
-   `https://SEU_USUARIO.github.io/elgaly-express/`
-   Você poderá abrir direto no navegador do celular, adicionar à tela de início e usar como aplicativo!
+### Passo 2: Autorizar seu domínio no Firebase (Importante para o Login com Google no GitHub!)
+Por segurança, o Firebase só aceita logins dos domínios autorizados por você:
+1. Acesse o [Console do Firebase](https://console.firebase.google.com/) no seu projeto `elgaly-express-230108`.
+2. Vá em **Authentication** > aba **Configurações** (ou *Settings*) > **Domínios autorizados**.
+3. O `localhost` já vem autorizado (por isso funciona no seu PC!).
+4. Clique em **Adicionar domínio** e digite o domínio do seu GitHub Pages:
+   `SEU_USUARIO.github.io`
+5. Clique em **Salvar**.
+
+Pronto! Agora o login com Google e a sincronização em nuvem funcionarão tanto no seu computador quanto no seu celular online!
 
 ---
 
 ## 📁 Estrutura de Arquivos
 ```text
 elgaly-express/
-├── index.html        # Estrutura SPA com abas e modais
-├── style.css         # Estilo neo-brutalista comic responsivo para mobile
-├── app.js            # Gerenciador de rotinas, auth EEX e UI
-├── report.js         # Motor estatístico 7/15/30 dias e PDF com logotipo
-├── README.md         # Instruções de deploy e documentação
+├── index.html           # Estrutura com drawer mobile e abas SPA
+├── style.css            # Estilo neo-brutalista, drawer mobile e auto-hide
+├── firebase-service.js  # Conexão Firebase Auth e Firestore em tempo real
+├── app.js               # Gerenciador de rotinas, UI e navegação
+├── report.js            # Motor analítico e gerador de PDF com logotipo
+├── README.md            # Documentação e instruções de deploy
 ├── images/
-│   └── elgalylogo.png # Logotipo oficial da Elgaly Express
-└── vendor/           # Bibliotecas locais offline (com fallback CDN)
-    ├── jspdf.umd.min.js
-    └── confetti.browser.min.js
+│   └── elgalylogo.png    # Logotipo oficial da Elgaly Express
+└── vendor/              # Bibliotecas locais offline (jsPDF e Confetti)
 ```

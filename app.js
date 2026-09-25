@@ -1,30 +1,28 @@
 /**
  * ELGALY EXPRESS - APLICAÇÃO DE ROTINAS & DESPACHO
- * Gerenciador de tarefas, hábitos, autenticação EEX (.express.com) e visualizações SPA.
+ * Gerenciador de tarefas, hábitos, autenticação EEX (.express.com), sincronização Firebase,
+ * Navbar inteligente (esconde ao rolar) e Menu Lateral Mobile.
  */
 
 // ==========================================================================
 // GERENCIADOR DE AUTENTICAÇÃO & IDENTIDADE EEX (AuthManager)
-// Vibe anos 2000: nickname.express.com + Suporte a Login com Google
+// Vibe anos 2000: nickname.express.com + Suporte a Login com Google / Firebase
 // ==========================================================================
 const AuthManager = {
   currentUser: null,
   users: {},
 
   init() {
-    // Carregar usuários salvos
     const savedUsers = localStorage.getItem('elgaly_express_users');
     if (savedUsers) {
       try { this.users = JSON.parse(savedUsers); } catch (e) { this.users = {}; }
     }
 
-    // Carregar usuário atual
     const savedCurrent = localStorage.getItem('elgaly_express_current_user');
     if (savedCurrent) {
       try { this.currentUser = JSON.parse(savedCurrent); } catch (e) { this.currentUser = null; }
     }
 
-    // Se nenhum usuário logado, cria um perfil padrão de Recruta
     if (!this.currentUser) {
       this.loginAsGuest();
     }
@@ -33,11 +31,10 @@ const AuthManager = {
   formatEexNickname(rawNick) {
     if (!rawNick) return 'entregador.express.com';
     let clean = rawNick.toLowerCase().trim()
-      .replace(/@.*$/, '') // remove sufixos de email se houver
-      .replace(/[^a-z0-9_.-]/g, ''); // apenas caracteres amigáveis
+      .replace(/@.*$/, '')
+      .replace(/[^a-z0-9_.-]/g, '');
     if (!clean) clean = 'entregador';
     
-    // Garante o sufixo anos 2000 .express.com
     if (!clean.endsWith('.express.com')) {
       clean = clean.replace(/\.express$/, '') + '.express.com';
     }
@@ -79,63 +76,15 @@ const AuthManager = {
     return newUser;
   },
 
-  /**
-   * Processa credencial retornada pelo Google Identity Services
-   */
-  handleGoogleCredential(response) {
-    try {
-      // Decodificar JWT (header.payload.signature)
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      const payload = JSON.parse(jsonPayload);
-      const googleName = payload.name || 'Agente Google';
-      const googleEmail = payload.email || '';
-      const googlePicture = payload.picture || '';
-
-      // Gera o nick anos 2000 a partir do email do Google
-      const suggestedNick = googleEmail ? googleEmail.split('@')[0] : googleName.toLowerCase().replace(/\s+/g, '.');
-      const eexEmail = this.formatEexNickname(suggestedNick);
-      const userId = eexEmail.replace('.express.com', '');
-
-      const googleUser = {
-        id: userId,
-        name: googleName,
-        nickname: userId,
-        eexEmail: eexEmail,
-        avatar: googlePicture || 'images/elgalylogo.png',
-        isGoogle: true,
-        email: googleEmail,
-        joinedAt: new Date().toISOString()
-      };
-
-      this.users[userId] = googleUser;
-      this.currentUser = googleUser;
-      this.saveUsers();
-      this.saveCurrent();
-
-      // Fechar modal de login e atualizar UI
-      const modal = document.getElementById('modalAuth');
-      if (modal) modal.classList.remove('active');
-
-      AppUI.renderAll();
-      AppUI.showToast(`🚀 Bem-vindo, Agente ${eexEmail}!`);
-
-    } catch (err) {
-      console.error('Erro ao processar login Google:', err);
-      alert('Não foi possível concluir o login com o Google. Você pode criar um apelido EEX direto no formulário abaixo!');
+  async logout() {
+    if (typeof FirebaseService !== 'undefined' && this.currentUser && this.currentUser.isGoogle) {
+      await FirebaseService.logout();
     }
-  },
-
-  logout() {
     this.loginAsGuest();
     TaskManager.init();
     HabitManager.init();
     AppUI.renderAll();
-    AppUI.showToast('Você saiu da sua conta EEX.');
+    AppUI.showToast('Você saiu da sua conta.');
   },
 
   getCurrentUser() {
@@ -153,7 +102,7 @@ const AuthManager = {
 
 // ==========================================================================
 // GERENCIADOR DE TAREFAS / ENCOMENDAS (TaskManager)
-// Inicia 100% ZERADO para o usuário construir sua própria rotina
+// Suporta armazenamento local E sincronização em tempo real na nuvem (Firestore)
 // ==========================================================================
 const TaskManager = {
   tasks: [],
@@ -173,13 +122,12 @@ const TaskManager = {
         this.tasks = [];
       }
     } else {
-      // Inicia zerado como solicitado!
       this.tasks = [];
-      this.save();
+      this.saveLocally();
     }
   },
 
-  save() {
+  saveLocally() {
     localStorage.setItem(this.getStorageKey(), JSON.stringify(this.tasks));
   },
 
@@ -191,7 +139,7 @@ const TaskManager = {
     return this.tasks.find(t => t.id === id);
   },
 
-  addTask(taskData) {
+  async addTask(taskData) {
     const prefix = taskData.category === 'faculdade' ? 'FAC' : 'ELG';
     const randomNum = Math.floor(100 + Math.random() * 900);
     const newTask = {
@@ -208,27 +156,41 @@ const TaskManager = {
     };
 
     this.tasks.unshift(newTask);
-    this.save();
+    this.saveLocally();
+
+    // Sincroniza com Firebase se logado
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveTaskToCloud(newTask);
+    }
+
     return newTask;
   },
 
-  updateTask(id, updatedFields) {
+  async updateTask(id, updatedFields) {
     const idx = this.tasks.findIndex(t => t.id === id);
     if (idx !== -1) {
       this.tasks[idx] = { ...this.tasks[idx], ...updatedFields };
-      this.save();
+      this.saveLocally();
+
+      if (typeof FirebaseService !== 'undefined') {
+        await FirebaseService.saveTaskToCloud(this.tasks[idx]);
+      }
       return this.tasks[idx];
     }
     return null;
   },
 
-  toggleComplete(id) {
+  async toggleComplete(id) {
     const task = this.getTaskById(id);
     if (!task) return;
 
     task.completed = !task.completed;
     task.completedAt = task.completed ? new Date().toISOString() : null;
-    this.save();
+    this.saveLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveTaskToCloud(task);
+    }
 
     if (task.completed && typeof confetti === 'function') {
       confetti({
@@ -241,15 +203,19 @@ const TaskManager = {
     return task;
   },
 
-  deleteTask(id) {
+  async deleteTask(id) {
     this.tasks = this.tasks.filter(t => t.id !== id);
-    this.save();
+    this.saveLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.deleteTaskFromCloud(id);
+    }
   }
 };
 
 // ==========================================================================
 // GERENCIADOR DE ROTINA DIÁRIA (HabitManager)
-// Inicia 100% ZERADO para o usuário registrar seus próprios hábitos
+// Suporta armazenamento local E sincronização em tempo real na nuvem (Firestore)
 // ==========================================================================
 const HabitManager = {
   habits: [],
@@ -273,22 +239,22 @@ const HabitManager = {
       try { this.habits = JSON.parse(savedHabits); } catch (e) { this.habits = []; }
     } else {
       this.habits = [];
-      this.saveHabits();
+      this.saveHabitsLocally();
     }
 
     if (savedHistory) {
       try { this.history = JSON.parse(savedHistory); } catch (e) { this.history = {}; }
     } else {
       this.history = {};
-      this.saveHistory();
+      this.saveHistoryLocally();
     }
   },
 
-  saveHabits() {
+  saveHabitsLocally() {
     localStorage.setItem(this.getHabitsKey(), JSON.stringify(this.habits));
   },
 
-  saveHistory() {
+  saveHistoryLocally() {
     localStorage.setItem(this.getHistoryKey(), JSON.stringify(this.history));
   },
 
@@ -309,7 +275,7 @@ const HabitManager = {
     return this.history[todayKey] || [];
   },
 
-  toggleHabit(id) {
+  async toggleHabit(id) {
     const todayKey = this.getTodayKey();
     if (!this.history[todayKey]) {
       this.history[todayKey] = [];
@@ -322,7 +288,12 @@ const HabitManager = {
       this.history[todayKey].splice(idx, 1);
     }
 
-    this.saveHistory();
+    this.saveHistoryLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveHabitHistoryToCloud(this.history);
+    }
+
     return this.isCompletedToday(id);
   },
 
@@ -332,20 +303,29 @@ const HabitManager = {
     return list.includes(id);
   },
 
-  addHabit(title, category) {
+  async addHabit(title, category) {
     const newHabit = {
       id: 'habit-' + Date.now(),
       title: title.trim(),
       category: category || 'pessoal'
     };
     this.habits.push(newHabit);
-    this.saveHabits();
+    this.saveHabitsLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveHabitToCloud(newHabit);
+    }
+
     return newHabit;
   },
 
-  deleteHabit(id) {
+  async deleteHabit(id) {
     this.habits = this.habits.filter(h => h.id !== id);
-    this.saveHabits();
+    this.saveHabitsLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.deleteHabitFromCloud(id);
+    }
   },
 
   calculateStreak(habitId) {
@@ -373,12 +353,13 @@ const HabitManager = {
 
 // ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
-// Visualizações separadas (SPA Tabs), Cumprimento e Responsividade Mobile
+// Com Navbar Inteligente (Auto-hide no desktop) e Menu Lateral (Mobile Drawer)
 // ==========================================================================
 const AppUI = {
-  currentTab: 'inicio', // inicio | rotina | encomendas | relatorios | perfil
+  currentTab: 'inicio',
   currentFilter: 'todas',
   searchQuery: '',
+  lastScrollTop: 0,
 
   init() {
     AuthManager.init();
@@ -387,6 +368,8 @@ const AppUI = {
 
     this.bindEvents();
     this.initNavigation();
+    this.initSmartNavbar();
+    this.initMobileDrawer();
     this.updateCurrentDateDisplay();
     this.renderAll();
 
@@ -394,6 +377,80 @@ const AppUI = {
       this.renderTasks();
       this.renderHomeOverview();
     }, 60000);
+  },
+
+  /**
+   * 1. Navbar Inteligente: Esconde ao rolar para baixo no desktop, reaparece ao rolar para cima!
+   */
+  initSmartNavbar() {
+    const header = document.querySelector('header');
+    if (!header) return;
+
+    window.addEventListener('scroll', () => {
+      // Apenas ativa no desktop (> 768px)
+      if (window.innerWidth <= 768) {
+        header.classList.remove('header-hidden');
+        return;
+      }
+
+      const st = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // Evita esconder se estiver bem perto do topo
+      if (st <= 80) {
+        header.classList.remove('header-hidden');
+        this.lastScrollTop = st;
+        return;
+      }
+
+      if (st > this.lastScrollTop && st > 120) {
+        // Rolando para baixo: esconde
+        header.classList.add('header-hidden');
+      } else {
+        // Rolando para cima: mostra
+        header.classList.remove('header-hidden');
+      }
+
+      this.lastScrollTop = st <= 0 ? 0 : st;
+    }, { passive: true });
+  },
+
+  /**
+   * 2. Menu Lateral Mobile: Gaveta lateral deslizante em telas menores
+   */
+  initMobileDrawer() {
+    const btnToggleDrawer = document.getElementById('btnMobileMenu');
+    const drawer = document.getElementById('mobileDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+
+    const openDrawer = () => {
+      if (drawer && overlay) {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // impede scroll de fundo
+      }
+    };
+
+    const closeDrawer = () => {
+      if (drawer && overlay) {
+        drawer.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    };
+
+    if (btnToggleDrawer) btnToggleDrawer.addEventListener('click', openDrawer);
+    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeDrawer);
+    if (overlay) overlay.addEventListener('click', closeDrawer);
+
+    // Fechar gaveta ao clicar em qualquer link da navegação mobile
+    document.querySelectorAll('.drawer-nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        closeDrawer();
+        const tab = link.dataset.tab;
+        window.location.hash = tab;
+      });
+    });
   },
 
   initNavigation() {
@@ -410,20 +467,17 @@ const AppUI = {
   switchTab(tabName) {
     this.currentTab = tabName;
 
-    // Atualizar links da nav
-    document.querySelectorAll('.nav-link').forEach(link => {
+    // Atualizar links desktop e mobile
+    document.querySelectorAll('.nav-link, .drawer-nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.tab === tabName);
     });
 
-    // Mostrar apenas a seção ativa
     document.querySelectorAll('.app-view').forEach(view => {
       view.classList.toggle('active-view', view.id === `view-${tabName}`);
     });
 
-    // Rola suave para o topo
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Renderiza dados específicos da view
     if (tabName === 'inicio') this.renderHomeOverview();
     if (tabName === 'rotina') this.renderDailyRoutine();
     if (tabName === 'encomendas') this.renderTasks();
@@ -432,15 +486,14 @@ const AppUI = {
   },
 
   bindEvents() {
-    // 1. Navegação por abas
+    // Links de navegação desktop
     document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', (e) => {
-        const tab = link.dataset.tab;
-        window.location.hash = tab;
+      link.addEventListener('click', () => {
+        window.location.hash = link.dataset.tab;
       });
     });
 
-    // 2. Filtros de Tarefas
+    // Filtros de Tarefas
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -450,7 +503,7 @@ const AppUI = {
       });
     });
 
-    // 3. Busca de Encomendas
+    // Busca de Encomendas
     const searchInput = document.getElementById('taskSearchInput');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -459,21 +512,31 @@ const AppUI = {
       });
     }
 
-    // 4. Modal de Login / Registro
-    const btnOpenAuth = document.getElementById('btnOpenAuth');
+    // Modal de Login / Registro
+    const btnsOpenAuth = document.querySelectorAll('.action-open-auth');
     const modalAuth = document.getElementById('modalAuth');
     const modalAuthClose = document.getElementById('modalAuthClose');
     const formDirectRegister = document.getElementById('formDirectRegister');
+    const btnGoogleLogin = document.getElementById('btnGoogleLoginCustom');
 
-    if (btnOpenAuth && modalAuth) {
-      btnOpenAuth.addEventListener('click', () => {
-        modalAuth.classList.add('active');
+    btnsOpenAuth.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (modalAuth) modalAuth.classList.add('active');
       });
-    }
+    });
 
     if (modalAuthClose && modalAuth) {
       modalAuthClose.addEventListener('click', () => {
         modalAuth.classList.remove('active');
+      });
+    }
+
+    // Botão Oficial do Google via Firebase
+    if (btnGoogleLogin) {
+      btnGoogleLogin.addEventListener('click', () => {
+        if (typeof FirebaseService !== 'undefined') {
+          FirebaseService.loginWithGoogle();
+        }
       });
     }
 
@@ -493,7 +556,6 @@ const AppUI = {
       });
     }
 
-    // Preview em tempo real do nickname anos 2000
     const regNickInput = document.getElementById('regNick');
     const nickPreview = document.getElementById('nickPreview');
     if (regNickInput && nickPreview) {
@@ -503,7 +565,7 @@ const AppUI = {
       });
     }
 
-    // 5. Botões de Nova Encomenda
+    // Botões de Nova Encomenda
     const btnsNewTask = document.querySelectorAll('.action-new-task');
     const modalTask = document.getElementById('modalTask');
     const formTask = document.getElementById('formTask');
@@ -522,7 +584,7 @@ const AppUI = {
     }
 
     if (formTask) {
-      formTask.addEventListener('submit', (e) => {
+      formTask.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('taskId').value;
         const taskData = {
@@ -534,10 +596,10 @@ const AppUI = {
         };
 
         if (id) {
-          TaskManager.updateTask(id, taskData);
+          await TaskManager.updateTask(id, taskData);
           this.showToast('Encomenda atualizada com sucesso!');
         } else {
-          TaskManager.addTask(taskData);
+          await TaskManager.addTask(taskData);
           this.showToast('Nova encomenda despachada!');
         }
 
@@ -546,7 +608,7 @@ const AppUI = {
       });
     }
 
-    // 6. Modal de Novo Hábito
+    // Botões de Novo Hábito
     const btnsNewHabit = document.querySelectorAll('.action-new-habit');
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
@@ -566,12 +628,12 @@ const AppUI = {
     }
 
     if (formHabit) {
-      formHabit.addEventListener('submit', (e) => {
+      formHabit.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('habitTitle').value;
         const cat = document.getElementById('habitCategory').value;
         if (title) {
-          HabitManager.addHabit(title, cat);
+          await HabitManager.addHabit(title, cat);
           modalHabit.classList.remove('active');
           this.renderDailyRoutine();
           this.renderHomeOverview();
@@ -581,7 +643,6 @@ const AppUI = {
       });
     }
 
-    // Fechar modais ao clicar no overlay de fundo
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
@@ -590,14 +651,12 @@ const AppUI = {
       });
     });
 
-    // 7. Timeframe do Relatório
     document.querySelectorAll('.timeframe-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         ReportEngine.setTimeframe(btn.dataset.days);
       });
     });
 
-    // 8. Exportar PDF
     const btnExportPDF = document.getElementById('btnExportPDF');
     if (btnExportPDF) {
       btnExportPDF.addEventListener('click', () => {
@@ -625,37 +684,28 @@ const AppUI = {
     ReportEngine.renderReportPreview();
   },
 
-  /**
-   * Renderiza crachá do Agente no Cabeçalho
-   */
   renderHeaderProfile() {
     const user = AuthManager.getCurrentUser();
-    const btnAuth = document.getElementById('btnOpenAuth');
-    const userBadge = document.getElementById('headerUserBadge');
-    const userNickText = document.getElementById('headerUserNick');
+    const btnsAuth = document.querySelectorAll('.action-open-auth');
+    const userBadges = document.querySelectorAll('.header-user-badge');
+    const userNickTexts = document.querySelectorAll('.header-user-nick');
 
     if (!user || user.id === 'guest') {
-      if (btnAuth) btnAuth.style.display = 'inline-flex';
-      if (userBadge) userBadge.style.display = 'none';
+      btnsAuth.forEach(b => b.style.display = 'inline-flex');
+      userBadges.forEach(b => b.style.display = 'none');
     } else {
-      if (btnAuth) btnAuth.style.display = 'none';
-      if (userBadge) {
-        userBadge.style.display = 'inline-flex';
-        if (userNickText) userNickText.textContent = user.eexEmail;
-      }
+      btnsAuth.forEach(b => b.style.display = 'none');
+      userBadges.forEach(b => b.style.display = 'inline-flex');
+      userNickTexts.forEach(t => t.textContent = user.eexEmail);
     }
   },
 
-  /**
-   * Renderiza a Tela Inicial (Início) com Cumprimento e Resumo
-   */
   renderHomeOverview() {
     const user = AuthManager.getCurrentUser();
     const tasks = TaskManager.getAllTasks();
     const habits = HabitManager.getAllHabits();
     const todayHabits = HabitManager.getTodayCompleted();
 
-    // Cumprimento personalizado
     const greetingTitle = document.getElementById('homeGreetingTitle');
     const greetingSubtitle = document.getElementById('homeGreetingSubtitle');
 
@@ -674,13 +724,12 @@ const AppUI = {
 
     if (greetingSubtitle) {
       if (user && user.id !== 'guest') {
-        greetingSubtitle.textContent = `Seu terminal operacional de despacho da Ilha de Elgaly Edge está ativo. Vamos botar a rotina em dia!`;
+        greetingSubtitle.textContent = `Seu terminal operacional de despacho da Ilha de Elgaly Edge está ativo. ${user.isGoogle ? 'Sincronizado na Nuvem com o Firebase ☁️!' : ''}`;
       } else {
         greetingSubtitle.textContent = `Entregando cartas, organizando encomendas e invocando entidades ancestrais em toda a ilha de Elgaly Edge!`;
       }
     }
 
-    // Indicadores do Hero
     const pendingTasks = tasks.filter(t => !t.completed).length;
     const completedTasks = tasks.filter(t => t.completed).length;
     const overdueTasks = tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate).getTime() < Date.now()).length;
@@ -695,7 +744,6 @@ const AppUI = {
     if (elHabitToday) elHabitToday.textContent = `${todayHabits.length}/${habits.length}`;
     if (elOverdue) elOverdue.textContent = overdueTasks;
 
-    // Resumo de hoje na Home
     const urgentList = document.getElementById('homeUrgentList');
     if (urgentList) {
       const nextTasks = tasks
@@ -732,9 +780,6 @@ const AppUI = {
     }
   },
 
-  /**
-   * Renderiza a Rotina Diária (Check-in)
-   */
   renderDailyRoutine() {
     const habits = HabitManager.getAllHabits();
     const container = document.getElementById('dailyHabitsGrid');
@@ -780,19 +825,19 @@ const AppUI = {
         </div>
       `;
 
-      card.addEventListener('click', (e) => {
+      card.addEventListener('click', async (e) => {
         if (e.target.classList.contains('habit-btn-delete')) return;
-        HabitManager.toggleHabit(habit.id);
+        await HabitManager.toggleHabit(habit.id);
         this.renderDailyRoutine();
         this.renderHomeOverview();
         ReportEngine.renderReportPreview();
       });
 
       const delBtn = card.querySelector('.habit-btn-delete');
-      delBtn.addEventListener('click', (e) => {
+      delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (confirm(`Remover "${habit.title}" da sua rotina diária?`)) {
-          HabitManager.deleteHabit(habit.id);
+          await HabitManager.deleteHabit(habit.id);
           this.renderDailyRoutine();
           this.renderHomeOverview();
           ReportEngine.renderReportPreview();
@@ -813,16 +858,12 @@ const AppUI = {
     }
   },
 
-  /**
-   * Renderiza a Grade de Encomendas & Prazos
-   */
   renderTasks() {
     const container = document.getElementById('tasksGrid');
     if (!container) return;
 
     let tasks = TaskManager.getAllTasks();
 
-    // Filtros
     if (this.currentFilter === 'faculdade') {
       tasks = tasks.filter(t => t.category === 'faculdade');
     } else if (this.currentFilter === 'pessoal') {
@@ -833,7 +874,6 @@ const AppUI = {
       tasks = tasks.filter(t => t.completed);
     }
 
-    // Busca
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
       tasks = tasks.filter(t => 
@@ -995,8 +1035,8 @@ const AppUI = {
         </div>
       `;
 
-      card.querySelector('[data-action="toggle"]').addEventListener('click', () => {
-        TaskManager.toggleComplete(task.id);
+      card.querySelector('[data-action="toggle"]').addEventListener('click', async () => {
+        await TaskManager.toggleComplete(task.id);
         this.renderAll();
       });
 
@@ -1004,9 +1044,9 @@ const AppUI = {
         this.openTaskModal(task);
       });
 
-      card.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      card.querySelector('[data-action="delete"]').addEventListener('click', async () => {
         if (confirm(`Deseja cancelar e remover a encomenda "${task.title}"?`)) {
-          TaskManager.deleteTask(task.id);
+          await TaskManager.deleteTask(task.id);
           this.renderAll();
         }
       });
@@ -1015,9 +1055,6 @@ const AppUI = {
     });
   },
 
-  /**
-   * Renderiza a Visão de Perfil do Entregador EEX (Vibe Anos 2000)
-   */
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
     const tasks = TaskManager.getAllTasks();
@@ -1046,7 +1083,7 @@ const AppUI = {
             Setor de Operações: <strong>Nova Amerit - NA (Nova Arcanis)</strong>
           </p>
           <p style="font-size: 0.85rem; color: #6b7280;">
-            Tipo de Acesso: ${user && user.isGoogle ? '🔗 Vinculado com Google' : '💾 Perfil Local EEX'}
+            Tipo de Acesso: ${user && user.isGoogle ? '☁️ Sincronizado na Nuvem (Firebase / Google)' : '💾 Perfil Local EEX'}
           </p>
         </div>
       </div>
@@ -1068,7 +1105,7 @@ const AppUI = {
 
       <div class="retro-badge-actions">
         ${isGuest ? `
-          <button class="btn-comic btn-secondary" onclick="document.getElementById('modalAuth').classList.add('active')">
+          <button class="btn-comic btn-secondary action-open-auth">
             🔑 Cadastrar ou Fazer Login com Google
           </button>
         ` : `
@@ -1128,11 +1165,6 @@ const AppUI = {
       toast.classList.remove('show');
     }, 3500);
   }
-};
-
-// Callback global para integração com o Google Identity Services (GSI)
-window.handleGoogleSignIn = function(response) {
-  AuthManager.handleGoogleCredential(response);
 };
 
 document.addEventListener('DOMContentLoaded', () => {

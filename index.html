@@ -10,8 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Darumadrop+One&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   
-  <!-- Google Identity Services (GSI) para Login com Google -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- SDKs do Firebase (Compatibilidade Direta via CDN para GitHub Pages) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
   <!-- Folha de Estilos Modular -->
   <link rel="stylesheet" href="style.css">
@@ -19,30 +21,63 @@
 <body>
 
   <!-- ==========================================================================
-       CABEÇALHO OFICIAL COM LOGO, PERFIL E NAVEGAÇÃO
+       MENU LATERAL MOBILE (DRAWER GAVETA DESLIZANTE)
+       ========================================================================== -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <aside class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <span class="drawer-title">ELGALY EXPRESS</span>
+      <button class="drawer-close" id="btnCloseDrawer" aria-label="Fechar Menu">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <a href="#inicio" class="drawer-nav-link active" data-tab="inicio">🏠 Início</a>
+      <a href="#rotina" class="drawer-nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+      <a href="#encomendas" class="drawer-nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
+      <a href="#relatorios" class="drawer-nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
+      
+      <button class="btn-comic action-new-task" style="margin-top: 10px; width: 100%;">
+        ⚡ + Nova Encomenda
+      </button>
+    </div>
+
+    <div class="drawer-footer">
+      <small style="font-weight: 800; color: var(--purple-dark);">Terminal de Despacho NA (Nova Arcanis)</small>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       CABEÇALHO COM AUTO-HIDE NO DESKTOP & BOTÃO HAMBÚRGUER MOBILE
        ========================================================================== -->
   <header>
     <div class="header-top-bar">
+      <!-- Botão Hambúrguer (Visível no Celular) -->
+      <button class="btn-mobile-menu" id="btnMobileMenu" aria-label="Abrir Menu">
+        ☰
+      </button>
+
       <!-- Logotipo Oficial Centralizado -->
       <a href="#inicio" class="logo-wrapper" title="Elgaly Express - Início">
         <img src="images/elgalylogo.png" alt="Elgaly Express" class="logo" id="mainLogo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
         <div id="logoFallback" class="logo-fallback">ELGALY EXPRESS</div>
       </a>
 
-      <!-- Área de Autenticação / Perfil no Topo -->
+      <!-- Área de Autenticação / Perfil -->
       <div class="header-auth-box">
-        <button class="btn-header-auth" id="btnOpenAuth">
+        <button class="btn-header-auth action-open-auth">
           🔑 Entrar / Cadastrar
         </button>
-        <a href="#perfil" class="user-badge-pill" id="headerUserBadge">
+        <a href="#perfil" class="header-user-badge">
           <span>⚡</span>
-          <span id="headerUserNick">recruta.express.com</span>
+          <span class="header-user-nick">recruta.express.com</span>
         </a>
       </div>
     </div>
     
-    <!-- Navegação em Abas (Single Page App) -->
-    <nav>
+    <!-- Navegação Desktop (Esconde no celular e dá lugar ao menu lateral) -->
+    <nav class="desktop-nav">
       <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
       <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
       <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
@@ -342,27 +377,20 @@
       <button class="modal-close" id="modalAuthClose" aria-label="Fechar">&times;</button>
       <h2>Terminal de Acesso EEX</h2>
       <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
-        Entre com sua conta Google ou crie seu apelido oficial <strong>.express.com</strong>!
+        Conecte com sua conta Google para sincronizar no PC e Celular ou ative seu apelido <strong>.express.com</strong>!
       </p>
 
-      <!-- Botão Oficial do Google Identity Services -->
+      <!-- Botão Oficial do Google via Firebase -->
       <div class="google-auth-wrapper">
-        <p>Acesse rapidamente com um clique:</p>
-        <div id="g_id_onload"
-             data-client_id="376638785661-g17gpjri6k36cvn3q4bdurhj0mkq311q.apps.googleusercontent.com"
-             data-callback="handleGoogleSignIn"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="sign_in_with"
-             data-shape="pill"
-             data-logo_alignment="left">
-        </div>
-        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 6px;">
-          (No GitHub Pages, você também pode usar o formulário direto abaixo sem precisar de chaves API!)
+        <p style="font-weight: 800; color: var(--purple-dark); margin-bottom: 10px;">
+          Sincronização em Nuvem (Firebase Cloud):
+        </p>
+        <button type="button" class="btn-google-login-action" id="btnGoogleLoginCustom">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+          Entrar com Conta Google
+        </button>
+        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">
+          Suas encomendas e hábitos serão sincronizados em tempo real entre o PC e o seu Celular.
         </div>
       </div>
 
@@ -507,7 +535,8 @@
     }
   </script>
 
-  <!-- Lógica da Aplicação -->
+  <!-- Módulos da Aplicação -->
+  <script src="./firebase-service.js"></script>
   <script src="./report.js"></script>
   <script src="./app.js"></script>
 </body>

@@ -1,7 +1,7 @@
 /* ==========================================================================
    ELGALY EXPRESS - SISTEMA DE ROTINA & DESPACHO DIMENSIONAL
    Paleta de Cores e Estética Neo-Brutalista / Comic Book Oficial
-   Otimizado para Telas Móveis (GitHub Pages Mobile Ready) & Vibe Anos 2000
+   Navbar Inteligente (Auto-hide no Desktop) & Menu Lateral (Mobile Drawer)
    ========================================================================== */
 
 :root {
@@ -58,26 +58,32 @@ body {
   100% { background-position: 100px 100px; }
 }
 
-/* Headings e botões comic */
 h1, h2, h3, h4, h5, h6, 
 .comic-font, nav a, .sticker-tag, .btn-comic, 
-.stat-value, .filter-btn, .char-tag, .eex-retro-email {
+.stat-value, .filter-btn, .char-tag, .eex-retro-email,
+.drawer-nav a {
   font-family: var(--font-main);
   letter-spacing: 0.5px;
 }
 
 /* ==========================================================================
-   HEADER & CRONOGRAMA DE NAVEGAÇÃO
+   HEADER & NAVBAR INTELIGENTE (AUTO-HIDE NO DESKTOP)
    ========================================================================== */
 header {
   background: var(--purple-dark);
   border-bottom: 6px solid var(--black);
-  padding: 16px 15px;
+  padding: 14px 18px;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 6px 0 rgba(26, 8, 38, 0.3);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Esconde suavemente no desktop ao rolar para baixo */
+header.header-hidden {
+  transform: translateY(-100%);
 }
 
 .header-top-bar {
@@ -87,6 +93,27 @@ header {
   max-width: 1100px;
   margin: 0 auto;
   position: relative;
+}
+
+/* Botão Hambúrguer Mobile */
+.btn-mobile-menu {
+  display: none;
+  background: var(--yellow-bright);
+  color: var(--black);
+  border: 3px solid var(--black);
+  border-radius: 12px;
+  padding: 7px 12px;
+  font-size: 1.35rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--black);
+  transition: transform 0.15s, box-shadow 0.15s;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-mobile-menu:hover {
+  transform: scale(1.05);
 }
 
 .logo-wrapper {
@@ -120,10 +147,6 @@ header img.logo:hover {
 
 /* Widget de Perfil no Header */
 .header-auth-box {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -152,7 +175,7 @@ header img.logo:hover {
   background: #ffdf00;
 }
 
-.user-badge-pill {
+.header-user-badge {
   background: var(--magenta-bright);
   color: var(--white);
   border: 3px solid var(--black);
@@ -169,13 +192,13 @@ header img.logo:hover {
   transition: transform 0.2s;
 }
 
-.user-badge-pill:hover {
+.header-user-badge:hover {
   transform: scale(1.04);
   background: var(--purple-main);
 }
 
-/* Barra de Navegação em Abas (SPA) */
-nav {
+/* Navegação Desktop (Abas) */
+nav.desktop-nav {
   margin-top: 14px;
   display: flex;
   justify-content: center;
@@ -183,7 +206,7 @@ nav {
   flex-wrap: wrap;
 }
 
-nav a, .nav-btn {
+nav.desktop-nav a, .nav-btn {
   color: var(--white);
   text-decoration: none;
   background: var(--magenta-bright);
@@ -200,13 +223,13 @@ nav a, .nav-btn {
   min-height: 44px;
 }
 
-nav a:hover, .nav-btn:hover {
+nav.desktop-nav a:hover, .nav-btn:hover {
   transform: translate(-3px, -3px) rotate(1deg);
   box-shadow: 6px 6px 0px var(--black);
   background: var(--purple-main);
 }
 
-nav a.active {
+nav.desktop-nav a.active {
   background: var(--yellow-bright);
   color: var(--black);
   border-color: var(--black);
@@ -218,6 +241,117 @@ nav a.active {
   background: var(--yellow-bright) !important;
   color: var(--black) !important;
   font-weight: bold;
+}
+
+/* ==========================================================================
+   MENU LATERAL MOBILE (DRAWER GAVETA DESLIZANTE)
+   ========================================================================== */
+.drawer-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(26, 8, 38, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 290px;
+  max-width: 85vw;
+  height: 100vh;
+  background: var(--card-bg);
+  border-right: 6px solid var(--black);
+  box-shadow: 8px 0px 0px var(--magenta-bright);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.mobile-drawer.active {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  background: var(--purple-dark);
+  border-bottom: 5px solid var(--black);
+  padding: 16px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-title {
+  color: var(--yellow-bright);
+  font-family: var(--font-main);
+  font-size: 1.5rem;
+}
+
+.drawer-close {
+  background: var(--magenta-bright);
+  color: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0px var(--black);
+}
+
+.drawer-body {
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.drawer-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--white);
+  color: var(--black);
+  text-decoration: none;
+  font-size: 1.25rem;
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0px var(--black);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.drawer-nav-link:active, .drawer-nav-link.active {
+  background: var(--yellow-bright);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--black);
+}
+
+.drawer-footer {
+  padding: 16px 14px;
+  border-top: 3px dashed var(--black);
+  text-align: center;
+  background: #ffeef6;
 }
 
 /* ==========================================================================
@@ -317,7 +451,6 @@ nav a.active {
   100% { transform: rotate(-1deg) scale(1.04); }
 }
 
-/* Indicadores Rápidos no Hero */
 .hero-quick-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -360,7 +493,6 @@ nav a.active {
   text-align: center;
 }
 
-/* Resumo de Hoje na Home */
 .home-summary-box {
   background: var(--white);
   border: 5px solid var(--black);
@@ -445,7 +577,7 @@ nav a.active {
 }
 
 /* ==========================================================================
-   SEÇÃO 1: ROTINA DIÁRIA (CHECK-IN DE HÁBITOS)
+   ROTINA DIÁRIA (CHECK-IN DE HÁBITOS)
    ========================================================================== */
 .daily-routine-box {
   background: var(--card-bg);
@@ -610,10 +742,6 @@ nav a.active {
   color: var(--magenta-bright);
 }
 
-.habit-actions {
-  display: flex;
-}
-
 .habit-btn-delete {
   background: transparent;
   border: none;
@@ -629,7 +757,7 @@ nav a.active {
 }
 
 /* ==========================================================================
-   SEÇÃO 2: ENCOMENDAS COM PRAZO (TAREFAS)
+   ENCOMENDAS COM PRAZO (TAREFAS)
    ========================================================================== */
 .tasks-control-bar {
   display: flex;
@@ -688,7 +816,6 @@ nav a.active {
   box-shadow: 3px 3px 0px var(--black);
 }
 
-/* Grid de Tarefas */
 .tasks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
@@ -762,21 +889,9 @@ nav a.active {
   color: #78350f;
 }
 
-.task-badge.priority-baixa {
-  background: #e2e8f0;
-  color: #334155;
-}
-
-.task-badge.priority-media {
-  background: #fed7aa;
-  color: #9a3412;
-}
-
-.task-badge.priority-alta {
-  background: #fca5a5;
-  color: #991b1b;
-}
-
+.task-badge.priority-baixa { background: #e2e8f0; color: #334155; }
+.task-badge.priority-media { background: #fed7aa; color: #9a3412; }
+.task-badge.priority-alta { background: #fca5a5; color: #991b1b; }
 .task-badge.priority-cosmica {
   background: var(--magenta-bright);
   color: var(--white);
@@ -873,22 +988,11 @@ nav a.active {
   min-height: 38px;
 }
 
-.btn-task-action.btn-complete {
-  background: var(--green-mint);
-  color: var(--black);
-  flex-grow: 1;
-}
-
-.btn-task-action.btn-reopen {
-  background: #cbd5e1;
-  color: var(--black);
-  flex-grow: 1;
-}
-
+.btn-task-action.btn-complete { background: var(--green-mint); color: var(--black); flex-grow: 1; }
+.btn-task-action.btn-reopen { background: #cbd5e1; color: var(--black); flex-grow: 1; }
 .btn-task-action.btn-edit { background: var(--yellow-bright); color: var(--black); }
 .btn-task-action.btn-delete { background: #fee2e2; color: #991b1b; }
 
-/* Empty State Cards */
 .empty-state, .empty-state-card {
   text-align: center;
   padding: 35px 20px;
@@ -913,7 +1017,7 @@ nav a.active {
 }
 
 /* ==========================================================================
-   SEÇÃO 3: CENTRAL DE RELATÓRIOS & PDF
+   CENTRAL DE RELATÓRIOS & PDF
    ========================================================================== */
 .report-panel {
   background: var(--card-bg);
@@ -1145,8 +1249,8 @@ nav a.active {
 }
 
 /* ==========================================================================
-   SEÇÃO 4: PERFIL DO ENTREGADOR (CRACHÁ RETRO ANOS 2000)
-   ========================================================================== */
+   PERFIL DO ENTREGADOR (CRACHÁ RETRO ANOS 2000)
+   ========================================================================= */
 .profile-section-wrap {
   display: flex;
   justify-content: center;
@@ -1358,7 +1462,7 @@ nav a.active {
 .form-group textarea {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 16px; /* Evita zoom automático no iOS */
+  font-size: 16px;
   padding: 10px 14px;
   border: 3px solid var(--black);
   border-radius: 12px;
@@ -1403,23 +1507,12 @@ nav a.active {
   background: var(--purple-main);
 }
 
-.btn-comic.btn-secondary {
-  background: var(--yellow-bright);
-  color: var(--black);
-}
+.btn-comic.btn-secondary { background: var(--yellow-bright); color: var(--black); }
 .btn-comic.btn-secondary:hover { background: #fcd34d; }
+.btn-comic.btn-purple { background: var(--purple-dark); color: var(--white); }
+.btn-comic.btn-outline { background: var(--white); color: var(--black); }
 
-.btn-comic.btn-purple {
-  background: var(--purple-dark);
-  color: var(--white);
-}
-
-.btn-comic.btn-outline {
-  background: var(--white);
-  color: var(--black);
-}
-
-/* Área de Login com Google no Modal */
+/* Botão Oficial do Google via Firebase */
 .google-auth-wrapper {
   background: var(--white);
   border: 3px solid var(--black);
@@ -1430,11 +1523,27 @@ nav a.active {
   margin-bottom: 18px;
 }
 
-.google-auth-wrapper p {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 12px;
+.btn-google-login-action {
+  background: #ffffff;
+  color: #1f2937;
+  border: 3px solid var(--black);
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--black);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 44px;
+}
+
+.btn-google-login-action:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px var(--black);
+  background: #f9fafb;
 }
 
 .auth-divider-comic {
@@ -1462,7 +1571,6 @@ nav a.active {
   color: var(--purple-main);
 }
 
-/* Toast Notificação */
 .eex-toast {
   position: fixed;
   bottom: 25px;
@@ -1522,44 +1630,39 @@ footer {
 }
 
 /* ==========================================================================
-   RESPONSIVIDADE MOBILE (GITHUB PAGES & CELULAR READY)
+   RESPONSIVIDADE MOBILE & DRAWER LATERAL
    ========================================================================== */
 @media (max-width: 768px) {
   header {
-    padding: 12px 10px;
+    padding: 12px 14px;
+  }
+
+  /* No mobile, oculta a navbar horizontal e mostra o botão hambúrguer */
+  nav.desktop-nav {
+    display: none !important;
+  }
+
+  .btn-mobile-menu {
+    display: inline-flex;
   }
 
   .header-top-bar {
-    flex-direction: column;
-    gap: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
-  .header-auth-box {
-    position: static;
-    transform: none;
-    justify-content: center;
+  .logo-wrapper {
+    margin: 0;
   }
 
   header img.logo {
-    max-width: 200px;
+    max-width: 170px;
   }
 
-  nav {
-    overflow-x: auto;
-    white-space: nowrap;
-    justify-content: flex-start;
-    padding: 4px 6px 10px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  nav a, .nav-btn {
-    font-size: 1rem;
-    padding: 6px 14px;
+  .btn-header-auth {
+    font-size: 0.85rem;
+    padding: 5px 10px;
   }
 
   .hero h1 {
