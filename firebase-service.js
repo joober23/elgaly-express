@@ -58,23 +58,24 @@ const FirebaseService = {
     this.auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email || '';
-        const defaultNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'entregador').toLowerCase().replace(/\s+/g, '.');
+        const defaultNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'agente').toLowerCase().replace(/\s+/g, '.');
         const defaultEexEmail = AuthManager.formatEexNickname(defaultNick);
 
         let userData = {
           id: firebaseUser.uid,
           uid: firebaseUser.uid,
-          name: firebaseUser.displayName || 'Agente Google',
+          name: firebaseUser.displayName || 'Agente',
           nickname: defaultNick,
           eexEmail: defaultEexEmail,
           avatar: firebaseUser.photoURL || 'images/elgalylogo.png',
           location: 'Nova Amerit - NA (Nova Arcanis)',
           email: email,
           isGoogle: true,
+          onboardingDone: false,
           joinedAt: new Date().toISOString()
         };
 
-        // Verifica se o usuário já possui um perfil customizado salvo no Firestore
+        // Verifica se o usuário já possui perfil customizado salvo no Firestore
         try {
           const profileDoc = await this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').get();
           if (profileDoc.exists) {
@@ -88,10 +89,23 @@ const FirebaseService = {
         AuthManager.currentUser = userData;
         AuthManager.saveCurrent();
 
-        // Inicia sincronização em tempo real do banco de dados na nuvem
+        // Primeiro acesso: onboarding obrigatório
+        if (!userData.onboardingDone) {
+          // Preenche o preview do avatar com a foto do Google
+          const onbPreview = document.getElementById('onbAvatarPreview');
+          if (onbPreview && userData.avatar) onbPreview.src = userData.avatar;
+          // Oculta o auth gateway e exibe o modal de onboarding
+          const gw = document.getElementById('authGateway');
+          if (gw) gw.style.display = 'none';
+          document.getElementById('appViewsContainer').style.display = 'none';
+          document.getElementById('modalOnboarding').classList.add('active');
+          return; // Não inicializa o app ainda
+        }
+
+        // Onboarding já feito — inicializa o app normalmente
         this.startRealtimeSync(firebaseUser.uid);
         AppUI.renderAll();
-        AppUI.showToast(`☁️ Conectado na Nuvem: ${userData.eexEmail}`);
+        AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.eexEmail}!`);
       } else {
         // Usuário deslogado do Firebase
         this.stopRealtimeSync();

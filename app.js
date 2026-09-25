@@ -1,100 +1,39 @@
 /**
  * ELGALY EXPRESS - APLICAÇÃO DE ROTINAS & DESPACHO
- * Gerenciador de tarefas, hábitos, autenticação EEX (.express.com), sincronização Firebase,
- * Portão obrigatório de login, upload de fotos de perfil e edição de localização.
+ * Autenticação exclusivamente via Google (Rede EEX).
+ * Onboarding no primeiro acesso + Crachás salvos com PIN de 6 dígitos.
  */
 
 // ==========================================================================
-// GERENCIADOR DE AUTENTICAÇÃO & IDENTIDADE EEX (AuthManager)
-// Vibe anos 2000: nickname.express.com + Suporte a Login com Google / Firebase
+// GERENCIADOR DE AUTENTICAÇÃO EEX (Somente Google + Rede EEX)
 // ==========================================================================
 const AuthManager = {
   currentUser: null,
-  users: {}, // { 'teleportsready.express.com': userData }
 
   init() {
-    const savedUsers = localStorage.getItem('elgaly_express_users');
-    if (savedUsers) {
-      try { this.users = JSON.parse(savedUsers); } catch (e) { this.users = {}; }
-    }
-
     const savedCurrent = localStorage.getItem('elgaly_express_current_user');
     if (savedCurrent) {
-      try { 
+      try {
         const parsed = JSON.parse(savedCurrent);
-        // Só considera logado se não for um convidado genérico
         if (parsed && parsed.id && parsed.id !== 'guest') {
           this.currentUser = parsed;
-        } else {
-          this.currentUser = null;
         }
-      } catch (e) { 
-        this.currentUser = null; 
+      } catch (e) {
+        this.currentUser = null;
       }
     }
   },
 
   formatEexNickname(rawNick) {
-    if (!rawNick) return 'entregador.express.com';
+    if (!rawNick) return 'agente.express.com';
     let clean = rawNick.toLowerCase().trim()
       .replace(/@.*$/, '')
       .replace(/[^a-z0-9_.-]/g, '');
-    if (!clean) clean = 'entregador';
-    
+    if (!clean) clean = 'agente';
     if (!clean.endsWith('.express.com')) {
       clean = clean.replace(/\.express$/, '') + '.express.com';
     }
     return clean;
-  },
-
-  registerUser(name, rawNick, avatarUrl = '', location = 'Nova Amerit - NA (Nova Arcanis)') {
-    const eexEmail = this.formatEexNickname(rawNick);
-    const userId = eexEmail.replace('.express.com', '');
-
-    const newUser = {
-      id: userId,
-      name: name.trim() || userId,
-      nickname: userId,
-      eexEmail: eexEmail,
-      avatar: avatarUrl || 'images/elgalylogo.png',
-      location: location.trim() || 'Nova Amerit - NA (Nova Arcanis)',
-      isGoogle: false,
-      joinedAt: new Date().toISOString()
-    };
-
-    this.users[eexEmail] = newUser;
-    this.currentUser = newUser;
-    this.saveUsers();
-    this.saveCurrent();
-    return newUser;
-  },
-
-  loginWithEex(rawNick) {
-    const eexEmail = this.formatEexNickname(rawNick);
-    if (this.users[eexEmail]) {
-      this.currentUser = this.users[eexEmail];
-      this.saveCurrent();
-      return this.currentUser;
-    }
-
-    // Se ainda não cadastrado na lista local, cria o crachá direto
-    const userId = eexEmail.replace('.express.com', '');
-    const newUser = {
-      id: userId,
-      name: userId,
-      nickname: userId,
-      eexEmail: eexEmail,
-      avatar: 'images/elgalylogo.png',
-      location: 'Nova Amerit - NA (Nova Arcanis)',
-      isGoogle: false,
-      joinedAt: new Date().toISOString()
-    };
-
-    this.users[eexEmail] = newUser;
-    this.currentUser = newUser;
-    this.saveUsers();
-    this.saveCurrent();
-    return newUser;
   },
 
   async updateUserProfile(updatedFields) {
@@ -102,20 +41,18 @@ const AuthManager = {
     this.currentUser = { ...this.currentUser, ...updatedFields };
     this.saveCurrent();
 
-    if (this.currentUser.eexEmail) {
-      this.users[this.currentUser.eexEmail] = this.currentUser;
-      this.saveUsers();
-    }
+    // Atualiza o crachá salvo com novos dados (nome/avatar/eex)
+    this.updateSavedBadge(this.currentUser);
 
-    // Sincroniza perfil com Firestore se usuário do Google
-    if (this.currentUser.isGoogle && typeof FirebaseService !== 'undefined') {
+    if (typeof FirebaseService !== 'undefined') {
       await FirebaseService.saveProfileToCloud({
         name: this.currentUser.name,
         location: this.currentUser.location,
-        avatar: this.currentUser.avatar
+        avatar: this.currentUser.avatar,
+        eexEmail: this.currentUser.eexEmail,
+        nickname: this.currentUser.nickname
       });
     }
-
     return this.currentUser;
   },
 
@@ -140,12 +77,65 @@ const AuthManager = {
     return this.currentUser;
   },
 
-  saveUsers() {
-    localStorage.setItem('elgaly_express_users', JSON.stringify(this.users));
-  },
-
   saveCurrent() {
     localStorage.setItem('elgaly_express_current_user', JSON.stringify(this.currentUser));
+  },
+
+  // ============================================================
+  // SISTEMA DE CRACHÁS SALVOS — re-login rápido com PIN de 6 dígitos
+  // ============================================================
+  getSavedBadges() {
+    try {
+      return JSON.parse(localStorage.getItem('elgaly_express_badges') || '[]');
+    } catch { return []; }
+  },
+
+  saveBadge(user, pin) {
+    const badges = this.getSavedBadges();
+    const idx = badges.findIndex(b => b.uid === user.id);
+    const badge = {
+      uid: user.id,
+      name: user.name,
+      eexEmail: user.eexEmail,
+      avatar: user.avatar,
+      pinHash: this.hashPin(pin)
+    };
+    if (idx >= 0) {
+      badges[idx] = badge;
+    } else {
+      badges.push(badge);
+    }
+    localStorage.setItem('elgaly_express_badges', JSON.stringify(badges));
+  },
+
+  updateSavedBadge(user) {
+    const badges = this.getSavedBadges();
+    const idx = badges.findIndex(b => b.uid === user.id);
+    if (idx >= 0) {
+      badges[idx].name = user.name;
+      badges[idx].eexEmail = user.eexEmail;
+      badges[idx].avatar = user.avatar;
+      localStorage.setItem('elgaly_express_badges', JSON.stringify(badges));
+    }
+  },
+
+  removeBadge(uid) {
+    const badges = this.getSavedBadges().filter(b => b.uid !== uid);
+    localStorage.setItem('elgaly_express_badges', JSON.stringify(badges));
+  },
+
+  // Hash simples e determinístico — conforto de UX, não segurança criptográfica
+  hashPin(pin) {
+    let h = 0;
+    const str = 'eex_salt_2026_' + pin;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+    }
+    return h.toString(36);
+  },
+
+  verifyPin(pin, badge) {
+    return this.hashPin(pin) === badge.pinHash;
   }
 };
 
@@ -422,6 +412,8 @@ const AppUI = {
   lastScrollTop: 0,
   uploadedAvatarBase64: null,
   editAvatarBase64: null,
+  onboardingAvatarBase64: null,
+  _pendingBadgeLogin: null,
 
   init() {
     AuthManager.init();
@@ -537,35 +529,7 @@ const AppUI = {
   },
 
   bindEvents() {
-    // 1. Alternador de abas no Portal de Autenticação Obrigatório
-    document.querySelectorAll('.auth-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.auth-pane').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        const targetPane = document.getElementById(btn.dataset.pane);
-        if (targetPane) targetPane.classList.add('active');
-      });
-    });
-
-    // 2. Upload de Foto no Cadastro (do dispositivo para Base64)
-    const regAvatarInput = document.getElementById('regAvatarInput');
-    const regAvatarPreview = document.getElementById('regAvatarPreview');
-    if (regAvatarInput) {
-      regAvatarInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            this.uploadedAvatarBase64 = event.target.result;
-            if (regAvatarPreview) regAvatarPreview.src = this.uploadedAvatarBase64;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    }
-
-    // 3. Upload de Foto na Edição do Perfil
+    // 1. Upload de Foto na Edição do Perfil
     const editAvatarInput = document.getElementById('editAvatarInput');
     const editAvatarPreview = document.getElementById('editAvatarPreview');
     if (editAvatarInput) {
@@ -582,53 +546,7 @@ const AppUI = {
       });
     }
 
-    // 4. Formulário de Cadastro sem Google
-    const formDirectRegister = document.getElementById('formDirectRegister');
-    if (formDirectRegister) {
-      formDirectRegister.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('regName').value;
-        const nick = document.getElementById('regNick').value;
-        const location = document.getElementById('regLocation').value;
-        const avatar = this.uploadedAvatarBase64 || 'images/elgalylogo.png';
-
-        if (nick) {
-          AuthManager.registerUser(name, nick, avatar, location);
-          TaskManager.init();
-          HabitManager.init();
-          this.renderAll();
-          this.showToast(`🚀 Bem-vindo, Agente ${AuthManager.getCurrentUser().eexEmail}!`);
-        }
-      });
-    }
-
-    // 5. Formulário de Login com EEX ID
-    const formEexLogin = document.getElementById('formEexLogin');
-    if (formEexLogin) {
-      formEexLogin.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nickInput = document.getElementById('loginEexNick').value;
-        if (nickInput) {
-          AuthManager.loginWithEex(nickInput);
-          TaskManager.init();
-          HabitManager.init();
-          this.renderAll();
-          this.showToast(`🚀 Bem-vindo de volta, ${AuthManager.getCurrentUser().eexEmail}!`);
-        }
-      });
-    }
-
-    // Preview ao vivo do nick .express.com
-    const regNickInput = document.getElementById('regNick');
-    const nickPreview = document.getElementById('nickPreview');
-    if (regNickInput && nickPreview) {
-      regNickInput.addEventListener('input', (e) => {
-        const val = e.target.value.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-        nickPreview.textContent = val ? `${val}.express.com` : 'seu-nick.express.com';
-      });
-    }
-
-    // 6. Botão de Login Google (via Firebase)
+    // 2. Botão de Login Google (via Firebase)
     const btnsGoogle = document.querySelectorAll('.action-google-login');
     btnsGoogle.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -638,7 +556,176 @@ const AppUI = {
       });
     });
 
-    // 7. Modal de Edição de Perfil
+    // 3. Formulário de Onboarding da Rede EEX (primeiro acesso após Google login)
+    const formOnboarding = document.getElementById('formOnboarding');
+    if (formOnboarding) {
+      // Preview ao vivo do nick
+      const onbNickInput = document.getElementById('onbNick');
+      const onbNickPreview = document.getElementById('onbNickPreview');
+      if (onbNickInput && onbNickPreview) {
+        onbNickInput.addEventListener('input', (e) => {
+          const val = e.target.value.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+          onbNickPreview.textContent = val ? `${val}.express.com` : 'seunick.express.com';
+        });
+      }
+
+      // Autocomplete de cidades de SP
+      const onbLocation = document.getElementById('onbLocation');
+      const citySugg = document.getElementById('citySuggestions');
+      const SP_CITIES = [
+        'São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP', 'Santo André - SP',
+        'São Bernardo do Campo - SP', 'Osasco - SP', 'Ribeirão Preto - SP',
+        'Sorocaba - SP', 'Mauá - SP', 'São José dos Campos - SP',
+        'Mogi das Cruzes - SP', 'Santos - SP', 'Diadema - SP', 'Jundiaí - SP',
+        'Piracicaba - SP', 'Bauru - SP', 'São José do Rio Preto - SP',
+        'Carapicuíba - SP', 'Araçatuba - SP', 'Limeira - SP', 'Taubaté - SP',
+        'Franca - SP', 'Praia Grande - SP', 'Itaquaquecetuba - SP',
+        'Suzano - SP', 'Barueri - SP', 'Taboão da Serra - SP'
+      ];
+      if (onbLocation && citySugg) {
+        onbLocation.addEventListener('input', () => {
+          const q = onbLocation.value.toLowerCase();
+          if (q.length < 2) { citySugg.classList.remove('show'); return; }
+          const matches = SP_CITIES.filter(c => c.toLowerCase().includes(q));
+          if (matches.length === 0) { citySugg.classList.remove('show'); return; }
+          citySugg.innerHTML = matches.map(c =>
+            `<div class="city-suggestion-item" data-city="${c}">${c}</div>`
+          ).join('');
+          citySugg.classList.add('show');
+        });
+        citySugg.addEventListener('click', (e) => {
+          const item = e.target.closest('.city-suggestion-item');
+          if (item) {
+            onbLocation.value = item.dataset.city;
+            citySugg.classList.remove('show');
+          }
+        });
+        document.addEventListener('click', (e) => {
+          if (!onbLocation.contains(e.target) && !citySugg.contains(e.target)) {
+            citySugg.classList.remove('show');
+          }
+        });
+      }
+
+      // Upload de avatar no onboarding
+      const onbAvatarInput = document.getElementById('onbAvatarInput');
+      const onbAvatarPreview = document.getElementById('onbAvatarPreview');
+      if (onbAvatarInput) {
+        onbAvatarInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              this.onboardingAvatarBase64 = ev.target.result;
+              if (onbAvatarPreview) onbAvatarPreview.src = this.onboardingAvatarBase64;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      // Submit do onboarding
+      formOnboarding.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const rawNick = (document.getElementById('onbNick').value || '').trim();
+        const location = (document.getElementById('onbLocation').value || '').trim();
+        const pin = (document.getElementById('onbPin').value || '').trim();
+        const errEl = document.getElementById('onbNickError');
+
+        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+
+        if (rawNick.length < 2) {
+          if (errEl) { errEl.textContent = '⚠️ O ID Express precisa ter pelo menos 2 caracteres!'; errEl.style.display = 'block'; }
+          return;
+        }
+        if (!/^[0-9]{6}$/.test(pin)) {
+          this.showToast('❌ O PIN deve ter exatamente 6 dígitos numéricos!');
+          return;
+        }
+
+        const user = AuthManager.currentUser;
+        if (!user) return;
+
+        const eexEmail = AuthManager.formatEexNickname(rawNick);
+        const nickname = eexEmail.replace('.express.com', '');
+        const avatar = this.onboardingAvatarBase64 || user.avatar || 'images/elgalylogo.png';
+
+        user.eexEmail = eexEmail;
+        user.nickname = nickname;
+        user.location = location || 'Nova Amerit - NA (Nova Arcanis)';
+        user.avatar = avatar;
+        user.onboardingDone = true;
+        AuthManager.currentUser = user;
+        AuthManager.saveCurrent();
+
+        if (typeof FirebaseService !== 'undefined') {
+          await FirebaseService.saveProfileToCloud({
+            name: user.name,
+            eexEmail: eexEmail,
+            nickname: nickname,
+            location: user.location,
+            avatar: avatar,
+            onboardingDone: true
+          });
+        }
+
+        // Salva o crachá com PIN para re-login rápido
+        AuthManager.saveBadge(user, pin);
+
+        const modal = document.getElementById('modalOnboarding');
+        if (modal) modal.classList.remove('active');
+        this.onboardingAvatarBase64 = null;
+
+        TaskManager.init();
+        HabitManager.init();
+
+        // Inicia sync em tempo real
+        if (typeof FirebaseService !== 'undefined' && user.uid) {
+          FirebaseService.startRealtimeSync(user.uid);
+        }
+
+        this.renderAll();
+        this.showToast(`🚀 Bem-vindo à Rede EEX, ${eexEmail}!`);
+      });
+    }
+
+    // 4. Modal de PIN (crachá salvo)
+    const formPinLogin = document.getElementById('formPinLogin');
+    const btnCancelPinLogin = document.getElementById('btnCancelPinLogin');
+    if (formPinLogin) {
+      formPinLogin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pin = (document.getElementById('pinInput').value || '').trim();
+        const errEl = document.getElementById('pinError');
+        const badge = this._pendingBadgeLogin;
+        if (errEl) errEl.textContent = '';
+        if (!badge) return;
+
+        if (AuthManager.verifyPin(pin, badge)) {
+          document.getElementById('modalPinLogin').classList.remove('active');
+          document.getElementById('pinInput').value = '';
+          this._pendingBadgeLogin = null;
+          // O Firebase tentará reutilizar a sessão ativa; se expirou, mostrará tela Google
+          if (typeof FirebaseService !== 'undefined') {
+            FirebaseService.loginWithGoogle();
+          }
+        } else {
+          if (errEl) errEl.textContent = '❌ PIN incorreto. Tente novamente.';
+          document.getElementById('pinInput').value = '';
+        }
+      });
+    }
+    if (btnCancelPinLogin) {
+      btnCancelPinLogin.addEventListener('click', () => {
+        document.getElementById('modalPinLogin').classList.remove('active');
+        document.getElementById('pinInput').value = '';
+        const errEl = document.getElementById('pinError');
+        if (errEl) errEl.textContent = '';
+        this._pendingBadgeLogin = null;
+      });
+    }
+
+    // 5. Modal de Edição de Perfil
     const modalEditProfile = document.getElementById('modalEditProfile');
     const modalEditProfileClose = document.getElementById('modalEditProfileClose');
     const formEditProfile = document.getElementById('formEditProfile');
@@ -816,7 +903,7 @@ const AppUI = {
       if (appViewsContainer) appViewsContainer.style.display = 'none';
       if (desktopNav) desktopNav.style.display = 'none';
       if (btnMobileMenu) btnMobileMenu.style.display = 'none';
-      this.renderSavedUsersList();
+      this.renderSavedBadges();
       this.renderHeaderProfile();
       return;
     }
@@ -836,42 +923,45 @@ const AppUI = {
   },
 
   /**
-   * Renderiza lista de contas salvas no dispositivo para acesso com 1 clique
+   * Renderiza crachás salvos no dispositivo para acesso rápido com PIN
    */
-  renderSavedUsersList() {
-    const container = document.getElementById('savedUsersList');
-    if (!container) return;
+  renderSavedBadges() {
+    const list = document.getElementById('savedBadgesList');
+    const section = document.getElementById('savedBadgesSection');
+    if (!list) return;
 
-    const users = Object.values(AuthManager.users);
-    if (users.length === 0) {
-      container.innerHTML = `
-        <div style="font-size: 0.85rem; color: #6b7280; font-weight: 600; padding: 6px;">
-          Nenhum crachá salvo neste navegador ainda. Crie o seu na aba ao lado!
-        </div>
-      `;
+    const badges = AuthManager.getSavedBadges();
+    if (badges.length === 0) {
+      if (section) section.style.display = 'none';
       return;
     }
+    if (section) section.style.display = 'block';
 
-    container.innerHTML = '<div style="font-size: 0.85rem; font-weight: 800; color: var(--purple-main); margin-bottom: 6px;">Ou escolha um crachá salvo neste aparelho:</div>';
-    users.forEach(u => {
-      const btn = document.createElement('button');
-      btn.className = 'saved-user-chip';
-      btn.innerHTML = `
-        <img src="${u.avatar}" alt="Avatar" class="saved-user-avatar">
-        <div class="saved-user-text">
-          <strong>${u.name}</strong>
-          <span>${u.eexEmail}</span>
+    list.innerHTML = badges.map(badge => `
+      <div class="badge-chip" data-uid="${badge.uid}">
+        <img class="badge-chip-avatar" src="${badge.avatar || 'images/elgalylogo.png'}" alt="" onerror="this.src='images/elgalylogo.png'">
+        <div class="badge-chip-info">
+          <div class="badge-chip-name">${badge.name}</div>
+          <div class="badge-chip-eex">${badge.eexEmail}</div>
         </div>
-      `;
-      btn.addEventListener('click', () => {
-        AuthManager.currentUser = u;
-        AuthManager.saveCurrent();
-        TaskManager.init();
-        HabitManager.init();
-        this.renderAll();
-        this.showToast(`Entrando como ${u.eexEmail}...`);
+        <span class="badge-chip-pin-icon">🔑</span>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.badge-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const uid = chip.dataset.uid;
+        const badge = AuthManager.getSavedBadges().find(b => b.uid === uid);
+        if (!badge) return;
+        document.getElementById('pinLoginAvatarImg').src = badge.avatar || 'images/elgalylogo.png';
+        document.getElementById('pinLoginName').textContent = badge.name;
+        document.getElementById('pinLoginEex').textContent = badge.eexEmail;
+        document.getElementById('pinInput').value = '';
+        const errEl = document.getElementById('pinError');
+        if (errEl) errEl.textContent = '';
+        this._pendingBadgeLogin = badge;
+        document.getElementById('modalPinLogin').classList.add('active');
       });
-      container.appendChild(btn);
     });
   },
 

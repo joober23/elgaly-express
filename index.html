@@ -91,93 +91,33 @@
          ========================================================================== -->
     <div class="auth-gateway-container" id="authGateway" style="display: none;">
       <div class="auth-gateway-header">
-        <h2>TERMINAL DE ACESSO EEX</h2>
+        <img src="images/elgalylogo.png" alt="Elgaly Express" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;">
+        <h2>REDE EEX</h2>
         <p>Identifique-se para acessar o sistema de despacho e rotinas.</p>
       </div>
 
-      <!-- Abas de Autenticação -->
-      <div class="auth-tabs-bar">
-        <button class="auth-tab-btn active" data-pane="pane-google">⚡ Google (Nuvem)</button>
-        <button class="auth-tab-btn" data-pane="pane-login">📟 Entrar com EEX</button>
-        <button class="auth-tab-btn" data-pane="pane-register">🚀 Criar Passaporte</button>
-      </div>
+      <!-- Login principal: apenas Google -->
+      <div class="auth-main-login">
+        <button type="button" class="btn-google-login-action action-google-login" style="width:100%;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15z"/></svg>
+          Entrar com Conta Google
+        </button>
+        <div class="auth-hint">Sincronização automática entre dispositivos via Firebase.</div>
 
-      <!-- Aba 1: Google Cloud Login -->
-      <div class="auth-pane active" id="pane-google">
-        <div class="google-auth-wrapper" style="margin-bottom: 0;">
-          <p style="font-weight: 800; color: var(--purple-dark); margin-bottom: 12px; font-size: 1.05rem;">
-            Acesso Rápido com Sincronização Automática:
-          </p>
-          <button type="button" class="btn-google-login-action action-google-login" style="width: 100%; justify-content: center;">
-            <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-            Entrar com Conta Google
-          </button>
-          <div style="font-size: 0.85rem; color: #6b7280; margin-top: 10px; line-height: 1.4;">
-            Conecta direto pelo Firebase. Tudo o que você fizer no PC aparecerá automaticamente no seu celular!
-          </div>
+        <!-- Crachás Salvos -->
+        <div class="saved-badges-section" id="savedBadgesSection" style="display:none;">
+          <div class="saved-badges-title">🏷️ Ou escolha um crachá salvo neste aparelho:</div>
+          <div class="saved-badges-list" id="savedBadgesList"></div>
         </div>
       </div>
-
-      <!-- Aba 2: Login com EEX ID Existente -->
-      <div class="auth-pane" id="pane-login">
-        <form class="comic-form" id="formEexLogin">
-          <div class="form-group">
-            <label for="loginEexNick">🏷️ Digite seu Apelido EEX:</label>
-            <input type="text" id="loginEexNick" required placeholder="Ex: teleportsready ou teleportsready.express.com">
-          </div>
-
-          <button type="submit" class="btn-comic btn-secondary" style="width: 100%;">
-            Entrar no Terminal
-          </button>
-        </form>
-
-        <!-- Contas Salvas no Navegador -->
-        <div class="saved-users-list" id="savedUsersList"></div>
-      </div>
-
-      <!-- Aba 3: Cadastro sem Google -->
-      <div class="auth-pane" id="pane-register">
-        <form class="comic-form" id="formDirectRegister">
-          <div class="form-group">
-            <label for="regName">👤 Nome de Exibição / Agente:</label>
-            <input type="text" id="regName" required placeholder="Ex: Teleporte Pronto, Juan Silva...">
-          </div>
-
-          <div class="form-group">
-            <label for="regNick">🏷️ Apelido EEX (Vibe Anos 2000):</label>
-            <input type="text" id="regNick" required placeholder="Ex: teleportsready">
-            <small style="font-weight: 700; color: var(--magenta-bright); font-size: 0.85rem; margin-top: 2px;">
-              Endereço: <strong id="nickPreview">seu-nick.express.com</strong>
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="regLocation">📍 Setor de Operações (Localização):</label>
-            <input type="text" id="regLocation" required value="Nova Amerit - NA (Nova Arcanis)" placeholder="Ex: Nova Amerit - NA (Nova Arcanis)">
-          </div>
-
-          <div class="form-group">
-            <label>🖼️ Foto de Perfil (Escolha do seu dispositivo):</label>
-            <div class="avatar-upload-wrap">
-              <div class="avatar-preview-box">
-                <img id="regAvatarPreview" src="images/elgalylogo.png" alt="Prévia">
-              </div>
-              <input type="file" id="regAvatarInput" class="file-input-comic" accept="image/*">
-            </div>
-          </div>
-
-          <button type="submit" class="btn-comic" style="margin-top: 10px; width: 100%;">
-            🚀 Emitir Passaporte EEX
-          </button>
-        </form>
-      </div>
-
     </div>
+
 
     <!-- ==========================================================================
          CONTAINER DAS VISUALIZAÇÕES PRINCIPAIS (PROTEGIDAS POR AUTENTICAÇÃO)
          ========================================================================== -->
     <div id="appViewsContainer">
+
       
       <!-- ==========================================================================
            VISUALIZAÇÃO 1: INÍCIO (PAINEL GERAL & CUMPRIMENTO)
@@ -615,9 +555,77 @@
     }
   </script>
 
+
   <!-- Módulos da Aplicação -->
   <script src="./firebase-service.js"></script>
   <script src="./report.js"></script>
   <script src="./app.js"></script>
+
+  <!-- MODAL DE ONBOARDING DA REDE EEX (Primeiro acesso após Google login) -->
+  <div class="modal-overlay" id="modalOnboarding">
+    <div class="modal-box" style="max-width:480px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <img src="images/elgalylogo.png" alt="EEX" style="width:56px;">
+        <h2 style="margin:8px 0 4px;">Bem-vindo à Rede EEX!</h2>
+        <p style="font-size:0.9rem;color:var(--purple-dark);">Configure seu perfil de agente antes de começar.</p>
+      </div>
+      <form class="comic-form" id="formOnboarding">
+        <div class="form-group">
+          <label for="onbNick">🏷️ Seu ID Express (apelido único):</label>
+          <input type="text" id="onbNick" required placeholder="seunick" maxlength="32" autocomplete="off">
+          <small style="font-weight:700;color:var(--magenta-bright);font-size:0.85rem;margin-top:2px;display:block;">
+            Endereço: <strong id="onbNickPreview">seunick.express.com</strong>
+          </small>
+          <span id="onbNickError" style="display:none;color:#e62b7e;font-size:0.78rem;font-weight:700;margin-top:4px;"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="onbLocation">📍 Setor de Operações (Cidade):</label>
+          <input type="text" id="onbLocation" required placeholder="Ex: São Paulo - SP" autocomplete="off">
+          <div class="city-suggestions" id="citySuggestions"></div>
+        </div>
+
+        <div class="form-group">
+          <label>🖼️ Foto de Perfil:</label>
+          <div class="avatar-upload-wrap">
+            <div class="avatar-preview-box">
+              <img id="onbAvatarPreview" src="images/elgalylogo.png" alt="Prévia">
+            </div>
+            <input type="file" id="onbAvatarInput" class="file-input-comic" accept="image/*">
+          </div>
+          <small style="color:var(--purple-dark);font-size:0.8rem;">Deixe em branco para usar a foto do seu Google.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="onbPin">🔑 PIN Secreto (6 dígitos para crachá rápido):</label>
+          <input type="password" id="onbPin" required placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="new-password">
+          <small style="color:var(--purple-dark);font-size:0.8rem;">Use este PIN para entrar rapidamente pelo crachá salvo.</small>
+        </div>
+
+        <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">
+          🚀 Ativar Crachá EEX
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE PIN PARA CRACHÁ SALVO -->
+  <div class="modal-overlay" id="modalPinLogin">
+    <div class="modal-box" style="max-width:360px;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;">
+        <img id="pinLoginAvatarImg" src="images/elgalylogo.png" style="width:100%;height:100%;object-fit:cover;" alt="">
+      </div>
+      <h3 id="pinLoginName" style="margin:0 0 4px;">Agente</h3>
+      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 16px;"></p>
+      <form id="formPinLogin">
+        <input type="password" id="pinInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+          style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required>
+        <span id="pinError" style="display:block;color:#e62b7e;font-size:0.8rem;margin-top:6px;min-height:18px;font-weight:700;"></span>
+        <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">🔓 Entrar</button>
+      </form>
+      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+
 </body>
 </html>

@@ -1828,6 +1828,7 @@ footer {
     text-align: center;
   }
 
+
   .rank-badge-stamp {
     font-size: 2.2rem;
   }
@@ -1836,4 +1837,163 @@ footer {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* ==========================================================================
+   REDE EEX — AUTH GATEWAY SIMPLIFICADO (Apenas Google)
+   ========================================================================== */
+.auth-main-login {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-hint {
+  font-size: 0.82rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: -8px;
+  font-family: var(--font-body);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   CRACHÁS SALVOS (Badges para re-login com PIN)
+   ========================================================================== */
+.saved-badges-section {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--purple-main);
+}
+
+.saved-badges-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--purple-dark);
+  margin-bottom: 10px;
+  font-family: var(--font-body);
+}
+
+.saved-badges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.badge-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 2.5px solid var(--purple-main);
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  font-family: var(--font-main);
+}
+
+.badge-chip:hover {
+  background: var(--purple-main);
+  border-color: var(--purple-dark);
+  transform: translateY(-1px);
+}
+
+.badge-chip:hover .badge-chip-name {
+  color: var(--white);
+}
+
+.badge-chip:hover .badge-chip-eex {
+  color: var(--yellow-bright);
+}
+
+.badge-chip-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--purple-main);
+  flex-shrink: 0;
+}
+
+.badge-chip-info {
+  flex: 1;
+  text-align: left;
+}
+
+.badge-chip-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--purple-dark);
+  font-family: var(--font-main);
+}
+
+.badge-chip-eex {
+  font-size: 0.75rem;
+  color: var(--purple-main);
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.badge-chip-pin-icon {
+  font-size: 1.1rem;
+  opacity: 0.65;
+}
+
+/* ==========================================================================
+   AUTOCOMPLETE DE CIDADES
+   ========================================================================== */
+.city-suggestions {
+  position: absolute;
+  background: var(--white);
+  border: 2.5px solid var(--purple-main);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 200;
+  width: 100%;
+  left: 0;
+  top: 100%;
+  display: none;
+  box-shadow: 3px 4px 0 var(--black);
+}
+
+.city-suggestions.show {
+  display: block;
+}
+
+.city-suggestion-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  border-bottom: 1px solid #eee;
+  font-family: var(--font-body);
+  transition: background 0.1s;
+}
+
+.city-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.city-suggestion-item:hover {
+  background: var(--card-bg);
+  color: var(--purple-dark);
+  font-weight: 700;
+}
+
+/* Garante position:relative no form-group para o dropdown funcionar */
+.form-group {
+  position: relative;
+}
+
+/* ==========================================================================
+   MODAIS DE ONBOARDING E PIN — z-index acima de tudo
+   ========================================================================== */
+#modalOnboarding {
+  z-index: 9000;
+}
+
+#modalPinLogin {
+  z-index: 8500;
 }
