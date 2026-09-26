@@ -20,6 +20,7 @@ const FirebaseService = {
   unsubscribeTasks: null,
   unsubscribeHabits: null,
   unsubscribeHistory: null,
+  unsubscribeEvents: null,
 
   init() {
     if (typeof firebase === 'undefined') {
@@ -212,12 +213,30 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar histórico do Firestore:', err);
     });
+
+    // 4. Escuta eventos e lembretes em tempo real
+    this.unsubscribeEvents = userDoc.collection('events').onSnapshot(snapshot => {
+      const cloudEvents = [];
+      snapshot.forEach(doc => {
+        cloudEvents.push({ id: doc.id, ...doc.data() });
+      });
+      cloudEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (typeof EventManager !== 'undefined') {
+        EventManager.events = cloudEvents;
+        EventManager.saveLocally();
+        AppUI.renderEvents();
+        AppUI.renderHomeOverview();
+      }
+    }, err => {
+      console.warn('Erro ao escutar eventos do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
     if (this.unsubscribeTasks) { this.unsubscribeTasks(); this.unsubscribeTasks = null; }
     if (this.unsubscribeHabits) { this.unsubscribeHabits(); this.unsubscribeHabits = null; }
     if (this.unsubscribeHistory) { this.unsubscribeHistory(); this.unsubscribeHistory = null; }
+    if (this.unsubscribeEvents) { this.unsubscribeEvents(); this.unsubscribeEvents = null; }
   },
 
   // ========================================================
@@ -258,6 +277,18 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('system').doc('habit_history').set(history);
+  },
+
+  async saveEventToCloud(event) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    await this.db.collection('users').doc(uid).collection('events').doc(event.id).set(event, { merge: true });
+  },
+
+  async deleteEventFromCloud(eventId) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    await this.db.collection('users').doc(uid).collection('events').doc(eventId).delete();
   }
 };
 

@@ -37,10 +37,16 @@
       <a href="#encomendas" class="drawer-nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
       <a href="#relatorios" class="drawer-nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
       <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
+      <a href="#configuracoes" class="drawer-nav-link" data-tab="configuracoes">⚙️ Configurações</a>
       
-      <button class="btn-comic action-new-task" style="margin-top: 10px; width: 100%;">
-        ⚡ + Nova Encomenda
-      </button>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn-comic action-new-task" style="flex: 1;">
+          ⚡ + Encomenda
+        </button>
+        <button class="btn-comic btn-secondary action-new-event" style="flex: 1;">
+          📅 + Evento
+        </button>
+      </div>
     </div>
 
     <div class="drawer-footer">
@@ -64,11 +70,12 @@
         <div id="logoFallback" class="logo-fallback">ELGALY EXPRESS</div>
       </a>
 
-      <!-- Área de Autenticação / Perfil -->
+      <!-- Área de Autenticação / Perfil + Tema -->
       <div class="header-auth-box">
+        <button id="btnHeaderTheme" class="btn-theme-toggle" title="Alternar Modo Escuro / Claro" aria-label="Alternar Tema">🌙</button>
         <a href="#perfil" class="header-user-badge">
           <img src="images/elgalylogo.png" alt="Avatar" class="header-user-avatar">
-          <span class="header-user-nick">entregador.express.com</span>
+          <span class="header-user-nick">agente.express.com</span>
         </a>
       </div>
     </div>
@@ -80,7 +87,9 @@
       <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
       <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
       <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil EEX</a>
-      <button class="nav-btn nav-cta action-new-task">⚡ + Nova Encomenda</button>
+      <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+      <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
+      <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
     </nav>
   </header>
 
@@ -174,11 +183,27 @@
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <button class="btn-comic btn-secondary action-new-habit">+ Hábito</button>
               <button class="btn-comic action-new-task">+ Encomenda</button>
+              <button class="btn-comic btn-purple action-new-event" style="background: var(--purple-main); color: var(--white);">+ Evento</button>
             </div>
           </div>
 
           <div class="home-urgent-grid" id="homeUrgentList">
             <!-- Preenchido pelo app.js -->
+          </div>
+        </section>
+
+        <!-- Seção de Próximos Eventos & Lembretes (Provas, Reuniões, etc.) -->
+        <section class="home-summary-box" style="margin-top: 24px;">
+          <div class="home-summary-header">
+            <div>
+              <h3>📅 Próximos Eventos & Lembretes</h3>
+              <span style="font-weight: 700; color: var(--purple-main);">Provas da faculdade, compromissos e datas importantes</span>
+            </div>
+            <button class="btn-comic action-new-event">+ Novo Evento</button>
+          </div>
+
+          <div class="events-grid" id="homeEventsGrid">
+            <!-- Preenchido dinamicamente pelo app.js -->
           </div>
         </section>
 
@@ -232,28 +257,52 @@
             <div class="section-subtitle">Prazos, Trabalhos da Faculdade & Missões Pessoais</div>
           </div>
 
-          <!-- Barra de Controle, Filtros e Busca Integrada -->
-          <div class="tasks-control-bar">
-            <div class="filter-group">
-              <button class="filter-btn active" data-filter="todas">🌟 Todas</button>
-              <button class="filter-btn" data-filter="faculdade">🎓 Faculdade</button>
-              <button class="filter-btn" data-filter="pessoal">👤 Pessoal</button>
-              <button class="filter-btn" data-filter="pendentes">⏳ Pendentes</button>
-              <button class="filter-btn" data-filter="concluidas">✅ Concluídas</button>
-            </div>
-
-            <div class="task-search-wrap">
-              <input type="text" id="taskSearchInput" class="task-search-input" placeholder="🔍 Buscar por código ou nome...">
-            </div>
-
-            <button class="btn-comic btn-purple action-new-task">
-              + Nova Encomenda
-            </button>
+          <!-- Alternador de Subvisão: Encomendas vs Eventos -->
+          <div class="subnav-tabs">
+            <button class="subnav-btn active" id="tabBtnTasks" data-sub="tasks">📦 Encomendas Dimensionais</button>
+            <button class="subnav-btn" id="tabBtnEvents" data-sub="events">📅 Eventos & Lembretes de Provas</button>
           </div>
 
-          <!-- Grade de Encomendas -->
-          <div class="tasks-grid" id="tasksGrid">
-            <!-- Tarefas inseridas dinamicamente pelo app.js -->
+          <!-- SUB-VISÃO 1: ENCOMENDAS -->
+          <div id="subviewTasks">
+            <!-- Barra de Controle, Filtros e Busca Integrada -->
+            <div class="tasks-control-bar">
+              <div class="filter-group">
+                <button class="filter-btn active" data-filter="todas">🌟 Todas</button>
+                <button class="filter-btn" data-filter="faculdade">🎓 Faculdade</button>
+                <button class="filter-btn" data-filter="pessoal">👤 Pessoal</button>
+                <button class="filter-btn" data-filter="pendentes">⏳ Pendentes</button>
+                <button class="filter-btn" data-filter="concluidas">✅ Concluídas</button>
+              </div>
+
+              <div class="task-search-wrap">
+                <input type="text" id="taskSearchInput" class="task-search-input" placeholder="🔍 Buscar por código ou nome...">
+              </div>
+
+              <button class="btn-comic btn-purple action-new-task">
+                + Nova Encomenda
+              </button>
+            </div>
+
+            <!-- Grade de Encomendas -->
+            <div class="tasks-grid" id="tasksGrid">
+              <!-- Tarefas inseridas dinamicamente pelo app.js -->
+            </div>
+          </div>
+
+          <!-- SUB-VISÃO 2: EVENTOS & LEMBRETES -->
+          <div id="subviewEvents" style="display: none;">
+            <div class="events-section-header">
+              <div>
+                <h3 style="font-size: 1.4rem; color: var(--purple-dark); margin: 0;">Compromissos & Datas Importantes</h3>
+                <span style="font-size: 0.88rem; font-weight: 700; color: var(--purple-main);">Lembretes pontuais: provas acadêmicas, aniversários, consultas e prazos fixos</span>
+              </div>
+              <button class="btn-comic action-new-event">+ Novo Evento</button>
+            </div>
+
+            <div class="events-grid" id="eventsGrid">
+              <!-- Eventos inseridos dinamicamente pelo app.js -->
+            </div>
           </div>
         </section>
       </div>
@@ -397,6 +446,74 @@
         </section>
       </div>
 
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 6: CONFIGURAÇÕES & PREFERÊNCIAS EEX
+           ========================================================================== -->
+      <div class="app-view" id="view-configuracoes">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">CENTRAL DE CONFIGURAÇÕES EEX</h2>
+            <div class="section-subtitle">Tema, Segurança do Crachá, Localização & Sessão</div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Card 1: Aparência / Modo Escuro -->
+            <div class="settings-card">
+              <h3>🎨 Modo Escuro / Claro</h3>
+              <p>Escolha o tema que melhor combina com a sua rotina dimensional.</p>
+              <div class="theme-switch-row">
+                <span class="theme-switch-label" id="themeStatusLabel">Modo Claro</span>
+                <button type="button" class="btn-theme-toggle" id="btnThemeToggle">🌙 Alternar Tema</button>
+              </div>
+            </div>
+
+            <!-- Card 2: Segurança do Crachá (PIN de 6 dígitos) -->
+            <div class="settings-card">
+              <h3>🔐 Senha Numérica do Crachá (PIN)</h3>
+              <p>Atualize seu PIN de 6 dígitos para login rápido pelos crachás salvos neste dispositivo.</p>
+              <form class="comic-form" id="formChangePin">
+                <div class="form-group">
+                  <label for="cfgNewPin">Novo PIN de 6 Dígitos:</label>
+                  <input type="password" id="cfgNewPin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" required>
+                </div>
+                <button type="submit" class="btn-comic" style="width: 100%; margin-top: 8px;">
+                  🔑 Atualizar PIN
+                </button>
+              </form>
+            </div>
+
+            <!-- Card 3: Setor de Operações (Localização com Autocomplete SP) -->
+            <div class="settings-card">
+              <h3>📍 Setor de Operações (Cidade)</h3>
+              <p>Altere sua cidade operacional (com sugestão de todos os 645 municípios de SP).</p>
+              <form class="comic-form" id="formChangeLocation">
+                <div class="form-group">
+                  <label for="cfgLocation">Cidade / Setor:</label>
+                  <input type="text" id="cfgLocation" placeholder="Ex: São Paulo - SP" autocomplete="off" required>
+                  <div class="city-suggestions" id="cfgCitySuggestions"></div>
+                </div>
+                <button type="submit" class="btn-comic btn-secondary" style="width: 100%; margin-top: 8px;">
+                  📍 Salvar Localização
+                </button>
+              </form>
+            </div>
+
+            <!-- Card 4: Conta & Sessão -->
+            <div class="settings-card">
+              <h3>👤 Conta & Conexão</h3>
+              <p>Gerencie sua sessão ativa na Rede EEX.</p>
+              <div style="background: var(--white); border: 2.5px solid var(--black); border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 0.9rem;">
+                <div style="font-weight: 800; color: var(--purple-dark);" id="cfgUserName">Agente</div>
+                <div style="color: var(--purple-main); font-size: 0.8rem;" id="cfgUserEex">agente.express.com</div>
+              </div>
+              <button type="button" class="btn-comic" id="btnSettingsLogout" style="width: 100%; background: var(--red-alert); color: var(--white); border-color: var(--black);">
+                🚪 Sair da Conta (Logout)
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
     </div>
 
   </main>
@@ -521,8 +638,78 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label>📅 Dias da Semana que esse Hábito acontece:</label>
+          <div class="weekday-picker" id="habitDaysPicker">
+            <button type="button" class="weekday-btn active" data-day="1">Seg</button>
+            <button type="button" class="weekday-btn active" data-day="2">Ter</button>
+            <button type="button" class="weekday-btn active" data-day="3">Qua</button>
+            <button type="button" class="weekday-btn active" data-day="4">Qui</button>
+            <button type="button" class="weekday-btn active" data-day="5">Sex</button>
+            <button type="button" class="weekday-btn active" data-day="6">Sáb</button>
+            <button type="button" class="weekday-btn active" data-day="0">Dom</button>
+          </div>
+          <div class="weekday-quick-presets">
+            <button type="button" class="preset-btn" data-preset="all">Todos os dias</button>
+            <button type="button" class="preset-btn" data-preset="weekdays">Seg a Sex (Dias Úteis)</button>
+            <button type="button" class="preset-btn" data-preset="weekend">Fim de Semana (Sáb/Dom)</button>
+          </div>
+        </div>
+
         <button type="submit" class="btn-comic btn-secondary" style="margin-top: 10px;">
           Adicionar à Rotina Diária
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVO EVENTO / LEMBRETE (PROVAS, ANIVERSÁRIOS, DATAS FIXAS)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalEvent">
+    <div class="modal-content">
+      <button class="modal-close" id="modalEventClose" aria-label="Fechar">&times;</button>
+      <h2 id="modalEventTitle">Novo Evento & Lembrete</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Cadastre um compromisso pontual como prova da faculdade, reunião ou aniversário.
+      </p>
+
+      <form class="comic-form" id="formEvent">
+        <input type="hidden" id="eventId">
+
+        <div class="form-group">
+          <label for="eventTitle">📅 Título do Evento / Prova:</label>
+          <input type="text" id="eventTitle" required placeholder="Ex: Prova de Banco de Dados, Apresentação de TCC...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="eventDate">🗓️ Data do Evento:</label>
+            <input type="date" id="eventDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eventTime">⏰ Horário (Opcional):</label>
+            <input type="time" id="eventTime">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="eventCategory">🏷️ Setor / Categoria:</label>
+          <select id="eventCategory" required>
+            <option value="faculdade">🎓 Faculdade (Prova / Aula Especial / TCC)</option>
+            <option value="pessoal" selected>🌟 Pessoal (Aniversário / Saúde / Geral)</option>
+            <option value="trabalho">💼 Trabalho & Projetos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eventDescription">📝 Descrição & Informações:</label>
+          <textarea id="eventDescription" rows="3" placeholder="Ex: Matéria que vai cair: Capítulos 1 a 4, sala 204..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-comic" style="margin-top: 10px;">
+          Salvar Evento
         </button>
       </form>
     </div>
@@ -556,6 +743,9 @@
   </script>
 
 
+  <!-- Cidades de São Paulo (Todos os 645 municípios) -->
+  <script src="./sp-cities.js"></script>
+
   <!-- Módulos da Aplicação -->
   <script src="./firebase-service.js"></script>
   <script src="./report.js"></script>
@@ -563,11 +753,11 @@
 
   <!-- MODAL DE ONBOARDING DA REDE EEX (Primeiro acesso após Google login) -->
   <div class="modal-overlay" id="modalOnboarding">
-    <div class="modal-box" style="max-width:480px;">
+    <div class="modal-content" style="max-width:500px;">
       <div style="text-align:center;margin-bottom:16px;">
         <img src="images/elgalylogo.png" alt="EEX" style="width:56px;">
         <h2 style="margin:8px 0 4px;">Bem-vindo à Rede EEX!</h2>
-        <p style="font-size:0.9rem;color:var(--purple-dark);">Configure seu perfil de agente antes de começar.</p>
+        <p style="font-size:0.95rem;color:var(--purple-dark);font-weight:700;">Configure seu perfil de agente antes de começar.</p>
       </div>
       <form class="comic-form" id="formOnboarding">
         <div class="form-group">
@@ -593,13 +783,13 @@
             </div>
             <input type="file" id="onbAvatarInput" class="file-input-comic" accept="image/*">
           </div>
-          <small style="color:var(--purple-dark);font-size:0.8rem;">Deixe em branco para usar a foto do seu Google.</small>
+          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Deixe em branco para usar a foto do seu Google.</small>
         </div>
 
         <div class="form-group">
           <label for="onbPin">🔑 PIN Secreto (6 dígitos para crachá rápido):</label>
           <input type="password" id="onbPin" required placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="new-password">
-          <small style="color:var(--purple-dark);font-size:0.8rem;">Use este PIN para entrar rapidamente pelo crachá salvo.</small>
+          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Use este PIN para entrar rapidamente pelo crachá salvo.</small>
         </div>
 
         <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">
@@ -611,12 +801,12 @@
 
   <!-- MODAL DE PIN PARA CRACHÁ SALVO -->
   <div class="modal-overlay" id="modalPinLogin">
-    <div class="modal-box" style="max-width:360px;text-align:center;">
-      <div style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;">
+    <div class="modal-content" style="max-width:380px;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);">
         <img id="pinLoginAvatarImg" src="images/elgalylogo.png" style="width:100%;height:100%;object-fit:cover;" alt="">
       </div>
       <h3 id="pinLoginName" style="margin:0 0 4px;">Agente</h3>
-      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 16px;"></p>
+      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 16px;font-weight:700;"></p>
       <form id="formPinLogin">
         <input type="password" id="pinInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
           style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required>

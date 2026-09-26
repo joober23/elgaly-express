@@ -353,11 +353,12 @@ const HabitManager = {
     return list.includes(id);
   },
 
-  async addHabit(title, category) {
+  async addHabit(title, category, days = [0, 1, 2, 3, 4, 5, 6]) {
     const newHabit = {
       id: 'habit-' + Date.now(),
       title: title.trim(),
-      category: category || 'pessoal'
+      category: category || 'pessoal',
+      days: Array.isArray(days) && days.length > 0 ? days : [0, 1, 2, 3, 4, 5, 6]
     };
     this.habits.push(newHabit);
     this.saveHabitsLocally();
@@ -379,6 +380,9 @@ const HabitManager = {
   },
 
   calculateStreak(habitId) {
+    const habit = this.habits.find(h => h.id === habitId);
+    const scheduledDays = (habit && habit.days && habit.days.length > 0) ? habit.days : [0, 1, 2, 3, 4, 5, 6];
+
     let streak = 0;
     const today = new Date();
 
@@ -389,17 +393,186 @@ const HabitManager = {
     for (let i = 1; i <= 365; i++) {
       const pastDate = new Date();
       pastDate.setDate(today.getDate() - i);
+      const dow = pastDate.getDay();
+
+      // Se não era dia previsto para esse hábito (ex: fim de semana sem faculdade), não quebra o streak
+      if (!scheduledDays.includes(dow)) {
+        continue;
+      }
+
       const dateKey = pastDate.toLocaleDateString('en-CA');
       const list = this.history[dateKey] || [];
       if (list.includes(habitId)) {
         streak++;
       } else {
-        break;
+        break; // Dia previsto que não foi cumprido: encerra o streak
       }
     }
     return streak;
   }
 };
+
+// ==========================================================================
+// GERENCIADOR DE TEMAS (ThemeManager) — Modo Claro & Modo Escuro
+// ==========================================================================
+const ThemeManager = {
+  current: 'light',
+
+  init() {
+    const saved = localStorage.getItem('elgaly_theme') || 
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    this.setTheme(saved);
+  },
+
+  toggle() {
+    this.setTheme(this.current === 'dark' ? 'light' : 'dark');
+  },
+
+  setTheme(theme) {
+    this.current = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('elgaly_theme', theme);
+
+    const btn = document.getElementById('btnThemeToggle');
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
+
+    const statusLabel = document.getElementById('themeStatusLabel');
+    if (statusLabel) statusLabel.textContent = theme === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
+
+    const iconBtn = document.getElementById('btnHeaderTheme');
+    if (iconBtn) iconBtn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+  }
+};
+
+// ==========================================================================
+// GERENCIADOR DE EVENTOS & LEMBRETES (EventManager)
+// Provas da faculdade, aniversários, reuniões e compromissos com data fixa
+// ==========================================================================
+const EventManager = {
+  events: [],
+
+  getStorageKey() {
+    const user = AuthManager.getCurrentUser();
+    return user ? `elgaly_events_${user.id}` : 'elgaly_events_default';
+  },
+
+  init() {
+    if (!AuthManager.isLoggedIn()) {
+      this.events = [];
+      return;
+    }
+    const key = this.getStorageKey();
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try { this.events = JSON.parse(saved); } catch (e) { this.events = []; }
+    } else {
+      this.events = [];
+    }
+  },
+
+  saveLocally() {
+    if (!AuthManager.isLoggedIn()) return;
+    localStorage.setItem(this.getStorageKey(), JSON.stringify(this.events));
+  },
+
+  getAllEvents() {
+    return this.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  },
+
+  getUpcomingEvents() {
+    const today = new Date().toLocaleDateString('en-CA');
+    return this.getAllEvents().filter(e => !e.completed && e.date >= today);
+  },
+
+  async addEvent(eventData) {
+    const newEvent = {
+      id: 'evt-' + Date.now(),
+      title: eventData.title.trim(),
+      date: eventData.date,
+      time: eventData.time || '',
+      category: eventData.category || 'faculdade',
+      description: (eventData.description || '').trim(),
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+    this.events.push(newEvent);
+    this.saveLocally();
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveEventToCloud(newEvent);
+    }
+    return newEvent;
+  },
+
+  async updateEvent(id, updatedFields) {
+    const idx = this.events.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      this.events[idx] = { ...this.events[idx], ...updatedFields };
+      this.saveLocally();
+      if (typeof FirebaseService !== 'undefined') {
+        await FirebaseService.saveEventToCloud(this.events[idx]);
+      }
+    }
+  },
+
+  async deleteEvent(id) {
+    this.events = this.events.filter(e => e.id !== id);
+    this.saveLocally();
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.deleteEventFromCloud(id);
+    }
+  },
+
+  async toggleEvent(id) {
+    const evt = this.events.find(e => e.id === id);
+    if (evt) {
+      evt.completed = !evt.completed;
+      this.saveLocally();
+      if (typeof FirebaseService !== 'undefined') {
+        await FirebaseService.saveEventToCloud(evt);
+      }
+    }
+  }
+};
+
+// ==========================================================================
+// UTILITÁRIO DE AUTOCOMPLETE DE CIDADES DE SÃO PAULO (645 Municípios)
+// ==========================================================================
+function setupCityAutocomplete(inputEl, suggestionsEl) {
+  if (!inputEl || !suggestionsEl) return;
+  const cities = window.SP_CITIES || ['São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP'];
+  const normalize = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  inputEl.addEventListener('input', () => {
+    const q = normalize(inputEl.value);
+    if (q.length < 2) {
+      suggestionsEl.classList.remove('show');
+      return;
+    }
+    const matches = cities.filter(c => normalize(c).includes(q)).slice(0, 15);
+    if (matches.length === 0) {
+      suggestionsEl.classList.remove('show');
+      return;
+    }
+    suggestionsEl.innerHTML = matches.map(c => 
+      `<div class="city-suggestion-item" data-city="${c}">${c}</div>`
+    ).join('');
+    suggestionsEl.classList.add('show');
+  });
+
+  suggestionsEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.city-suggestion-item');
+    if (item) {
+      inputEl.value = item.dataset.city;
+      suggestionsEl.classList.remove('show');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!inputEl.contains(e.target) && !suggestionsEl.contains(e.target)) {
+      suggestionsEl.classList.remove('show');
+    }
+  });
+}
 
 // ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
@@ -416,9 +589,11 @@ const AppUI = {
   _pendingBadgeLogin: null,
 
   init() {
+    ThemeManager.init();
     AuthManager.init();
     TaskManager.init();
     HabitManager.init();
+    EventManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -430,6 +605,7 @@ const AppUI = {
     setInterval(() => {
       if (AuthManager.isLoggedIn()) {
         this.renderTasks();
+        this.renderEvents();
         this.renderHomeOverview();
       }
     }, 60000);
@@ -500,7 +676,7 @@ const AppUI = {
   initNavigation() {
     const handleRoute = () => {
       const hash = window.location.hash.replace('#', '') || 'inicio';
-      const validTabs = ['inicio', 'rotina', 'encomendas', 'relatorios', 'perfil'];
+      const validTabs = ['inicio', 'rotina', 'encomendas', 'relatorios', 'perfil', 'configuracoes'];
       this.switchTab(validTabs.includes(hash) ? hash : 'inicio');
     };
 
@@ -523,9 +699,10 @@ const AppUI = {
 
     if (tabName === 'inicio') this.renderHomeOverview();
     if (tabName === 'rotina') this.renderDailyRoutine();
-    if (tabName === 'encomendas') this.renderTasks();
+    if (tabName === 'encomendas') { this.renderTasks(); this.renderEvents(); }
     if (tabName === 'relatorios') ReportEngine.renderReportPreview();
     if (tabName === 'perfil') this.renderProfileView();
+    if (tabName === 'configuracoes') this.renderConfiguracoes();
   },
 
   bindEvents() {
@@ -569,43 +746,10 @@ const AppUI = {
         });
       }
 
-      // Autocomplete de cidades de SP
+      // Autocomplete de cidades de SP (Todos os 645 municípios)
       const onbLocation = document.getElementById('onbLocation');
       const citySugg = document.getElementById('citySuggestions');
-      const SP_CITIES = [
-        'São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP', 'Santo André - SP',
-        'São Bernardo do Campo - SP', 'Osasco - SP', 'Ribeirão Preto - SP',
-        'Sorocaba - SP', 'Mauá - SP', 'São José dos Campos - SP',
-        'Mogi das Cruzes - SP', 'Santos - SP', 'Diadema - SP', 'Jundiaí - SP',
-        'Piracicaba - SP', 'Bauru - SP', 'São José do Rio Preto - SP',
-        'Carapicuíba - SP', 'Araçatuba - SP', 'Limeira - SP', 'Taubaté - SP',
-        'Franca - SP', 'Praia Grande - SP', 'Itaquaquecetuba - SP',
-        'Suzano - SP', 'Barueri - SP', 'Taboão da Serra - SP'
-      ];
-      if (onbLocation && citySugg) {
-        onbLocation.addEventListener('input', () => {
-          const q = onbLocation.value.toLowerCase();
-          if (q.length < 2) { citySugg.classList.remove('show'); return; }
-          const matches = SP_CITIES.filter(c => c.toLowerCase().includes(q));
-          if (matches.length === 0) { citySugg.classList.remove('show'); return; }
-          citySugg.innerHTML = matches.map(c =>
-            `<div class="city-suggestion-item" data-city="${c}">${c}</div>`
-          ).join('');
-          citySugg.classList.add('show');
-        });
-        citySugg.addEventListener('click', (e) => {
-          const item = e.target.closest('.city-suggestion-item');
-          if (item) {
-            onbLocation.value = item.dataset.city;
-            citySugg.classList.remove('show');
-          }
-        });
-        document.addEventListener('click', (e) => {
-          if (!onbLocation.contains(e.target) && !citySugg.contains(e.target)) {
-            citySugg.classList.remove('show');
-          }
-        });
-      }
+      setupCityAutocomplete(onbLocation, citySugg);
 
       // Upload de avatar no onboarding
       const onbAvatarInput = document.getElementById('onbAvatarInput');
@@ -678,6 +822,7 @@ const AppUI = {
 
         TaskManager.init();
         HabitManager.init();
+        EventManager.init();
 
         // Inicia sync em tempo real
         if (typeof FirebaseService !== 'undefined' && user.uid) {
@@ -756,7 +901,7 @@ const AppUI = {
       });
     }
 
-    // 8. Filtros de Tarefas
+    // 6. Filtros de Tarefas
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -766,7 +911,7 @@ const AppUI = {
       });
     });
 
-    // 9. Busca de Encomendas
+    // 7. Busca de Encomendas
     const searchInput = document.getElementById('taskSearchInput');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -775,7 +920,7 @@ const AppUI = {
       });
     }
 
-    // 10. Botões de Nova Encomenda
+    // 8. Botões de Nova Encomenda
     const btnsNewTask = document.querySelectorAll('.action-new-task');
     const modalTask = document.getElementById('modalTask');
     const formTask = document.getElementById('formTask');
@@ -819,7 +964,34 @@ const AppUI = {
       });
     }
 
-    // 11. Botões de Novo Hábito
+    // 9. Seletor de Dias da Semana para Hábitos
+    document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+      });
+    });
+
+    document.querySelectorAll('.weekday-quick-presets .preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        const allBtns = document.querySelectorAll('#habitDaysPicker .weekday-btn');
+        if (preset === 'all') {
+          allBtns.forEach(b => b.classList.add('active'));
+        } else if (preset === 'weekdays') {
+          allBtns.forEach(b => {
+            const d = parseInt(b.dataset.day, 10);
+            b.classList.toggle('active', d >= 1 && d <= 5);
+          });
+        } else if (preset === 'weekend') {
+          allBtns.forEach(b => {
+            const d = parseInt(b.dataset.day, 10);
+            b.classList.toggle('active', d === 0 || d === 6);
+          });
+        }
+      });
+    });
+
+    // 10. Botões de Novo Hábito
     const btnsNewHabit = document.querySelectorAll('.action-new-habit');
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
@@ -829,6 +1001,8 @@ const AppUI = {
       btn.addEventListener('click', () => {
         if (!AuthManager.isLoggedIn()) return;
         document.getElementById('habitTitle').value = '';
+        // Reseta todos os dias como ativos por padrão
+        document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => b.classList.add('active'));
         modalHabit.classList.add('active');
       });
     });
@@ -844,20 +1018,152 @@ const AppUI = {
         e.preventDefault();
         const title = document.getElementById('habitTitle').value;
         const cat = document.getElementById('habitCategory').value;
+        const selectedDays = [];
+        document.querySelectorAll('#habitDaysPicker .weekday-btn.active').forEach(b => {
+          selectedDays.push(parseInt(b.dataset.day, 10));
+        });
+
         if (title) {
-          await HabitManager.addHabit(title, cat);
+          await HabitManager.addHabit(title, cat, selectedDays.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6]);
           modalHabit.classList.remove('active');
           this.renderDailyRoutine();
           this.renderHomeOverview();
           ReportEngine.renderReportPreview();
-          this.showToast('Novo hábito registrado no check-in diário!');
+          this.showToast('Novo hábito registrado no check-in!');
         }
       });
     }
 
+    // 11. Modal de Novo Evento / Lembrete
+    const btnsNewEvent = document.querySelectorAll('.action-new-event');
+    const modalEvent = document.getElementById('modalEvent');
+    const formEvent = document.getElementById('formEvent');
+    const modalEventClose = document.getElementById('modalEventClose');
+
+    btnsNewEvent.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!AuthManager.isLoggedIn()) return;
+        this.openEventModal();
+      });
+    });
+
+    if (modalEventClose && modalEvent) {
+      modalEventClose.addEventListener('click', () => {
+        modalEvent.classList.remove('active');
+      });
+    }
+
+    if (formEvent) {
+      formEvent.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('eventId').value;
+        const eventData = {
+          title: document.getElementById('eventTitle').value,
+          date: document.getElementById('eventDate').value,
+          time: document.getElementById('eventTime').value,
+          category: document.getElementById('eventCategory').value,
+          description: document.getElementById('eventDescription').value
+        };
+
+        if (id) {
+          await EventManager.updateEvent(id, eventData);
+          this.showToast('Evento atualizado!');
+        } else {
+          await EventManager.addEvent(eventData);
+          this.showToast('📅 Lembrete de evento adicionado!');
+        }
+
+        modalEvent.classList.remove('active');
+        this.renderEvents();
+        this.renderHomeOverview();
+      });
+    }
+
+    // 12. Subnav Tabs (Encomendas vs Eventos)
+    const tabBtnTasks = document.getElementById('tabBtnTasks');
+    const tabBtnEvents = document.getElementById('tabBtnEvents');
+    const subviewTasks = document.getElementById('subviewTasks');
+    const subviewEvents = document.getElementById('subviewEvents');
+
+    if (tabBtnTasks && tabBtnEvents) {
+      tabBtnTasks.addEventListener('click', () => {
+        tabBtnTasks.classList.add('active');
+        tabBtnEvents.classList.remove('active');
+        if (subviewTasks) subviewTasks.style.display = 'block';
+        if (subviewEvents) subviewEvents.style.display = 'none';
+      });
+
+      tabBtnEvents.addEventListener('click', () => {
+        tabBtnEvents.classList.add('active');
+        tabBtnTasks.classList.remove('active');
+        if (subviewTasks) subviewTasks.style.display = 'none';
+        if (subviewEvents) subviewEvents.style.display = 'block';
+        this.renderEvents();
+      });
+    }
+
+    // 13. Configurações: Alternar Tema (Modo Escuro / Claro)
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    const btnHeaderTheme = document.getElementById('btnHeaderTheme');
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener('click', () => ThemeManager.toggle());
+    }
+    if (btnHeaderTheme) {
+      btnHeaderTheme.addEventListener('click', () => ThemeManager.toggle());
+    }
+
+    // 14. Configurações: Atualizar PIN
+    const formChangePin = document.getElementById('formChangePin');
+    if (formChangePin) {
+      formChangePin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newPin = (document.getElementById('cfgNewPin').value || '').trim();
+        if (!/^[0-9]{6}$/.test(newPin)) {
+          this.showToast('❌ O PIN deve ter 6 dígitos numéricos!');
+          return;
+        }
+        const user = AuthManager.getCurrentUser();
+        if (user) {
+          AuthManager.saveBadge(user, newPin);
+          this.showToast('🔐 PIN do crachá atualizado com sucesso!');
+          document.getElementById('cfgNewPin').value = '';
+        }
+      });
+    }
+
+    // 15. Configurações: Atualizar Localização com Autocomplete SP
+    const cfgLocationInput = document.getElementById('cfgLocation');
+    const cfgCitySuggestions = document.getElementById('cfgCitySuggestions');
+    setupCityAutocomplete(cfgLocationInput, cfgCitySuggestions);
+
+    const formChangeLocation = document.getElementById('formChangeLocation');
+    if (formChangeLocation) {
+      formChangeLocation.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const loc = (document.getElementById('cfgLocation').value || '').trim();
+        if (loc) {
+          await AuthManager.updateUserProfile({ location: loc });
+          this.renderAll();
+          this.showToast(`📍 Setor atualizado para ${loc}!`);
+        }
+      });
+    }
+
+    // 16. Configurações: Logout
+    const btnSettingsLogout = document.getElementById('btnSettingsLogout');
+    if (btnSettingsLogout) {
+      btnSettingsLogout.addEventListener('click', () => {
+        if (confirm('Deseja realmente sair da sua conta?')) {
+          AuthManager.logout();
+        }
+      });
+    }
+
+    // 17. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
+          if (overlay.id === 'modalOnboarding') return; // Onboarding obrigatório não fecha ao clicar fora!
           overlay.classList.remove('active');
         }
       });
@@ -918,7 +1224,9 @@ const AppUI = {
     this.renderHomeOverview();
     this.renderDailyRoutine();
     this.renderTasks();
+    this.renderEvents();
     this.renderProfileView();
+    this.renderConfiguracoes();
     ReportEngine.renderReportPreview();
   },
 
@@ -1008,6 +1316,9 @@ const AppUI = {
     const completedTasks = tasks.filter(t => t.completed).length;
     const overdueTasks = tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate).getTime() < Date.now()).length;
 
+    const todayDow = new Date().getDay();
+    const todayScheduledHabits = habits.filter(h => !h.days || h.days.includes(todayDow));
+
     const elActive = document.getElementById('statActiveTasks');
     const elCompleted = document.getElementById('statCompletedTasks');
     const elHabitToday = document.getElementById('statHabitStreak');
@@ -1015,7 +1326,7 @@ const AppUI = {
 
     if (elActive) elActive.textContent = pendingTasks;
     if (elCompleted) elCompleted.textContent = completedTasks;
-    if (elHabitToday) elHabitToday.textContent = `${todayHabits.length}/${habits.length}`;
+    if (elHabitToday) elHabitToday.textContent = `${todayHabits.length}/${todayScheduledHabits.length}`;
     if (elOverdue) elOverdue.textContent = overdueTasks;
 
     const urgentList = document.getElementById('homeUrgentList');
@@ -1052,6 +1363,8 @@ const AppUI = {
         });
       }
     }
+
+    this.renderEvents();
   },
 
   renderDailyRoutine() {
@@ -1075,10 +1388,24 @@ const AppUI = {
       return;
     }
 
+    const todayDow = new Date().getDay(); // 0 = Dom, 1 = Seg ...
+    const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+    const formatDaysBadge = (days) => {
+      if (!days || days.length === 7) return '📅 Todos os dias';
+      if (days.length === 5 && [1,2,3,4,5].every(d => days.includes(d))) return '📅 Seg a Sex';
+      if (days.length === 2 && [0,6].every(d => days.includes(d))) return '📅 Fim de semana';
+      return '📅 ' + days.map(d => DAY_NAMES[d]).join(', ');
+    };
+
+    const todayHabits = habits.filter(h => !h.days || h.days.includes(todayDow));
+    const restHabits = habits.filter(h => h.days && !h.days.includes(todayDow));
+
     let completedCount = 0;
     container.innerHTML = '';
 
-    habits.forEach(habit => {
+    // Renderiza hábitos de hoje
+    todayHabits.forEach(habit => {
       const isDone = HabitManager.isCompletedToday(habit.id);
       if (isDone) completedCount++;
       const streak = HabitManager.calculateStreak(habit.id);
@@ -1091,6 +1418,7 @@ const AppUI = {
           <div class="habit-title">${habit.title}</div>
           <div class="habit-meta">
             <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? 'Faculdade' : 'Pessoal'}</span>
+            <span class="habit-days-badge">${formatDaysBadge(habit.days)}</span>
             ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
           </div>
         </div>
@@ -1121,15 +1449,183 @@ const AppUI = {
       container.appendChild(card);
     });
 
-    const pct = Math.round((completedCount / habits.length) * 100);
-    if (progressBar) progressBar.style.width = `${pct}%`;
-    if (progressText) progressText.textContent = `${completedCount} de ${habits.length} entregues (${pct}%)`;
+    // Se houver hábitos programados para outros dias (descanso hoje)
+    if (restHabits.length > 0) {
+      const restBox = document.createElement('div');
+      restBox.className = 'rest-habits-box';
+      restBox.style.gridColumn = '1 / -1';
+      restBox.innerHTML = `
+        <div class="rest-habits-title">🛌 Rotinas em Descanso Hoje (${restHabits.length} programados para outros dias)</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          ${restHabits.map(h => `
+            <span style="background: var(--card-bg); border: 2px solid var(--purple-main); border-radius: 10px; padding: 6px 12px; font-size: 0.85rem; font-weight: 700; color: var(--purple-dark);">
+              ${h.title} <small style="color: var(--purple-main);">(${formatDaysBadge(h.days)})</small>
+            </span>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(restBox);
+    }
 
-    if (completedCount === habits.length && habits.length > 0) {
+    const totalToday = todayHabits.length;
+    const pct = totalToday > 0 ? Math.round((completedCount / totalToday) * 100) : 100;
+    if (progressBar) progressBar.style.width = `${pct}%`;
+    if (progressText) progressText.textContent = `${completedCount} de ${totalToday} hábitos de hoje entregues (${pct}%)`;
+
+    if (completedCount === totalToday && totalToday > 0) {
       if (progressBar) progressBar.style.background = 'linear-gradient(90deg, #4ade80, #10b981)';
     } else {
       if (progressBar) progressBar.style.background = 'linear-gradient(90deg, var(--yellow-bright), var(--magenta-bright))';
     }
+  },
+
+  openEventModal(event = null) {
+    const modal = document.getElementById('modalEvent');
+    const titleEl = document.getElementById('modalEventTitle');
+    const idInput = document.getElementById('eventId');
+    const titleInput = document.getElementById('eventTitle');
+    const dateInput = document.getElementById('eventDate');
+    const timeInput = document.getElementById('eventTime');
+    const catInput = document.getElementById('eventCategory');
+    const descInput = document.getElementById('eventDescription');
+
+    if (event) {
+      titleEl.textContent = 'Editar Evento & Lembrete';
+      idInput.value = event.id;
+      titleInput.value = event.title;
+      dateInput.value = event.date;
+      timeInput.value = event.time || '';
+      catInput.value = event.category || 'faculdade';
+      descInput.value = event.description || '';
+    } else {
+      titleEl.textContent = 'Novo Evento & Lembrete';
+      idInput.value = '';
+      titleInput.value = '';
+      dateInput.value = new Date().toLocaleDateString('en-CA');
+      timeInput.value = '';
+      catInput.value = 'faculdade';
+      descInput.value = '';
+    }
+
+    modal.classList.add('active');
+  },
+
+  renderEvents() {
+    const events = EventManager.getAllEvents();
+    const container = document.getElementById('eventsGrid');
+    const homeContainer = document.getElementById('homeEventsGrid');
+
+    const renderToContainer = (targetEl, limit = null) => {
+      if (!targetEl) return;
+      const list = limit ? events.filter(e => !e.completed).slice(0, limit) : events;
+
+      if (list.length === 0) {
+        targetEl.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1; padding: 20px;">
+            <p style="font-weight: 700; color: var(--purple-dark); margin: 0 0 10px;">Nenhum evento ou prova agendada no momento.</p>
+            <button class="btn-comic action-new-event" style="font-size: 0.9rem;">+ Adicionar Prova ou Lembrete</button>
+          </div>
+        `;
+        targetEl.querySelectorAll('.action-new-event').forEach(btn => {
+          btn.addEventListener('click', () => this.openEventModal());
+        });
+        return;
+      }
+
+      targetEl.innerHTML = '';
+
+      list.forEach(evt => {
+        let badgeClass = 'upcoming';
+        let badgeText = 'EM BREVE';
+
+        const evtDate = new Date(evt.date + 'T00:00:00');
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const diffDays = Math.round((evtDate - now) / (1000 * 60 * 60 * 24));
+
+        if (evt.completed) {
+          badgeClass = 'past';
+          badgeText = '✅ CONCLUÍDO';
+        } else if (diffDays === 0) {
+          badgeClass = 'today';
+          badgeText = '🚨 É HOJE!';
+        } else if (diffDays === 1) {
+          badgeClass = 'tomorrow';
+          badgeText = '⏰ É AMANHÃ!';
+        } else if (diffDays > 1 && diffDays <= 7) {
+          badgeClass = 'upcoming';
+          badgeText = `📅 EM ${diffDays} DIAS`;
+        } else if (diffDays > 7) {
+          badgeClass = 'upcoming';
+          badgeText = `📅 EM ${diffDays} DIAS`;
+        } else {
+          badgeClass = 'past';
+          badgeText = '⚠️ PASSOU';
+        }
+
+        const dateFormatted = new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+
+        const card = document.createElement('div');
+        card.className = `event-card ${evt.completed ? 'completed' : ''}`;
+        card.innerHTML = `
+          <div class="event-header">
+            <span class="habit-tag ${evt.category}">${evt.category === 'faculdade' ? '🎓 Faculdade' : (evt.category === 'trabalho' ? '💼 Trabalho' : '🌟 Pessoal')}</span>
+            <span class="event-countdown-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="event-title">${evt.title}</div>
+          <div class="event-date-row">
+            <span>🗓️ ${dateFormatted}</span>
+            ${evt.time ? `<span>• ⏰ ${evt.time}</span>` : ''}
+          </div>
+          ${evt.description ? `<div class="event-desc">${evt.description}</div>` : ''}
+          <div class="event-footer">
+            <button class="btn-comic btn-secondary btn-toggle-event" data-id="${evt.id}" style="font-size: 0.8rem; padding: 4px 10px;">
+              ${evt.completed ? '↺ Reabrir' : '✓ Concluir'}
+            </button>
+            <div class="event-actions">
+              <button class="btn-event-action btn-del-event" data-id="${evt.id}" title="Excluir">🗑️</button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector('.btn-toggle-event').addEventListener('click', async () => {
+          await EventManager.toggleEvent(evt.id);
+          this.renderEvents();
+          this.renderHomeOverview();
+        });
+
+        card.querySelector('.btn-del-event').addEventListener('click', async () => {
+          if (confirm(`Excluir evento "${evt.title}"?`)) {
+            await EventManager.deleteEvent(evt.id);
+            this.renderEvents();
+            this.renderHomeOverview();
+          }
+        });
+
+        targetEl.appendChild(card);
+      });
+    };
+
+    renderToContainer(container);
+    renderToContainer(homeContainer, 3);
+  },
+
+  renderConfiguracoes() {
+    const user = AuthManager.getCurrentUser();
+    if (!user) return;
+
+    const nameEl = document.getElementById('cfgUserName');
+    const eexEl = document.getElementById('cfgUserEex');
+    const locInput = document.getElementById('cfgLocation');
+
+    if (nameEl) nameEl.textContent = user.name;
+    if (eexEl) eexEl.textContent = user.eexEmail;
+    if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
+
+    const statusLabel = document.getElementById('themeStatusLabel');
+    if (statusLabel) statusLabel.textContent = ThemeManager.current === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
+    const btnTheme = document.getElementById('btnThemeToggle');
+    if (btnTheme) btnTheme.innerHTML = ThemeManager.current === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
   },
 
   renderTasks() {
