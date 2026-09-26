@@ -30,7 +30,7 @@ const ReportEngine = {
         console.warn('Não foi possível carregar base64 do logo para o PDF:', e);
       }
     };
-    img.src = 'images/elgalylogo.png';
+    img.src = 'images/elgalylogo_arrow.png';
   },
 
   setTimeframe(days) {
