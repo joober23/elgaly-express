@@ -575,6 +575,112 @@ function setupCityAutocomplete(inputEl, suggestionsEl) {
 }
 
 // ==========================================================================
+// GERENCIADOR DE PWA & NOTIFICAÇÕES (PWAManager)
+// Instalação na tela inicial do celular/PC e alertas operacionais
+// ==========================================================================
+const PWAManager = {
+  deferredPrompt: null,
+
+  init() {
+    // 1. Registro do Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('PWA Service Worker ativo:', reg.scope))
+          .catch((err) => console.warn('PWA SW registro falhou:', err));
+      });
+    }
+
+    // 2. Intercepta evento de instalação do app
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      this.showInstallButtons(true);
+    });
+
+    // 3. App instalado com sucesso
+    window.addEventListener('appinstalled', () => {
+      this.deferredPrompt = null;
+      this.showInstallButtons(false);
+      AppUI.showToast('🎉 Elgaly Express instalado com sucesso na sua tela inicial!');
+      const statusEl = document.getElementById('pwaStatusText');
+      if (statusEl) statusEl.textContent = '✅ Aplicativo instalado neste dispositivo!';
+    });
+
+    // 4. Se já estiver rodando em standalone
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      this.showInstallButtons(false);
+      const statusEl = document.getElementById('pwaStatusText');
+      if (statusEl) statusEl.textContent = '⚡ Você está usando a versão aplicativo (PWA)!';
+    }
+  },
+
+  showInstallButtons(show) {
+    document.querySelectorAll('.btn-pwa-install').forEach(btn => {
+      btn.style.display = show ? 'inline-block' : 'none';
+    });
+  },
+
+  async promptInstall() {
+    if (!this.deferredPrompt) {
+      AppUI.showToast('💡 No menu do seu navegador (três pontinhos ou compartilhar), toque em "Adicionar à Tela de Início"!');
+      return;
+    }
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      this.deferredPrompt = null;
+      this.showInstallButtons(false);
+    }
+  },
+
+  async testNotification() {
+    if (!('Notification' in window)) {
+      AppUI.showToast('⚠️ Este navegador não tem suporte a notificações.');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      this.sendSampleNotification();
+      AppUI.showToast('🔔 Notificação enviada!');
+      return;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        this.sendSampleNotification();
+        AppUI.showToast('🎉 Notificações autorizadas com sucesso!');
+      } else {
+        AppUI.showToast('❌ Permissão de notificações negada.');
+      }
+    } else {
+      AppUI.showToast('⚠️ Notificações bloqueadas nas configurações do navegador.');
+    }
+  },
+
+  sendSampleNotification() {
+    const user = AuthManager.getCurrentUser();
+    const name = user ? user.name : 'Agente';
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification('📦 Elgaly Express: Despacho em Rota!', {
+          body: `Olá, ${name}! Suas encomendas e rotinas diárias estão sincronizadas e em dia.`,
+          icon: 'images/icon-192.png',
+          badge: 'images/icon-192.png',
+          vibrate: [200, 100, 200]
+        });
+      });
+    } else {
+      new Notification('📦 Elgaly Express: Despacho em Rota!', {
+        body: `Olá, ${name}! Suas encomendas e rotinas diárias estão sincronizadas e em dia.`,
+        icon: 'images/icon-192.png'
+      });
+    }
+  }
+};
+
+// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
@@ -594,6 +700,7 @@ const AppUI = {
     TaskManager.init();
     HabitManager.init();
     EventManager.init();
+    PWAManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -1159,7 +1266,16 @@ const AppUI = {
       });
     }
 
-    // 17. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
+    // 17. Configurações: PWA Instalação & Notificações
+    document.querySelectorAll('.btn-pwa-install').forEach(btn => {
+      btn.addEventListener('click', () => PWAManager.promptInstall());
+    });
+    const btnPWANotify = document.getElementById('btnPWANotify');
+    if (btnPWANotify) {
+      btnPWANotify.addEventListener('click', () => PWAManager.testNotification());
+    }
+
+    // 18. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {

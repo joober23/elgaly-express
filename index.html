@@ -17,6 +17,15 @@
   
   <!-- Folha de Estilos Modular -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Metadados PWA & Mobile -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#3a154d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Elgaly Express">
+  <link rel="apple-touch-icon" href="images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
 </head>
 <body>
 
@@ -47,6 +56,10 @@
           📅 + Evento
         </button>
       </div>
+
+      <button type="button" class="btn-comic btn-purple btn-pwa-install" id="btnDrawerPWAInstall" style="margin-top: 10px; width: 100%; display: none; background: var(--purple-main); color: var(--white);">
+        📲 Instalar App no Celular
+      </button>
     </div>
 
     <div class="drawer-footer">
@@ -509,6 +522,23 @@
               <button type="button" class="btn-comic" id="btnSettingsLogout" style="width: 100%; background: var(--red-alert); color: var(--white); border-color: var(--black);">
                 🚪 Sair da Conta (Logout)
               </button>
+            </div>
+
+            <!-- Card 5: Aplicativo & Notificações (PWA) -->
+            <div class="settings-card">
+              <h3>📲 Aplicativo & Notificações</h3>
+              <p>Instale o Elgaly Express como app no celular ou computador e ative os avisos de prazos.</p>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="btn-comic btn-pwa-install" id="btnSettingsPWAInstall" style="width: 100%; display: none;">
+                  📲 Instalar no Aparelho (Tela Inicial)
+                </button>
+                <button type="button" class="btn-comic btn-secondary" id="btnPWANotify" style="width: 100%;">
+                  🔔 Ativar & Testar Notificações
+                </button>
+                <div id="pwaStatusText" style="font-size: 0.8rem; color: #6b7280; font-weight: 700; text-align: center;">
+                  PWA pronto para instalação e uso offline.
+                </div>
+              </div>
             </div>
           </div>
         </section>

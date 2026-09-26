@@ -1,0 +1,55 @@
+{
+  "name": "Elgaly Express: Rotinas & Despacho",
+  "short_name": "Elgaly Express",
+  "description": "Sistema de rotinas diárias, encomendas dimensionais e despacho.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12071f",
+  "theme_color": "#3a154d",
+  "icons": [
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/elgalylogo.png",
+      "sizes": "2428x892",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Nova Encomenda",
+      "short_name": "Encomenda",
+      "description": "Cadastrar nova encomenda ou trabalho",
+      "url": "./index.html#encomendas",
+      "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rotina Diária",
+      "short_name": "Rotina",
+      "description": "Fazer check-in dos hábitos de hoje",
+      "url": "./index.html#rotina",
+      "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Eventos & Provas",
+      "short_name": "Eventos",
+      "description": "Ver lembretes e provas",
+      "url": "./index.html#encomendas",
+      "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
