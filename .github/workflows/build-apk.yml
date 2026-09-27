@@ -42,6 +42,7 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+          cp -r android-res/* android/app/src/main/res/
         env:
           CI: true
 
