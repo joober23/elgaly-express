@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1008407071059",
+    "project_id": "elgaly-express-230108",
+    "storage_bucket": "elgaly-express-230108.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008407071059:android:e637deb6df3a510a6bb9a6",
+        "android_client_info": {
+          "package_name": "com.elgaly.express"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWP60C8fQ_HbEVeEC6Sa5PjuE7Bt87Z1k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
