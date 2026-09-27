@@ -46,6 +46,7 @@ jobs:
           cp -r android-res/* android/app/src/main/res/
           cp android-overrides/MainActivity.java android/app/src/main/java/com/elgaly/express/MainActivity.java
           cp android-overrides/app-build.gradle android/app/build.gradle
+          cp android-overrides/variables.gradle android/variables.gradle
           cp google-services.json android/app/google-services.json
         env:
           CI: true
