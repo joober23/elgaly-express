@@ -1,0 +1,19 @@
+{
+  "name": "elgaly-express",
+  "version": "1.0.0",
+  "description": "Elgaly Express - Sistema de Rotinas e Despacho",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "sync": "npm run build && cap sync",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}

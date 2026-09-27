@@ -1,0 +1,14 @@
+{
+  "appId": "com.elgaly.express",
+  "appName": "Elgaly Express",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_launcher_foreground",
+      "iconColor": "#3a154d"
+    }
+  }
+}

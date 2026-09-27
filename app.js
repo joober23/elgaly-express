@@ -575,6 +575,281 @@ function setupCityAutocomplete(inputEl, suggestionsEl) {
 }
 
 // ==========================================================================
+// GERENCIADOR DE NOTIFICAÇÕES LOCAIS (Capacitor Native + Web)
+// Notificações de 3 em 3 horas para hábitos pendentes, prazos e eventos
+// ==========================================================================
+const NotificationManager = {
+  _plugin: null,
+  _ready: false,
+  _debounceTimer: null,
+
+  isNative() {
+    return typeof window !== 'undefined' &&
+      !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  },
+
+  async init() {
+    try {
+      if (this.isNative() && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
+        this._plugin = window.Capacitor.Plugins.LocalNotifications;
+        const status = await this._plugin.requestPermissions();
+        this._ready = status && status.display === 'granted';
+        console.log(`📱 Capacitor LocalNotifications ativo: ${this._ready ? 'Concedido' : 'Negado'}`);
+        if (this._ready) {
+          this.scheduleAll();
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Falha ao inicializar NotificationManager:', err);
+      this._ready = false;
+    }
+  },
+
+  async requestPermission() {
+    if (!this.isNative()) {
+      return false;
+    }
+    try {
+      if (this._plugin) {
+        const res = await this._plugin.requestPermissions();
+        this._ready = res && res.display === 'granted';
+        return this._ready;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  },
+
+  /**
+   * Agenda todas as notificações:
+   * 1. Rotina Diária: a cada 3 horas (08h, 11h, 14h, 17h, 20h) para os próximos 7 dias
+   * 2. Encomendas com prazo: 3 dias antes, 1 dia antes e no dia da entrega
+   * 3. Eventos: 1 dia antes, 1 hora antes e na hora do evento
+   */
+  scheduleAll() {
+    if (this._debounceTimer) clearTimeout(this._debounceTimer);
+    this._debounceTimer = setTimeout(() => {
+      this._executeSchedule();
+    }, 1500);
+  },
+
+  async _executeSchedule() {
+    if (!this.isNative() || !this._ready || !this._plugin) {
+      return;
+    }
+
+    try {
+      // 1. Cancela notificações pendentes anteriores para re-agendamento limpo
+      const pending = await this._plugin.getPending();
+      if (pending && pending.notifications && pending.notifications.length > 0) {
+        await this._plugin.cancel({
+          notifications: pending.notifications.map(n => ({ id: n.id }))
+        });
+      }
+
+      const notifications = [];
+      const now = new Date();
+      let notifId = 1000;
+
+      // -------------------------------------------------------------
+      // 1. ROTINA DIÁRIA (HÁBITOS PENDENTES) - De 3 em 3 horas
+      // Horários: 08:00, 11:00, 14:00, 17:00, 20:00
+      // -------------------------------------------------------------
+      const habits = (typeof HabitManager !== 'undefined' && HabitManager.habits) ? HabitManager.habits : [];
+      const routineHours = [8, 11, 14, 17, 20];
+      const dayMap = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sab' };
+
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const targetDate = new Date(now);
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const dayOfWeek = targetDate.getDay();
+        const dayKey = dayMap[dayOfWeek];
+
+        const scheduledHabits = habits.filter(h => {
+          if (!h.days || h.days.length === 0) return true;
+          return h.days.includes(dayKey);
+        });
+
+        const pendingHabits = (dayOffset === 0)
+          ? scheduledHabits.filter(h => !h.done)
+          : scheduledHabits;
+
+        if (pendingHabits.length === 0) continue;
+
+        for (const hour of routineHours) {
+          const schedTime = new Date(targetDate);
+          schedTime.setHours(hour, 0, 0, 0);
+
+          if (schedTime > now) {
+            notifications.push({
+              id: notifId++,
+              title: '🔄 Rotina EEX Pendente',
+              body: `Você tem ${pendingHabits.length} hábito(s) da rotina diária pendentes hoje! Não deixe acumular 💪`,
+              schedule: { at: schedTime },
+              sound: 'default'
+            });
+          }
+        }
+      }
+
+      // -------------------------------------------------------------
+      // 2. ENCOMENDAS & TAREFAS COM PRAZO
+      // - 3 dias antes (09:00)
+      // - 1 dia antes (09:00)
+      // - No dia da entrega (09:00)
+      // -------------------------------------------------------------
+      const tasks = (typeof TaskManager !== 'undefined' && TaskManager.tasks) ? TaskManager.tasks : [];
+      for (const task of tasks) {
+        if (task.completed || !task.dueDate) continue;
+
+        const dueDate = new Date(task.dueDate.includes('T') ? task.dueDate : `${task.dueDate}T09:00:00`);
+        if (isNaN(dueDate.getTime())) continue;
+
+        const title = task.title || 'Encomenda';
+
+        // 3 dias antes às 09:00
+        const threeDaysBefore = new Date(dueDate);
+        threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+        threeDaysBefore.setHours(9, 0, 0, 0);
+        if (threeDaysBefore > now) {
+          notifications.push({
+            id: notifId++,
+            title: '📦 Entregar em 3 dias!',
+            body: `A encomenda "${title}" vence em 3 dias! Prepare o envio ⏰`,
+            schedule: { at: threeDaysBefore },
+            sound: 'default'
+          });
+        }
+
+        // 1 dia antes às 09:00
+        const oneDayBefore = new Date(dueDate);
+        oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+        oneDayBefore.setHours(9, 0, 0, 0);
+        if (oneDayBefore > now) {
+          notifications.push({
+            id: notifId++,
+            title: '🚨 Entregar amanhã!',
+            body: `A encomenda "${title}" precisa ser despachada amanhã! 📦`,
+            schedule: { at: oneDayBefore },
+            sound: 'default'
+          });
+        }
+
+        // No dia da entrega às 09:00
+        const dayOf = new Date(dueDate);
+        dayOf.setHours(9, 0, 0, 0);
+        if (dayOf > now) {
+          notifications.push({
+            id: notifId++,
+            title: '🔴 Dia de Entrega!',
+            body: `A encomenda "${title}" vence HOJE! Finalize e entregue no prazo! 🚨`,
+            schedule: { at: dayOf },
+            sound: 'default'
+          });
+        }
+      }
+
+      // -------------------------------------------------------------
+      // 3. EVENTOS & LEMBRETES
+      // - 1 dia antes (09:00)
+      // - 1 hora antes do horário
+      // - No momento do evento
+      // -------------------------------------------------------------
+      const events = (typeof EventManager !== 'undefined' && EventManager.events) ? EventManager.events : [];
+      for (const ev of events) {
+        if (ev.done || !ev.date) continue;
+
+        const timeStr = ev.time || '09:00';
+        const eventDateTime = new Date(`${ev.date}T${timeStr}:00`);
+        if (isNaN(eventDateTime.getTime())) continue;
+
+        const evTitle = ev.title || 'Evento';
+
+        // 1 dia antes às 09:00
+        const dayBefore = new Date(eventDateTime);
+        dayBefore.setDate(dayBefore.getDate() - 1);
+        dayBefore.setHours(9, 0, 0, 0);
+        if (dayBefore > now) {
+          notifications.push({
+            id: notifId++,
+            title: '📅 Evento Amanhã!',
+            body: `Lembrete: "${evTitle}" acontece amanhã às ${timeStr} 🎯`,
+            schedule: { at: dayBefore },
+            sound: 'default'
+          });
+        }
+
+        // 1 hora antes
+        const oneHourBefore = new Date(eventDateTime);
+        oneHourBefore.setHours(oneHourBefore.getHours() - 1);
+        if (oneHourBefore > now) {
+          notifications.push({
+            id: notifId++,
+            title: '⏰ Evento próximo!',
+            body: `O evento "${evTitle}" começa em 1 hora! Prepare-se 🚀`,
+            schedule: { at: oneHourBefore },
+            sound: 'default'
+          });
+        }
+
+        // No horário do evento
+        if (eventDateTime > now) {
+          notifications.push({
+            id: notifId++,
+            title: '🎯 Evento agora!',
+            body: `O evento "${evTitle}" está acontecendo agora! 🔔`,
+            schedule: { at: eventDateTime },
+            sound: 'default'
+          });
+        }
+      }
+
+      // Agenda até 64 notificações no dispositivo
+      if (notifications.length > 0) {
+        const batch = notifications.slice(0, 64);
+        await this._plugin.schedule({ notifications: batch });
+        console.log(`✅ [NotificationManager] ${batch.length} notificações locais agendadas.`);
+      }
+    } catch (err) {
+      console.error('❌ [NotificationManager] Erro ao agendar notificações:', err);
+    }
+  },
+
+  async testNotification() {
+    if (this.isNative() && this._plugin) {
+      try {
+        if (!this._ready) {
+          const res = await this._plugin.requestPermissions();
+          this._ready = res && res.display === 'granted';
+        }
+        if (!this._ready) {
+          AppUI.showToast('❌ Permissão de notificações negada no Android.');
+          return;
+        }
+
+        const testDate = new Date(Date.now() + 5000);
+        await this._plugin.schedule({
+          notifications: [{
+            id: 9999,
+            title: '🚀 Elgaly Express: Notificação Ativa!',
+            body: 'Suas notificações nativas estão funcionando com sucesso! 📦',
+            schedule: { at: testDate },
+            sound: 'default'
+          }]
+        });
+        AppUI.showToast('🔔 Notificação teste agendada para daqui a 5 segundos!');
+      } catch (e) {
+        console.error('Erro ao testar notificação:', e);
+        AppUI.showToast('⚠️ Erro ao enviar notificação de teste.');
+      }
+    } else {
+      PWAManager.testNotification();
+    }
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE PWA & NOTIFICAÇÕES (PWAManager)
 // Instalação na tela inicial do celular/PC e alertas operacionais
 // ==========================================================================
@@ -701,6 +976,7 @@ const AppUI = {
     HabitManager.init();
     EventManager.init();
     PWAManager.init();
+    NotificationManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -1272,7 +1548,7 @@ const AppUI = {
     });
     const btnPWANotify = document.getElementById('btnPWANotify');
     if (btnPWANotify) {
-      btnPWANotify.addEventListener('click', () => PWAManager.testNotification());
+      btnPWANotify.addEventListener('click', () => NotificationManager.testNotification());
     }
 
     // 18. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
@@ -1344,6 +1620,7 @@ const AppUI = {
     this.renderProfileView();
     this.renderConfiguracoes();
     ReportEngine.renderReportPreview();
+    NotificationManager.scheduleAll();
   },
 
   /**

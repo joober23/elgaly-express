@@ -1,66 +1,60 @@
-# 📦 Elgaly Express - Sistema de Rotina & Despacho Dimensional
+# ⚡ Elgaly Express (EEX)
 
-Aplicação web inspirada no universo ficcional **Elgaly Express**! Desenvolvida para organizar suas rotinas da **Faculdade** e da **Vida Pessoal**, com acompanhamento de hábitos diários, cálculo de agilidade/prazos, passaporte de entregador anos 2000 (`nickname.express.com`) com **Sincronização em Nuvem (Firebase Cloud Firestore)** e emissão de relatórios oficiais em **PDF** com logotipo oficial.
-
----
-
-## ⚡ Novidades desta Versão
-
-### 1. ☁️ Sincronização em Tempo Real (Firebase + Google)
-- Integrado oficialmente com o seu projeto Firebase (`elgaly-express-230108`).
-- **Sincronização PC ⇄ Celular**: Tudo o que você cadastrar, marcar ou editar no computador aparece instantaneamente no seu celular sem precisar recarregar a página!
-- **Modo Offline**: Se estiver sem internet, o app guarda as alterações no cache e sincroniza com a nuvem assim que você se reconectar.
-
-### 2. 🖥️ Navbar Inteligente no Computador (Auto-Hide)
-- Ao rolar a página para baixo no desktop, o cabeçalho se esconde suavemente para dar espaço total de leitura.
-- Ao rolar minimamente para cima, o cabeçalho reaparece instantaneamente.
-
-### 3. 📱 Menu Lateral Deslizante no Celular (Mobile Drawer)
-- Em telas menores (smartphones), a barra de navegação se transforma em um **menu lateral estilo gaveta**.
-- Botão hambúrguer estilizado (**☰**) no topo esquerdo que abre o painel deslizante com animação e efeito de fundo desfocado.
-
-### 4. 📄 Relatório em PDF com Logotipo Oficial
-- Emita relatórios para **7, 15 ou 30 dias** com o logotipo da Elgaly Express em alta resolução, carimbo de Rank (Rank S, A, B, C) e manifesto de tarefas.
+Sistema de Gestão de Rotinas, Encomendas Dimensionais e Agenda de Eventos.
 
 ---
 
-## 🌐 Como Colocar no GitHub Pages & Autorizar o Firebase
+## 📱 Como Baixar o APK do Aplicativo Android (via GitHub Actions)
 
-### Passo 1: Enviar os arquivos para o GitHub
-Abra a pasta `C:\Users\livin\.gemini\antigravity\scratch\elgaly-express` e envie:
-```bash
-git init
-git add .
-git commit -m "Adiciona sincronizacao Firebase e menu lateral mobile"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/elgaly-express.git
-git push -u origin main
-```
-No GitHub, vá em **Settings** > **Pages** > escolha a branch `main` e salve!
+Não é necessário ter o Android Studio instalado no seu computador! O GitHub compila o APK nas nuvens automaticamente.
 
-### Passo 2: Autorizar seu domínio no Firebase (Importante para o Login com Google no GitHub!)
-Por segurança, o Firebase só aceita logins dos domínios autorizados por você:
-1. Acesse o [Console do Firebase](https://console.firebase.google.com/) no seu projeto `elgaly-express-230108`.
-2. Vá em **Authentication** > aba **Configurações** (ou *Settings*) > **Domínios autorizados**.
-3. O `localhost` já vem autorizado (por isso funciona no seu PC!).
-4. Clique em **Adicionar domínio** e digite o domínio do seu GitHub Pages:
-   `SEU_USUARIO.github.io`
-5. Clique em **Salvar**.
+### Passo a Passo:
 
-Pronto! Agora o login com Google e a sincronização em nuvem funcionarão tanto no seu computador quanto no seu celular online!
+1. **Suba as alterações para o seu repositório GitHub:**
+   ```bash
+   git add .
+   git commit -m "feat: suporte a Capacitor e notificações nativas"
+   git push origin main
+   ```
+2. **Abra o repositório no seu navegador:**
+   - Clique na aba **"Actions"** no topo da página do GitHub.
+   - Você verá o fluxo **"Build Android APK"** sendo executado.
+3. **Baixe o arquivo `.apk`:**
+   - Quando o fluxo concluir (aparecerá um ícone verde ✅), clique nele.
+   - Role até a seção **"Artifacts"** no final da página.
+   - Clique em **`elgaly-express-debug-apk`** para baixar o arquivo zip.
+   - Extraia o `.apk` e envie para o seu celular (via WhatsApp, Google Drive, cabo USB ou Telegram).
+4. **Instalação no celular:**
+   - Toque no arquivo `.apk` no seu celular para instalar.
+   - Se o Android pedir, permita a instalação de "Fontes desconhecidas" para o gerenciador de arquivos/navegador.
 
 ---
 
-## 📁 Estrutura de Arquivos
-```text
-elgaly-express/
-├── index.html           # Estrutura com drawer mobile e abas SPA
-├── style.css            # Estilo neo-brutalista, drawer mobile e auto-hide
-├── firebase-service.js  # Conexão Firebase Auth e Firestore em tempo real
-├── app.js               # Gerenciador de rotinas, UI e navegação
-├── report.js            # Motor analítico e gerador de PDF com logotipo
-├── README.md            # Documentação e instruções de deploy
-├── images/
-│   └── elgalylogo.png    # Logotipo oficial da Elgaly Express
-└── vendor/              # Bibliotecas locais offline (jsPDF e Confetti)
-```
+## 🔔 Sistema de Notificações Inteligentes
+
+O Elgaly Express agenda alertas locais automáticos no seu dispositivo:
+
+1. **🔄 Rotina Diária (A cada 3 horas):**
+   - Disparos automáticos às **08:00**, **11:00**, **14:00**, **17:00** e **20:00**.
+   - Notifica apenas quando ainda houver hábitos programados para o dia que não foram marcados como concluídos.
+   - Planejado para os próximos 7 dias com base nos dias da semana definidos para cada hábito.
+
+2. **📦 Encomendas & Prazos:**
+   - **3 dias antes** do prazo (às 09:00): *"📦 Entregar em 3 dias! A encomenda [Nome] vence em 3 dias!"*
+   - **1 dia antes** do prazo (às 09:00): *"🚨 Entregar amanhã! A encomenda [Nome] precisa ser despachada amanhã!"*
+   - **No dia do vencimento** (às 09:00): *"🔴 Dia de Entrega! A encomenda [Nome] vence HOJE!"*
+
+3. **📅 Eventos & Lembretes:**
+   - **1 dia antes** (às 09:00): *"📅 Evento Amanhã! Lembrete do evento [Nome]"*
+   - **1 hora antes** do horário marcado: *"⏰ Evento próximo! O evento [Nome] começa em 1 hora!"*
+   - **No horário do evento**: *"🎯 Evento agora! O evento [Nome] está acontecendo agora!"*
+
+---
+
+## ⚙️ Tecnologias
+
+- **Core:** HTML5, CSS3 Brutalista/Cyberpunk, JavaScript Vanilla (ES6+)
+- **Cloud & Auth:** Firebase Auth (Google) & Cloud Firestore
+- **Mobile Engine:** Capacitor 6 (@capacitor/android, @capacitor/local-notifications)
+- **Offline & Web:** Service Worker & PWA Manifest
+- **CI/CD:** GitHub Actions (Build automático de APK Debug)

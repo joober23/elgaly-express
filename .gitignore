@@ -1,0 +1,19 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+
+# Capacitor web export
+www/
+
+# Capacitor / Mobile builds
+android/
+ios/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env
+.env.local
