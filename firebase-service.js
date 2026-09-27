@@ -58,6 +58,21 @@ const FirebaseService = {
       });
 
       this.setupAuthStateListener();
+
+      // Inicializa GoogleAuth nativo caso esteja rodando como app Capacitor
+      if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
+        try {
+          window.Capacitor.Plugins.GoogleAuth.initialize({
+            clientId: '1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com',
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true
+          });
+          console.log('📱 GoogleAuth nativo inicializado no Capacitor.');
+        } catch (e) {
+          console.warn('GoogleAuth init:', e);
+        }
+      }
+
       console.log('⚡ Firebase conectado com sucesso!');
     } catch (err) {
       console.error('Erro ao inicializar Firebase:', err);
@@ -132,7 +147,7 @@ const FirebaseService = {
   },
 
   /**
-   * Realiza login popup com a Conta Google
+   * Realiza login com a Conta Google (Nativo no Android/APK e Pop-up no Navegador/PWA)
    */
   async loginWithGoogle() {
     if (!this.isInitialized) {
@@ -140,6 +155,38 @@ const FirebaseService = {
       return;
     }
 
+    const isNative = typeof window !== 'undefined' &&
+      window.Capacitor &&
+      window.Capacitor.isNativePlatform &&
+      window.Capacitor.isNativePlatform();
+
+    // 1. SE ESTIVER NO APLICATIVO NATIVO (APK ANDROID): Login nativo direto com Google Play Services
+    if (isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
+      try {
+        console.log('📱 Iniciando login nativo com Google Play Services...');
+        const googleUser = await window.Capacitor.Plugins.GoogleAuth.signIn();
+        if (googleUser && googleUser.authentication && googleUser.authentication.idToken) {
+          const credential = firebase.auth.GoogleAuthProvider.credential(googleUser.authentication.idToken);
+          await this.auth.signInWithCredential(credential);
+          console.log('✅ Login nativo com Firebase concluído com sucesso!');
+          const modal = document.getElementById('modalAuth');
+          if (modal) modal.classList.remove('active');
+          return;
+        } else {
+          throw new Error('Não foi possível obter o token de autenticação do Google.');
+        }
+      } catch (nativeErr) {
+        console.error('Erro no login nativo do Google:', nativeErr);
+        if (nativeErr && (nativeErr.error === '12501' || (typeof nativeErr === 'string' && nativeErr.includes('12501')) || nativeErr.message?.includes('12501') || nativeErr.message?.includes('canceled') || nativeErr.message?.includes('cancelled'))) {
+          // Usuário fechou ou cancelou o diálogo de seleção de conta
+          return;
+        }
+        alert('Erro no login nativo do Google: ' + (nativeErr.message || JSON.stringify(nativeErr)));
+        return;
+      }
+    }
+
+    // 2. SE ESTIVER NO NAVEGADOR / PWA: Login via Pop-up Web
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
@@ -183,6 +230,11 @@ const FirebaseService = {
     this.stopRealtimeSync();
     if (this.auth && this.auth.currentUser) {
       await this.auth.signOut();
+    }
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
+      try {
+        await window.Capacitor.Plugins.GoogleAuth.signOut();
+      } catch (e) {}
     }
   },
 

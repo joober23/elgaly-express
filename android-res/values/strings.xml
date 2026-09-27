@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Elgaly Express</string>
+    <string name="title_activity_main">Elgaly Express</string>
+    <string name="package_name">com.elgaly.express</string>
+    <string name="custom_url_scheme">com.elgaly.express</string>
+    <string name="server_client_id">1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com</string>
+</resources>

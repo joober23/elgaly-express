@@ -9,6 +9,11 @@
     "LocalNotifications": {
       "smallIcon": "ic_launcher_foreground",
       "iconColor": "#3a154d"
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
     }
   }
 }

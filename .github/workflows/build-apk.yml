@@ -43,6 +43,7 @@ jobs:
           npx cap add android
           npx cap sync android
           cp -r android-res/* android/app/src/main/res/
+          cp android-overrides/MainActivity.java android/app/src/main/java/com/elgaly/express/MainActivity.java
         env:
           CI: true
 
