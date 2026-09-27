@@ -65,7 +65,7 @@ const FirebaseService = {
           window.Capacitor.Plugins.GoogleAuth.initialize({
             clientId: '1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com',
             scopes: ['profile', 'email'],
-            grantOfflineAccess: true
+            grantOfflineAccess: false
           });
           console.log('📱 GoogleAuth nativo inicializado no Capacitor.');
         } catch (e) {
@@ -223,33 +223,7 @@ const FirebaseService = {
     }
   },
 
-  /**
-   * Realiza login ou registro direto com E-mail e Senha / PIN
-   */
-  async loginWithEmail(email, password) {
-    if (!this.isInitialized) {
-      alert('Firebase ainda não inicializado. Verifique sua conexão com a internet.');
-      return;
-    }
-    try {
-      await this.auth.signInWithEmailAndPassword(email, password);
-    } catch (err) {
-      if (err.code === 'auth/user-not-found') {
-        try {
-          await this.auth.createUserWithEmailAndPassword(email, password);
-          return;
-        } catch (regErr) {
-          alert('Erro ao criar conta com e-mail: ' + regErr.message);
-          return;
-        }
-      }
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        alert('❌ Senha ou PIN incorreto para este e-mail.');
-        return;
-      }
-      alert('Erro na autenticação: ' + err.message);
-    }
-  },
+
 
   /**
    * Realiza logout

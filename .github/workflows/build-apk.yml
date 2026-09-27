@@ -53,6 +53,7 @@ jobs:
         run: |
           mkdir -p ~/.android
           cp android-overrides/debug.keystore ~/.android/debug.keystore
+          cp android-overrides/debug.keystore android/app/debug.keystore
 
       - name: Make gradlew executable
         working-directory: android
@@ -63,6 +64,10 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx4g"
+
+      - name: Verify APK signature SHA-1
+        run: |
+          keytool -printcert -jarfile android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

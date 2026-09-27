@@ -1116,24 +1116,6 @@ const AppUI = {
       });
     });
 
-    // 2.1 Formulário de Login Direto com E-mail + PIN/Senha
-    const formEmailDirect = document.getElementById('formEmailDirectLogin');
-    if (formEmailDirect) {
-      formEmailDirect.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = (document.getElementById('directLoginEmail').value || '').trim();
-        const pass = (document.getElementById('directLoginPass').value || '').trim();
-        if (!email || !pass) return;
-        if (pass.length < 6) {
-          AppUI.showToast('⚠️ A senha ou PIN deve ter pelo menos 6 dígitos!');
-          return;
-        }
-        if (typeof FirebaseService !== 'undefined') {
-          await FirebaseService.loginWithEmail(email, pass);
-        }
-      });
-    }
-
     // 3. Formulário de Onboarding da Rede EEX (primeiro acesso após Google login)
     const formOnboarding = document.getElementById('formOnboarding');
     if (formOnboarding) {
