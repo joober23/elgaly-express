@@ -45,6 +45,18 @@ const FirebaseService = {
       });
 
       this.isInitialized = true;
+      
+      // Processa retorno de autenticação via redirecionamento
+      this.auth.getRedirectResult().then(result => {
+        if (result && result.user) {
+          console.log('✅ Autenticação por redirecionamento concluída:', result.user.email);
+        }
+      }).catch(err => {
+        if (err.code !== 'auth/null-user') {
+          console.warn('Aviso getRedirectResult:', err);
+        }
+      });
+
       this.setupAuthStateListener();
       console.log('⚡ Firebase conectado com sucesso!');
     } catch (err) {
