@@ -149,16 +149,30 @@ const FirebaseService = {
       if (modal) modal.classList.remove('active');
     } catch (err) {
       console.error('Erro ao fazer login com Google:', err);
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-        try {
-          const provider = new firebase.auth.GoogleAuthProvider();
-          await this.auth.signInWithRedirect(provider);
-        } catch (redirErr) {
-          alert('Erro ao conectar com Google: ' + redirErr.message);
-        }
-      } else {
-        alert('Erro ao autenticar com o Google: ' + err.message);
+
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        console.log('Login cancelado pelo usuário.');
+        return;
       }
+
+      if (err.code === 'auth/unauthorized-domain') {
+        const domain = window.location.hostname;
+        alert(
+          `⚠️ Domínio não autorizado no Firebase!\n\n` +
+          `O domínio "${domain}" precisa ser adicionado no Console do Firebase:\n` +
+          `1. Acesse https://console.firebase.google.com\n` +
+          `2. Vá em Authentication > Configurações > Domínios autorizados\n` +
+          `3. Clique em "Adicionar domínio" e digite: ${domain}`
+        );
+        return;
+      }
+
+      if (err.code === 'auth/popup-blocked') {
+        alert('⚠️ O seu navegador bloqueou a janela pop-up de login do Google. Por favor, autorize pop-ups para este site e tente novamente.');
+        return;
+      }
+
+      alert('Erro ao autenticar com o Google (' + err.code + '): ' + err.message);
     }
   },
 
