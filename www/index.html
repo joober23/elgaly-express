@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Elgaly Express - Despacho & Rotina Dimensional</title>
+  
+  <!-- Fontes Oficiais: Darumadrop One e Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darumadrop+One&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- SDKs do Firebase (Compatibilidade Direta via CDN para GitHub Pages) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Folha de Estilos Modular -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Metadados PWA & Mobile -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#3a154d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Elgaly Express">
+  <link rel="apple-touch-icon" href="images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       MENU LATERAL MOBILE (DRAWER GAVETA DESLIZANTE)
+       ========================================================================== -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <aside class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <span class="drawer-title">ELGALY EXPRESS</span>
+      <button class="drawer-close" id="btnCloseDrawer" aria-label="Fechar Menu">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <a href="#inicio" class="drawer-nav-link active" data-tab="inicio">🏠 Início</a>
+      <a href="#rotina" class="drawer-nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+      <a href="#encomendas" class="drawer-nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
+      <a href="#relatorios" class="drawer-nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
+      <a href="#configuracoes" class="drawer-nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+      
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn-comic action-new-task" style="flex: 1;">
+          ⚡ + Encomenda
+        </button>
+        <button class="btn-comic btn-secondary action-new-event" style="flex: 1;">
+          📅 + Evento
+        </button>
+      </div>
+
+      <button type="button" class="btn-comic btn-purple btn-pwa-install" id="btnDrawerPWAInstall" style="margin-top: 10px; width: 100%; display: none; background: var(--purple-main); color: var(--white);">
+        📲 Instalar App no Celular
+      </button>
+    </div>
+
+    <div class="drawer-footer">
+      <small style="font-weight: 800; color: var(--purple-dark);">Terminal de Despacho NA (Nova Arcanis)</small>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       CABEÇALHO COM AUTO-HIDE NO DESKTOP & BOTÃO HAMBÚRGUER MOBILE
+       ========================================================================== -->
+  <header>
+    <div class="header-top-bar">
+      <!-- Botão Hambúrguer (Visível no Celular quando logado) -->
+      <button class="btn-mobile-menu" id="btnMobileMenu" aria-label="Abrir Menu">
+        ☰
+      </button>
+
+      <!-- Logotipo Oficial Centralizado -->
+      <a href="#inicio" class="logo-wrapper" title="Elgaly Express - Início">
+        <img src="images/elgalylogo.png" alt="Elgaly Express" class="logo" id="mainLogo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
+        <div id="logoFallback" class="logo-fallback">ELGALY EXPRESS</div>
+      </a>
+
+      <!-- Área de Autenticação / Perfil + Tema -->
+      <div class="header-auth-box">
+        <button id="btnHeaderTheme" class="btn-theme-toggle" title="Alternar Modo Escuro / Claro" aria-label="Alternar Tema">🌙</button>
+        <a href="#perfil" class="header-user-badge">
+          <img src="images/elgalylogo.png" alt="Avatar" class="header-user-avatar">
+          <span class="header-user-nick">agente.express.com</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Navegação Desktop (Abas) -->
+    <nav class="desktop-nav">
+      <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
+      <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+      <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
+      <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil EEX</a>
+      <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+      <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
+      <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- ==========================================================================
+         PORTÃO DE ACESSO OBRIGATÓRIO (EXIBIDO QUANDO NÃO ESTIVER LOGADO)
+         ========================================================================== -->
+    <div class="auth-gateway-container" id="authGateway" style="display: none;">
+      <div class="auth-gateway-header">
+        <img src="images/elgalylogo.png" alt="Elgaly Express" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;">
+        <h2>REDE EEX</h2>
+        <p>Identifique-se para acessar o sistema de despacho e rotinas.</p>
+      </div>
+
+      <!-- Login principal: apenas Google -->
+      <div class="auth-main-login">
+        <button type="button" class="btn-google-login-action action-google-login" style="width:100%;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15z"/></svg>
+          Entrar com Conta Google
+        </button>
+        <div class="auth-hint">Sincronização automática entre dispositivos via Firebase.</div>
+
+        <!-- Crachás Salvos -->
+        <div class="saved-badges-section" id="savedBadgesSection" style="display:none;">
+          <div class="saved-badges-title">🏷️ Ou escolha um crachá salvo neste aparelho:</div>
+          <div class="saved-badges-list" id="savedBadgesList"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==========================================================================
+         CONTAINER DAS VISUALIZAÇÕES PRINCIPAIS (PROTEGIDAS POR AUTENTICAÇÃO)
+         ========================================================================== -->
+    <div id="appViewsContainer">
+
+      
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 1: INÍCIO (PAINEL GERAL & CUMPRIMENTO)
+           ========================================================================== -->
+      <div class="app-view active-view" id="view-inicio">
+        
+        <!-- Hero Banner com Saudação Dinâmica -->
+        <section class="hero floating-anim">
+          <h1 id="homeGreetingTitle">SEM TEMPO PARA DESCANSO!</h1>
+          <p class="lead" id="homeGreetingSubtitle">
+            Entregando cartas, organizando encomendas e gerenciando sua rotina em toda a ilha de Elgaly Edge!
+          </p>
+          
+          <div>
+            <div class="sticker-tag pulse-anim">
+              Frete Grátis com 99% de Chance de Sobrevivência!
+            </div>
+          </div>
+
+          <!-- Indicadores Rápidos -->
+          <div class="hero-quick-stats">
+            <div class="quick-stat-card">
+              <span class="stat-icon">⏳</span>
+              <span class="stat-value" id="statActiveTasks">0</span>
+              <span class="stat-label">Em Rota (Pendentes)</span>
+            </div>
+            <div class="quick-stat-card">
+              <span class="stat-icon">✅</span>
+              <span class="stat-value" id="statCompletedTasks">0</span>
+              <span class="stat-label">Entregas Feitas</span>
+            </div>
+            <div class="quick-stat-card">
+              <span class="stat-icon">🔥</span>
+              <span class="stat-value" id="statHabitStreak">0/0</span>
+              <span class="stat-label">Hábitos de Hoje</span>
+            </div>
+            <div class="quick-stat-card">
+              <span class="stat-icon">⚠️</span>
+              <span class="stat-value" id="statOverdueTasks" style="color: var(--red-alert);">0</span>
+              <span class="stat-label">Em Atraso</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Resumo Rápido da Rota -->
+        <section class="home-summary-box">
+          <div class="home-summary-header">
+            <div>
+              <h3>Hoje na Sua Rota de Despacho</h3>
+              <span style="font-weight: 700; color: var(--purple-main);" id="homeDateDisplay">Hoje</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-comic btn-secondary action-new-habit">+ Hábito</button>
+              <button class="btn-comic action-new-task">+ Encomenda</button>
+              <button class="btn-comic btn-purple action-new-event" style="background: var(--purple-main); color: var(--white);">+ Evento</button>
+            </div>
+          </div>
+
+          <div class="home-urgent-grid" id="homeUrgentList">
+            <!-- Preenchido pelo app.js -->
+          </div>
+        </section>
+
+        <!-- Seção de Próximos Eventos & Lembretes (Provas, Reuniões, etc.) -->
+        <section class="home-summary-box" style="margin-top: 24px;">
+          <div class="home-summary-header">
+            <div>
+              <h3>📅 Próximos Eventos & Lembretes</h3>
+              <span style="font-weight: 700; color: var(--purple-main);">Provas da faculdade, compromissos e datas importantes</span>
+            </div>
+            <button class="btn-comic action-new-event">+ Novo Evento</button>
+          </div>
+
+          <div class="events-grid" id="homeEventsGrid">
+            <!-- Preenchido dinamicamente pelo app.js -->
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 2: ROTINA DIÁRIA (CHECK-IN DE HÁBITOS)
+           ========================================================================== -->
+      <div class="app-view" id="view-rotina">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">CHECK-IN DO ENTREGADOR</h2>
+            <div class="section-subtitle">Tarefas Diárias & Hábitos Contínuos</div>
+          </div>
+
+          <div class="daily-routine-box">
+            <div class="daily-header">
+              <div class="daily-date-title">
+                <h3 id="currentDateDisplay">Hoje</h3>
+                <span>Sincronizado com os Vórtices Temporais</span>
+              </div>
+
+              <div class="daily-progress-wrap">
+                <div class="progress-label-bar">
+                  <span>Progresso dos Hábitos</span>
+                  <span id="dailyProgressText">0 de 0 (0%)</span>
+                </div>
+                <div class="custom-progress-bar">
+                  <div class="custom-progress-fill" id="dailyProgressFill"></div>
+                </div>
+              </div>
+
+              <button class="btn-comic btn-secondary action-new-habit">+ Adicionar Hábito</button>
+            </div>
+
+            <!-- Grade de Hábitos -->
+            <div class="daily-habits-grid" id="dailyHabitsGrid">
+              <!-- Hábitos inseridos dinamicamente pelo app.js -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 3: ENCOMENDAS COM PRAZO (FACULDADE & PESSOAL)
+           ========================================================================== -->
+      <div class="app-view" id="view-encomendas">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">CENTRAL DE ENCOMENDAS</h2>
+            <div class="section-subtitle">Prazos, Trabalhos da Faculdade & Missões Pessoais</div>
+          </div>
+
+          <!-- Alternador de Subvisão: Encomendas vs Eventos -->
+          <div class="subnav-tabs">
+            <button class="subnav-btn active" id="tabBtnTasks" data-sub="tasks">📦 Encomendas Dimensionais</button>
+            <button class="subnav-btn" id="tabBtnEvents" data-sub="events">📅 Eventos & Lembretes de Provas</button>
+          </div>
+
+          <!-- SUB-VISÃO 1: ENCOMENDAS -->
+          <div id="subviewTasks">
+            <!-- Barra de Controle, Filtros e Busca Integrada -->
+            <div class="tasks-control-bar">
+              <div class="filter-group">
+                <button class="filter-btn active" data-filter="todas">🌟 Todas</button>
+                <button class="filter-btn" data-filter="faculdade">🎓 Faculdade</button>
+                <button class="filter-btn" data-filter="pessoal">👤 Pessoal</button>
+                <button class="filter-btn" data-filter="pendentes">⏳ Pendentes</button>
+                <button class="filter-btn" data-filter="concluidas">✅ Concluídas</button>
+              </div>
+
+              <div class="task-search-wrap">
+                <input type="text" id="taskSearchInput" class="task-search-input" placeholder="🔍 Buscar por código ou nome...">
+              </div>
+
+              <button class="btn-comic btn-purple action-new-task">
+                + Nova Encomenda
+              </button>
+            </div>
+
+            <!-- Grade de Encomendas -->
+            <div class="tasks-grid" id="tasksGrid">
+              <!-- Tarefas inseridas dinamicamente pelo app.js -->
+            </div>
+          </div>
+
+          <!-- SUB-VISÃO 2: EVENTOS & LEMBRETES -->
+          <div id="subviewEvents" style="display: none;">
+            <div class="events-section-header">
+              <div>
+                <h3 style="font-size: 1.4rem; color: var(--purple-dark); margin: 0;">Compromissos & Datas Importantes</h3>
+                <span style="font-size: 0.88rem; font-weight: 700; color: var(--purple-main);">Lembretes pontuais: provas acadêmicas, aniversários, consultas e prazos fixos</span>
+              </div>
+              <button class="btn-comic action-new-event">+ Novo Evento</button>
+            </div>
+
+            <div class="events-grid" id="eventsGrid">
+              <!-- Eventos inseridos dinamicamente pelo app.js -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 4: CENTRAL DE RELATÓRIOS & PDF
+           ========================================================================== -->
+      <div class="app-view" id="view-relatorios">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">DESPACHO & AUDITORIA OPERACIONAL</h2>
+            <div class="section-subtitle">Avaliação Periódica de Pontualidade & Agilidade</div>
+          </div>
+
+          <div class="report-panel">
+            
+            <!-- Seletor de Período: 7, 15 ou 30 Dias -->
+            <div class="report-timeframe-picker">
+              <button class="timeframe-btn active" data-days="7">📅 Últimos 7 Dias (Semanal)</button>
+              <button class="timeframe-btn" data-days="15">📅 Últimos 15 Dias (Quinzenal)</button>
+              <button class="timeframe-btn" data-days="30">📅 Últimos 30 Dias (Mensal)</button>
+            </div>
+
+            <!-- Banner de Rank do Entregador -->
+            <div class="rank-banner">
+              <div class="rank-info">
+                <h3 id="reportRankTitle">Rank S: Entregador Lendário</h3>
+                <p id="reportRankDesc">Carregando análise dimensional do seu desempenho...</p>
+              </div>
+              <div class="rank-badge-stamp" id="reportRankStamp">
+                RANK S
+              </div>
+            </div>
+
+            <!-- Estatísticas Principais -->
+            <div class="report-stats-grid">
+              <div class="report-stat-card">
+                <div class="val" id="reportStatTotal">0/0</div>
+                <div class="desc">Entregas Concluídas</div>
+              </div>
+              <div class="report-stat-card">
+                <div class="val" id="reportStatOnTime" style="color: #059669;">100%</div>
+                <div class="desc">Taxa de Pontualidade</div>
+              </div>
+              <div class="report-stat-card">
+                <div class="val" id="reportStatSpeed" style="color: #2563eb;">0</div>
+                <div class="desc">Agilidade Antecipada</div>
+              </div>
+              <div class="report-stat-card">
+                <div class="val" id="reportStatHabits" style="color: #d97706;">0 dias</div>
+                <div class="desc">Dias com Rotina 100%</div>
+              </div>
+            </div>
+
+            <!-- Barra de Agilidade -->
+            <div class="speed-analysis-box">
+              <h4>Medidor de Velocidade das Entregas</h4>
+              <div class="speed-bars-list">
+                <div class="speed-row">
+                  <div class="speed-row-label">
+                    <span>⚡ Rápido / Antecipado</span>
+                    <span id="speedTxtFast">0 encomendas (0%)</span>
+                  </div>
+                  <div class="speed-bar-track">
+                    <div class="speed-bar-fill fast" id="speedBarFast"></div>
+                  </div>
+                </div>
+
+                <div class="speed-row">
+                  <div class="speed-row-label">
+                    <span>⏰ Concluído no Prazo Regular</span>
+                    <span id="speedTxtOntime">0 encomendas (0%)</span>
+                  </div>
+                  <div class="speed-bar-track">
+                    <div class="speed-bar-fill warning" id="speedBarOntime"></div>
+                  </div>
+                </div>
+
+                <div class="speed-row">
+                  <div class="speed-row-label">
+                    <span>🐢 Atrasado ou Pendente Vencido</span>
+                    <span id="speedTxtLate">0 encomendas (0%)</span>
+                  </div>
+                  <div class="speed-bar-track">
+                    <div class="speed-bar-fill late" id="speedBarLate"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparativo Faculdade vs Pessoal -->
+            <div class="category-breakdown-grid">
+              <div class="cat-breakdown-card facul">
+                <h5 style="color: #1e3a8a;">🎓 Setor Acadêmico (Faculdade)</h5>
+                <ul id="reportFaculStats">
+                  <li><span>Total de Entregas:</span> <strong>0</strong></li>
+                  <li><span>Concluídas:</span> <strong>0</strong></li>
+                  <li><span>Pontualidade:</span> <strong>100%</strong></li>
+                </ul>
+              </div>
+
+              <div class="cat-breakdown-card pessoal">
+                <h5 style="color: #78350f;">🌟 Setor Pessoal & Projetos</h5>
+                <ul id="reportPessoalStats">
+                  <li><span>Total de Entregas:</span> <strong>0</strong></li>
+                  <li><span>Concluídas:</span> <strong>0</strong></li>
+                  <li><span>Pontualidade:</span> <strong>100%</strong></li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Ação de Exportação com Logotipo no PDF -->
+            <div class="pdf-export-action-bar">
+              <button class="btn-generate-pdf" id="btnExportPDF">
+                📄 Emitir Relatório Oficial Elgaly Express (PDF)
+              </button>
+              <div style="margin-top: 10px; font-size: 0.95rem; font-weight: 700; color: #6b7280;">
+                Documento oficial em A4 com o logotipo oficial, dados do agente e carimbo de aprovação.
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 5: PERFIL EEX (CRACHÁ DE ENTREGADOR ANOS 2000)
+           ========================================================================== -->
+      <div class="app-view" id="view-perfil">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">PASSAPORTE DO ENTREGADOR EEX</h2>
+            <div class="section-subtitle">Credencial Operacional & Carreira Dimensional</div>
+          </div>
+
+          <div class="profile-section-wrap">
+            <div class="retro-id-badge" id="profileBadgeCard">
+              <!-- Preenchido dinamicamente pelo app.js -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO 6: CONFIGURAÇÕES & PREFERÊNCIAS EEX
+           ========================================================================== -->
+      <div class="app-view" id="view-configuracoes">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">CENTRAL DE CONFIGURAÇÕES EEX</h2>
+            <div class="section-subtitle">Tema, Segurança do Crachá, Localização & Sessão</div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Card 1: Aparência / Modo Escuro -->
+            <div class="settings-card">
+              <h3>🎨 Modo Escuro / Claro</h3>
+              <p>Escolha o tema que melhor combina com a sua rotina dimensional.</p>
+              <div class="theme-switch-row">
+                <span class="theme-switch-label" id="themeStatusLabel">Modo Claro</span>
+                <button type="button" class="btn-theme-toggle" id="btnThemeToggle">🌙 Alternar Tema</button>
+              </div>
+            </div>
+
+            <!-- Card 2: Segurança do Crachá (PIN de 6 dígitos) -->
+            <div class="settings-card">
+              <h3>🔐 Senha Numérica do Crachá (PIN)</h3>
+              <p>Atualize seu PIN de 6 dígitos para login rápido pelos crachás salvos neste dispositivo.</p>
+              <form class="comic-form" id="formChangePin">
+                <div class="form-group">
+                  <label for="cfgNewPin">Novo PIN de 6 Dígitos:</label>
+                  <input type="password" id="cfgNewPin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" required>
+                </div>
+                <button type="submit" class="btn-comic" style="width: 100%; margin-top: 8px;">
+                  🔑 Atualizar PIN
+                </button>
+              </form>
+            </div>
+
+            <!-- Card 3: Setor de Operações (Localização com Autocomplete SP) -->
+            <div class="settings-card">
+              <h3>📍 Setor de Operações (Cidade)</h3>
+              <p>Altere sua cidade operacional (com sugestão de todos os 645 municípios de SP).</p>
+              <form class="comic-form" id="formChangeLocation">
+                <div class="form-group">
+                  <label for="cfgLocation">Cidade / Setor:</label>
+                  <input type="text" id="cfgLocation" placeholder="Ex: São Paulo - SP" autocomplete="off" required>
+                  <div class="city-suggestions" id="cfgCitySuggestions"></div>
+                </div>
+                <button type="submit" class="btn-comic btn-secondary" style="width: 100%; margin-top: 8px;">
+                  📍 Salvar Localização
+                </button>
+              </form>
+            </div>
+
+            <!-- Card 4: Conta & Sessão -->
+            <div class="settings-card">
+              <h3>👤 Conta & Conexão</h3>
+              <p>Gerencie sua sessão ativa na Rede EEX.</p>
+              <div style="background: var(--white); border: 2.5px solid var(--black); border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 0.9rem;">
+                <div style="font-weight: 800; color: var(--purple-dark);" id="cfgUserName">Agente</div>
+                <div style="color: var(--purple-main); font-size: 0.8rem;" id="cfgUserEex">agente.express.com</div>
+              </div>
+              <button type="button" class="btn-comic" id="btnSettingsLogout" style="width: 100%; background: var(--red-alert); color: var(--white); border-color: var(--black);">
+                🚪 Sair da Conta (Logout)
+              </button>
+            </div>
+
+            <!-- Card 5: Aplicativo & Notificações -->
+            <div class="settings-card">
+              <h3>📲 Aplicativo & Notificações</h3>
+              <p>Alertas automáticos de rotina a cada 3h, avisos de encomendas (3 dias, amanhã, hoje) e eventos próximos.</p>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="btn-comic btn-pwa-install" id="btnSettingsPWAInstall" style="width: 100%; display: none;">
+                  📲 Instalar no Aparelho (Tela Inicial)
+                </button>
+                <button type="button" class="btn-comic btn-secondary" id="btnPWANotify" style="width: 100%;">
+                  🔔 Ativar & Testar Notificações
+                </button>
+                <div id="pwaStatusText" style="font-size: 0.8rem; color: #6b7280; font-weight: 700; text-align: center;">
+                  Notificações automáticas sincronizadas e ativas.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==========================================================================
+       MODAL DE EDIÇÃO DE PERFIL E FOTO DO DISPOSITIVO
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalEditProfile">
+    <div class="modal-content">
+      <button class="modal-close" id="modalEditProfileClose" aria-label="Fechar">&times;</button>
+      <h2>Editar Crachá & Informações</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Atualize seu nome, localização de despacho e foto de perfil.
+      </p>
+
+      <form class="comic-form" id="formEditProfile">
+        <div class="form-group">
+          <label for="editProfileName">👤 Nome de Exibição / Agente:</label>
+          <input type="text" id="editProfileName" required placeholder="Ex: Teleporte Pronto">
+        </div>
+
+        <div class="form-group">
+          <label for="editProfileLocation">📍 Setor de Operações (Localização):</label>
+          <input type="text" id="editProfileLocation" required placeholder="Ex: Nova Amerit - NA (Nova Arcanis)">
+        </div>
+
+        <div class="form-group">
+          <label>🖼️ Foto de Perfil (Carregar do Dispositivo):</label>
+          <div class="avatar-upload-wrap">
+            <div class="avatar-preview-box">
+              <img id="editAvatarPreview" src="images/elgalylogo.png" alt="Foto">
+            </div>
+            <input type="file" id="editAvatarInput" class="file-input-comic" accept="image/*">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-comic" style="margin-top: 10px;">
+          Salvar Alterações
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVA / EDITAR ENCOMENDA
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalTask">
+    <div class="modal-content">
+      <button class="modal-close" id="modalTaskClose" aria-label="Fechar">&times;</button>
+      <h2 id="modalTaskTitle">Nova Encomenda Dimensional</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Cadastre um trabalho acadêmico ou compromisso pessoal com data limite.
+      </p>
+
+      <form class="comic-form" id="formTask">
+        <input type="hidden" id="taskId">
+
+        <div class="form-group">
+          <label for="taskTitle">📦 Título da Encomenda / Tarefa:</label>
+          <input type="text" id="taskTitle" required placeholder="Ex: Lista de Cálculo II, Projeto Pessoal...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskCategory">🏷️ Setor / Categoria:</label>
+            <select id="taskCategory" required>
+              <option value="faculdade">🎓 Faculdade (Acadêmico)</option>
+              <option value="pessoal">🌟 Pessoal (Projetos / Vida)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="taskPriority">⚡ Prioridade Dimensional:</label>
+            <select id="taskPriority" required>
+              <option value="baixa">Baixa (Sem pressa)</option>
+              <option value="media" selected>Média (Normal)</option>
+              <option value="alta">Alta (Prioritário)</option>
+              <option value="cosmica">Cósmica (Nível Apocalipse!)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDueDate">⏰ Data e Hora Limite (Prazo):</label>
+          <input type="datetime-local" id="taskDueDate">
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">📝 Observações & Instruções:</label>
+          <textarea id="taskDescription" rows="3" placeholder="Detalhes, links ou instruções adicionais..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-comic" style="margin-top: 10px;">
+          Salvar Encomenda
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVO HÁBITO DIÁRIO
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalHabit">
+    <div class="modal-content">
+      <button class="modal-close" id="modalHabitClose" aria-label="Fechar">&times;</button>
+      <h2>Novo Hábito Diário</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Adicione uma rotina diária para acompanhar sua sequência (streak).
+      </p>
+
+      <form class="comic-form" id="formHabit">
+        <div class="form-group">
+          <label for="habitTitle">☀️ Nome do Hábito:</label>
+          <input type="text" id="habitTitle" required placeholder="Ex: Revisar anotações, Fazer cardio, Água...">
+        </div>
+
+        <div class="form-group">
+          <label for="habitCategory">🏷️ Categoria:</label>
+          <select id="habitCategory" required>
+            <option value="faculdade">🎓 Faculdade</option>
+            <option value="pessoal" selected>🌟 Pessoal</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>📅 Dias da Semana que esse Hábito acontece:</label>
+          <div class="weekday-picker" id="habitDaysPicker">
+            <button type="button" class="weekday-btn active" data-day="1">Seg</button>
+            <button type="button" class="weekday-btn active" data-day="2">Ter</button>
+            <button type="button" class="weekday-btn active" data-day="3">Qua</button>
+            <button type="button" class="weekday-btn active" data-day="4">Qui</button>
+            <button type="button" class="weekday-btn active" data-day="5">Sex</button>
+            <button type="button" class="weekday-btn active" data-day="6">Sáb</button>
+            <button type="button" class="weekday-btn active" data-day="0">Dom</button>
+          </div>
+          <div class="weekday-quick-presets">
+            <button type="button" class="preset-btn" data-preset="all">Todos os dias</button>
+            <button type="button" class="preset-btn" data-preset="weekdays">Seg a Sex (Dias Úteis)</button>
+            <button type="button" class="preset-btn" data-preset="weekend">Fim de Semana (Sáb/Dom)</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-comic btn-secondary" style="margin-top: 10px;">
+          Adicionar à Rotina Diária
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE NOVO EVENTO / LEMBRETE (PROVAS, ANIVERSÁRIOS, DATAS FIXAS)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalEvent">
+    <div class="modal-content">
+      <button class="modal-close" id="modalEventClose" aria-label="Fechar">&times;</button>
+      <h2 id="modalEventTitle">Novo Evento & Lembrete</h2>
+      <p style="font-weight: 600; color: #4b5563; font-size: 0.95rem;">
+        Cadastre um compromisso pontual como prova da faculdade, reunião ou aniversário.
+      </p>
+
+      <form class="comic-form" id="formEvent">
+        <input type="hidden" id="eventId">
+
+        <div class="form-group">
+          <label for="eventTitle">📅 Título do Evento / Prova:</label>
+          <input type="text" id="eventTitle" required placeholder="Ex: Prova de Banco de Dados, Apresentação de TCC...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="eventDate">🗓️ Data do Evento:</label>
+            <input type="date" id="eventDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eventTime">⏰ Horário (Opcional):</label>
+            <input type="time" id="eventTime">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="eventCategory">🏷️ Setor / Categoria:</label>
+          <select id="eventCategory" required>
+            <option value="faculdade">🎓 Faculdade (Prova / Aula Especial / TCC)</option>
+            <option value="pessoal" selected>🌟 Pessoal (Aniversário / Saúde / Geral)</option>
+            <option value="trabalho">💼 Trabalho & Projetos</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eventDescription">📝 Descrição & Informações:</label>
+          <textarea id="eventDescription" rows="3" placeholder="Ex: Matéria que vai cair: Capítulos 1 a 4, sala 204..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-comic" style="margin-top: 10px;">
+          Salvar Evento
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       RODAPÉ OFICIAL (ELGALY EXPRESS)
+       ========================================================================== -->
+  <footer>
+    <div class="footer-box">
+      <p class="footer-copy">© 1998 - 2026 | Elgaly Express: Serviços de Entrega</p>
+      <p class="footer-address">Avenida Tennant Rockstead, 67, Nova Amerit - NA (Nova Arcanis)</p>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       SCRIPTS (RELATIVOS PARA GITHUB PAGES COM FALLBACK CDN)
+       ========================================================================== -->
+  <script src="./vendor/jspdf.umd.min.js"></script>
+  <script>
+    if (!window.jspdf && !window.jsPDF) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+    }
+  </script>
+
+  <script src="./vendor/confetti.browser.min.js"></script>
+  <script>
+    if (typeof confetti === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"><\/script>');
+    }
+  </script>
+
+
+  <!-- Cidades de São Paulo (Todos os 645 municípios) -->
+  <script src="./sp-cities.js"></script>
+
+  <!-- Módulos da Aplicação -->
+  <script src="./firebase-service.js"></script>
+  <script src="./report.js"></script>
+  <script src="./app.js"></script>
+
+  <!-- MODAL DE ONBOARDING DA REDE EEX (Primeiro acesso após Google login) -->
+  <div class="modal-overlay" id="modalOnboarding">
+    <div class="modal-content" style="max-width:500px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <img src="images/elgalylogo.png" alt="EEX" style="width:56px;">
+        <h2 style="margin:8px 0 4px;">Bem-vindo à Rede EEX!</h2>
+        <p style="font-size:0.95rem;color:var(--purple-dark);font-weight:700;">Configure seu perfil de agente antes de começar.</p>
+      </div>
+      <form class="comic-form" id="formOnboarding">
+        <div class="form-group">
+          <label for="onbNick">🏷️ Seu ID Express (apelido único):</label>
+          <input type="text" id="onbNick" required placeholder="seunick" maxlength="32" autocomplete="off">
+          <small style="font-weight:700;color:var(--magenta-bright);font-size:0.85rem;margin-top:2px;display:block;">
+            Endereço: <strong id="onbNickPreview">seunick.express.com</strong>
+          </small>
+          <span id="onbNickError" style="display:none;color:#e62b7e;font-size:0.78rem;font-weight:700;margin-top:4px;"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="onbLocation">📍 Setor de Operações (Cidade):</label>
+          <input type="text" id="onbLocation" required placeholder="Ex: São Paulo - SP" autocomplete="off">
+          <div class="city-suggestions" id="citySuggestions"></div>
+        </div>
+
+        <div class="form-group">
+          <label>🖼️ Foto de Perfil:</label>
+          <div class="avatar-upload-wrap">
+            <div class="avatar-preview-box">
+              <img id="onbAvatarPreview" src="images/elgalylogo.png" alt="Prévia">
+            </div>
+            <input type="file" id="onbAvatarInput" class="file-input-comic" accept="image/*">
+          </div>
+          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Deixe em branco para usar a foto do seu Google.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="onbPin">🔑 PIN Secreto (6 dígitos para crachá rápido):</label>
+          <input type="password" id="onbPin" required placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="new-password">
+          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Use este PIN para entrar rapidamente pelo crachá salvo.</small>
+        </div>
+
+        <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">
+          🚀 Ativar Crachá EEX
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE PIN PARA CRACHÁ SALVO -->
+  <div class="modal-overlay" id="modalPinLogin">
+    <div class="modal-content" style="max-width:380px;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);">
+        <img id="pinLoginAvatarImg" src="images/elgalylogo.png" style="width:100%;height:100%;object-fit:cover;" alt="">
+      </div>
+      <h3 id="pinLoginName" style="margin:0 0 4px;">Agente</h3>
+      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 16px;font-weight:700;"></p>
+      <form id="formPinLogin">
+        <input type="password" id="pinInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+          style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required>
+        <span id="pinError" style="display:block;color:#e62b7e;font-size:0.8rem;margin-top:6px;min-height:18px;font-weight:700;"></span>
+        <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">🔓 Entrar</button>
+      </form>
+      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+
+</body>
+</html>
