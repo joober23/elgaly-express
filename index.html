@@ -479,68 +479,80 @@
       </div>
 
       <!-- ==========================================================================
-           VISUALIZAÇÃO: EEX-FRIENDS (SISTEMA DE AMIGOS - TEASER / EM BREVE)
+           VISUALIZAÇÃO: EEX-FRIENDS (SISTEMA DE AMIGOS & ENTREGAS COLETIVAS)
            ========================================================================== -->
       <div class="app-view" id="view-amigos">
         <section class="site-section">
-          <div class="friends-teaser-container">
+          <div class="friends-app-container">
             
-            <div class="friends-badge-pill">
-              <span>⚡ CENTRAL EEX INFORMA</span>
-            </div>
-
+            <!-- Hero Card: Entregas Coletivas + Seu ID Express -->
             <div class="friends-hero-card">
-              <div class="friends-mascots-wrap">
-                <img src="images/brave.png" alt="Agente Brave" class="friends-mascot-img brave-friend">
-                <div class="friends-connection-bubble">🤝</div>
-                <img src="images/midnight.png" alt="Agente Midnight" class="friends-mascot-img midnight-friend">
+              <div class="friends-hero-top">
+                <div class="friends-mascots-wrap">
+                  <img src="images/brave.png" alt="Agente Brave" class="friends-mascot-img brave-friend">
+                  <div class="friends-connection-bubble">🤝</div>
+                  <img src="images/midnight.png" alt="Agente Midnight" class="friends-mascot-img midnight-friend">
+                </div>
+                <div>
+                  <h1 class="friends-hero-title">ENTREGAS... COLETIVAS! 📦✨</h1>
+                  <p class="friends-hero-subtitle">
+                    A Rede EEX conecta entregadores para manter rotinas e chamas acesas juntos!
+                  </p>
+                </div>
               </div>
 
-              <h1 class="friends-hero-title">ENTREGAS... COLETIVAS! 📦✨</h1>
-              <p class="friends-hero-subtitle">
-                Se conecte com seus amigos através do <strong>EEX-FRIENDS</strong>! Em breve!
-              </p>
-
-              <div class="friends-status-strip">
-                <span class="status-dot-pulse"></span>
-                <span>Módulo de Cooperação Dimensional em desenvolvimento pela Central EEX</span>
-              </div>
-            </div>
-
-            <!-- Grade de Recursos Futuros -->
-            <div class="friends-features-grid">
-              <div class="friends-feature-card">
-                <div class="feature-icon">🔥</div>
-                <h4>Streaks em Equipe</h4>
-                <p>Mantenha o fogo aceso juntos! Se todos cumprirem as rotinas do dia, a chama ganha bônus de energia dimensional.</p>
-              </div>
-
-              <div class="friends-feature-card">
-                <div class="feature-icon">📸</div>
-                <h4>Mural de Registros</h4>
-                <p>Veja os momentos bacanas e fotos com adesivos registrados pelos seus amigos diretamente no mural conjunto!</p>
-              </div>
-
-              <div class="friends-feature-card">
-                <div class="feature-icon">📦</div>
-                <h4>Despacho Cooperativo</h4>
-                <p>Envie encomendas, desafios e lembretes amigáveis para seus parceiros de rota não perderem prazos.</p>
-              </div>
-
-              <div class="friends-feature-card">
-                <div class="feature-icon">🏷️</div>
-                <h4>Rede por ID Express</h4>
-                <p>Adicione amigos facilmente buscando por <code>@seunick.express.com</code> e colecione crachás parceiros!</p>
+              <!-- Cartão de Compartilhamento do Seu ID Express -->
+              <div class="my-eex-share-card">
+                <div class="my-eex-share-info">
+                  <span class="share-label">🏷️ SEU ID EXPRESS PARA AMIGOS:</span>
+                  <strong class="share-code" id="myEexIdDisplay">carregando...</strong>
+                </div>
+                <button type="button" class="btn-comic" id="btnCopyMyEexId" style="background: var(--yellow-bright); color: var(--black);">
+                  📋 Copiar ID Express
+                </button>
               </div>
             </div>
 
-            <!-- Card Interativo de Notificação -->
-            <div class="friends-cta-card">
-              <h3>Fique Ligado, Agente!</h3>
-              <p>Os entregadores e agentes de Nova Amerit estarão prontos para a ação em equipe muito em breve.</p>
-              <button type="button" class="btn-comic" id="btnNotifyFriends" style="background: var(--yellow-bright); color: var(--black); margin-top: 10px;">
-                🔔 Quero Ser o Primeiro a Testar!
+            <!-- Abas Internas do EEX-Friends -->
+            <div class="friends-tabs-bar">
+              <button type="button" class="friends-tab-btn active" data-subtab="mural">
+                👥 Minha Turma (<span id="friendsCountBadge">0</span>)
               </button>
+              <button type="button" class="friends-tab-btn" data-subtab="buscar">
+                🔍 Buscar Agentes
+              </button>
+              <button type="button" class="friends-tab-btn" data-subtab="pedidos">
+                📬 Pedidos <span class="friends-req-counter" id="friendsReqBadge" style="display:none;">0</span>
+              </button>
+            </div>
+
+            <!-- PAINEL 1: MURAL DA TURMA (AMIGOS) -->
+            <div class="friends-subtab-pane active" id="paneFriendsMural">
+              <div class="friends-grid" id="friendsListGrid">
+                <!-- Preenchido dinamicamente pelo FriendsManager -->
+              </div>
+            </div>
+
+            <!-- PAINEL 2: BUSCAR AGENTES -->
+            <div class="friends-subtab-pane" id="paneFriendsSearch">
+              <div class="friends-search-box">
+                <form id="formSearchFriends" class="search-form-comic">
+                  <input type="text" id="inputSearchFriend" placeholder="Digite o apelido do agente (Ex: maria, juan...)" autocomplete="off">
+                  <button type="submit" class="btn-comic">🔍 Buscar</button>
+                </form>
+                <div class="search-results-box" id="friendsSearchResults">
+                  <p style="text-align: center; color: #6b7280; font-weight: 600; padding: 20px;">
+                    Digite o apelido de um parceiro para encontrá-lo na Rede EEX.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- PAINEL 3: PEDIDOS PENDENTES -->
+            <div class="friends-subtab-pane" id="paneFriendsRequests">
+              <div class="friends-requests-list" id="friendsRequestsList">
+                <!-- Preenchido dinamicamente pelo FriendsManager -->
+              </div>
             </div>
 
           </div>

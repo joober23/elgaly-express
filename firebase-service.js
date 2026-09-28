@@ -326,6 +326,49 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar memórias do Firestore:', err);
     });
+
+    // 6. Escuta lista de amigos em tempo real
+    this.unsubscribeFriends = userDoc.collection('friends').onSnapshot(async snapshot => {
+      const friendIds = [];
+      snapshot.forEach(doc => friendIds.push(doc.id));
+      if (typeof FriendsManager !== 'undefined') {
+        await FriendsManager.onFriendsListChanged(friendIds);
+      }
+    }, err => {
+      console.warn('Erro ao escutar amigos do Firestore:', err);
+    });
+
+    // 7. Escuta pedidos de amizade pendentes recebidos
+    this.unsubscribeRequests = this.db.collection('friend_requests')
+      .where('toUid', '==', uid)
+      .where('status', '==', 'pending')
+      .onSnapshot(snapshot => {
+        const reqs = [];
+        snapshot.forEach(doc => reqs.push({ id: doc.id, ...doc.data() }));
+        if (typeof FriendsManager !== 'undefined') {
+          FriendsManager.setPendingRequests(reqs);
+        }
+      }, err => {
+        console.warn('Erro ao escutar pedidos de amizade:', err);
+      });
+
+    // 8. Escuta cutucadas / pokes recebidos
+    this.unsubscribePokes = userDoc.collection('pokes')
+      .orderBy('timestamp', 'desc')
+      .limit(5)
+      .onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const poke = change.doc.data();
+            const ageMs = Date.now() - (poke.timestamp || 0);
+            if (ageMs < 120000 && typeof AppUI !== 'undefined') { // Recebido nos últimos 2 minutos
+              AppUI.showToast(`⚡ Agente ${poke.fromName} (@${poke.fromNick}) buzinou! Não esqueça da rotina! 📢`);
+            }
+          }
+        });
+      }, err => {
+        console.warn('Erro ao escutar pokes:', err);
+      });
   },
 
   stopRealtimeSync() {
@@ -334,6 +377,9 @@ const FirebaseService = {
     if (this.unsubscribeHistory) { this.unsubscribeHistory(); this.unsubscribeHistory = null; }
     if (this.unsubscribeEvents) { this.unsubscribeEvents(); this.unsubscribeEvents = null; }
     if (this.unsubscribeMemories) { this.unsubscribeMemories(); this.unsubscribeMemories = null; }
+    if (this.unsubscribeFriends) { this.unsubscribeFriends(); this.unsubscribeFriends = null; }
+    if (this.unsubscribeRequests) { this.unsubscribeRequests(); this.unsubscribeRequests = null; }
+    if (this.unsubscribePokes) { this.unsubscribePokes(); this.unsubscribePokes = null; }
   },
 
   // ========================================================
@@ -398,6 +444,174 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('memories').doc(memoryId).delete();
+  },
+
+  // ========================================================
+  // EEX-FRIENDS (REDE DE AMIGOS & ENTREGAS COLETIVAS)
+  // ========================================================
+
+  async updatePublicProfile(data) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    try {
+      await this.db.collection('public_profiles').doc(uid).set({
+        uid: uid,
+        name: data.name || 'Agente Express',
+        nickname: (data.nickname || '').toLowerCase().trim(),
+        eexEmail: data.eexEmail || 'agente.express.com',
+        avatar: data.avatar || 'images/elgalylogo.png',
+        location: data.location || 'Nova Amerit - NA',
+        streak: data.streak || 0,
+        allDoneToday: !!data.allDoneToday,
+        pendingToday: data.pendingToday || 0,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn('Erro ao atualizar perfil público:', e);
+    }
+  },
+
+  async searchPublicUsers(query) {
+    if (!this.db) return [];
+    try {
+      const q = (query || '').toLowerCase().trim().replace(/@.*$/, '').replace(/[^a-z0-9_.-]/g, '');
+      if (q.length < 2) return [];
+
+      const myUid = this.auth?.currentUser?.uid;
+      const snapshot = await this.db.collection('public_profiles')
+        .where('nickname', '>=', q)
+        .where('nickname', '<=', q + '\uf8ff')
+        .limit(10)
+        .get();
+
+      const results = [];
+      snapshot.forEach(doc => {
+        const u = doc.data();
+        if (u.uid !== myUid) {
+          results.push(u);
+        }
+      });
+      return results;
+    } catch (e) {
+      console.warn('Erro ao pesquisar agentes:', e);
+      return [];
+    }
+  },
+
+  async sendFriendRequest(targetUser) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return { success: false, error: 'Não autenticado' };
+    const myUid = this.auth.currentUser.uid;
+    const currentUser = AuthManager.getCurrentUser();
+    if (!currentUser) return { success: false, error: 'Usuário local inválido' };
+
+    try {
+      const reqId = `${myUid}_${targetUser.uid}`;
+      await this.db.collection('friend_requests').doc(reqId).set({
+        id: reqId,
+        fromUid: myUid,
+        fromNick: currentUser.nickname || 'agente',
+        fromName: currentUser.name || 'Agente Express',
+        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        fromEexEmail: currentUser.eexEmail || 'agente.express.com',
+        toUid: targetUser.uid,
+        toNick: targetUser.nickname || '',
+        toName: targetUser.name || '',
+        status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true };
+    } catch (e) {
+      console.error('Erro ao enviar pedido de amizade:', e);
+      return { success: false, error: e.message };
+    }
+  },
+
+  async acceptFriendRequest(request) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const myUid = this.auth.currentUser.uid;
+    const myUser = AuthManager.getCurrentUser();
+
+    try {
+      const batch = this.db.batch();
+
+      // 1. Adiciona o amigo no meu perfil
+      const myFriendRef = this.db.collection('users').doc(myUid).collection('friends').doc(request.fromUid);
+      batch.set(myFriendRef, {
+        uid: request.fromUid,
+        nickname: request.fromNick,
+        name: request.fromName,
+        avatar: request.fromAvatar,
+        eexEmail: request.fromEexEmail || `${request.fromNick}.express.com`,
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // 2. Adiciona meu perfil na lista de amigos dele
+      const otherFriendRef = this.db.collection('users').doc(request.fromUid).collection('friends').doc(myUid);
+      batch.set(otherFriendRef, {
+        uid: myUid,
+        nickname: myUser.nickname || 'agente',
+        name: myUser.name || 'Agente Express',
+        avatar: myUser.avatar || 'images/elgalylogo.png',
+        eexEmail: myUser.eexEmail || 'agente.express.com',
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // 3. Atualiza o status do request para 'accepted'
+      const reqRef = this.db.collection('friend_requests').doc(request.id);
+      batch.delete(reqRef);
+
+      await batch.commit();
+      return { success: true };
+    } catch (e) {
+      console.error('Erro ao aceitar pedido:', e);
+      return { success: false, error: e.message };
+    }
+  },
+
+  async rejectFriendRequest(requestId) {
+    if (!this.db) return;
+    try {
+      await this.db.collection('friend_requests').doc(requestId).delete();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  },
+
+  async removeFriend(friendUid) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const myUid = this.auth.currentUser.uid;
+    try {
+      const batch = this.db.batch();
+      batch.delete(this.db.collection('users').doc(myUid).collection('friends').doc(friendUid));
+      batch.delete(this.db.collection('users').doc(friendUid).collection('friends').doc(myUid));
+      await batch.commit();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  },
+
+  async sendPoke(toUid, pokeType = 'forca') {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const currentUser = AuthManager.getCurrentUser();
+    if (!currentUser) return;
+
+    try {
+      await this.db.collection('users').doc(toUid).collection('pokes').add({
+        fromUid: this.auth.currentUser.uid,
+        fromName: currentUser.name || 'Agente Parceiro',
+        fromNick: currentUser.nickname || 'agente',
+        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        pokeType: pokeType,
+        timestamp: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true };
+    } catch (e) {
+      console.warn('Erro ao buzinar/cutucar amigo:', e);
+      return { success: false };
+    }
   }
 };
 

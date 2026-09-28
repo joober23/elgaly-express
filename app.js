@@ -619,6 +619,245 @@ const MemoriesManager = {
 };
 
 // ==========================================================================
+// GERENCIADOR DO EEX-FRIENDS (Rede de Amigos & Entregas Coletivas)
+// ==========================================================================
+const FriendsManager = {
+  friends: [],
+  pendingRequests: [],
+  currentSubtab: 'mural',
+
+  init() {
+    try {
+      this.friends = JSON.parse(localStorage.getItem('elgaly_express_friends') || '[]');
+    } catch {
+      this.friends = [];
+    }
+  },
+
+  saveLocally() {
+    localStorage.setItem('elgaly_express_friends', JSON.stringify(this.friends));
+  },
+
+  async syncMyPublicProfile() {
+    const user = AuthManager.getCurrentUser();
+    if (!user || typeof FirebaseService === 'undefined') return;
+    try {
+      const stats = HabitManager.getTodayStats();
+      await FirebaseService.updatePublicProfile({
+        name: user.name,
+        nickname: user.nickname,
+        eexEmail: user.eexEmail,
+        avatar: user.avatar,
+        location: user.location,
+        streak: stats.streak,
+        allDoneToday: stats.allDone,
+        pendingToday: stats.pending
+      });
+    } catch (e) {
+      console.warn('Erro ao sincronizar perfil público:', e);
+    }
+  },
+
+  async onFriendsListChanged(friendIds) {
+    if (!friendIds || friendIds.length === 0) {
+      this.friends = [];
+      this.saveLocally();
+      this.render();
+      return;
+    }
+
+    try {
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db) {
+        const promises = friendIds.map(uid => 
+          FirebaseService.db.collection('public_profiles').doc(uid).get()
+        );
+        const docs = await Promise.all(promises);
+        this.friends = docs.filter(d => d.exists).map(d => ({ uid: d.id, ...d.data() }));
+        this.saveLocally();
+        this.render();
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar dados dos amigos:', e);
+    }
+  },
+
+  setPendingRequests(requests) {
+    this.pendingRequests = requests || [];
+    this.render();
+    this.updateBadge();
+  },
+
+  updateBadge() {
+    const badgeEl = document.getElementById('friendsReqBadge');
+    if (badgeEl) {
+      if (this.pendingRequests.length > 0) {
+        badgeEl.textContent = this.pendingRequests.length;
+        badgeEl.style.display = 'inline-flex';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
+  },
+
+  render() {
+    const user = AuthManager.getCurrentUser();
+    if (!user) return;
+
+    // Atualiza o display do meu ID Express
+    const myIdEl = document.getElementById('myEexIdDisplay');
+    if (myIdEl) myIdEl.textContent = user.eexEmail || `${user.nickname || 'agente'}.express.com`;
+
+    const countBadge = document.getElementById('friendsCountBadge');
+    if (countBadge) countBadge.textContent = this.friends.length;
+    this.updateBadge();
+
+    this.renderMural();
+    this.renderRequests();
+  },
+
+  renderMural() {
+    const grid = document.getElementById('friendsListGrid');
+    if (!grid) return;
+
+    if (this.friends.length === 0) {
+      grid.innerHTML = `
+        <div class="friends-empty-box">
+          <span style="font-size: 2.6rem; display: block; margin-bottom: 8px;">🤝</span>
+          <h3>Nenhum Parceiro Adicionado Ainda</h3>
+          <p>
+            Trabalhe em equipe! Busque seus amigos na aba <strong>Buscar Agentes</strong> ou mande seu ID Express para eles se conectarem!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = this.friends.map(friend => {
+      const isDone = !!friend.allDoneToday;
+      const mascotImg = isDone ? 'images/brave.png' : 'images/midnight.png';
+      const mascotStatus = isDone 
+        ? '✨ Brave comemora: rotina de hoje 100% cumprida!' 
+        : (friend.pendingToday > 0 
+            ? `😭 Midnight em pânico: ${friend.pendingToday} hábito(s) pendente(s)!` 
+            : '😭 Midnight ansiosa: check-in de hoje pendente!');
+
+      return `
+        <div class="friend-card ${isDone ? 'done-today' : 'pending-today'}">
+          <div class="friend-card-top">
+            <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-avatar">
+            <div class="friend-details">
+              <h4 class="friend-name">${friend.name || 'Agente'}</h4>
+              <span class="friend-nick">@${friend.eexEmail || (friend.nickname + '.express.com')}</span>
+              <span class="friend-location">📍 ${friend.location || 'Nova Amerit - NA'}</span>
+            </div>
+            <div class="friend-streak-pill" title="Sequência de Rotina">
+              <img src="images/${isDone ? 'fireon.png' : 'fireoff.png'}" alt="Fogo" class="friend-fire-icon">
+              <span>${friend.streak || 0} DIAS</span>
+            </div>
+          </div>
+
+          <div class="friend-mascot-status">
+            <img src="${mascotImg}" alt="Status" class="friend-status-mascot ${isDone ? 'bounce' : 'shake'}">
+            <span class="friend-status-text">${mascotStatus}</span>
+          </div>
+
+          <div class="friend-card-actions">
+            <button type="button" class="btn-comic btn-poke" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}">
+              📢 Dar uma Força!
+            </button>
+            <button type="button" class="btn-comic btn-secondary btn-del-friend" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Remover Parceiro">
+              ✕
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Eventos dos botões de cada amigo
+    grid.querySelectorAll('.btn-poke').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const uid = btn.dataset.uid;
+        const name = btn.dataset.name;
+        btn.disabled = true;
+        btn.textContent = '⚡ Enviando...';
+        await FirebaseService.sendPoke(uid);
+        AppUI.showToast(`📢 Você deu uma força para ${name}!`);
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = '📢 Dar uma Força!';
+        }, 3000);
+      });
+    });
+
+    grid.querySelectorAll('.btn-del-friend').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const uid = btn.dataset.uid;
+        const name = btn.dataset.name;
+        if (confirm(`Deseja desfazer a parceria com ${name}?`)) {
+          await FirebaseService.removeFriend(uid);
+          AppUI.showToast(`Parceria com ${name} desfeita.`);
+        }
+      });
+    });
+  },
+
+  renderRequests() {
+    const list = document.getElementById('friendsRequestsList');
+    if (!list) return;
+
+    if (this.pendingRequests.length === 0) {
+      list.innerHTML = `
+        <div class="friends-empty-box">
+          <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">📬</span>
+          <h4>Nenhum Pedido Pendente</h4>
+          <p>Quando outros entregadores da Rede EEX enviarem pedidos de parceria, eles aparecerão aqui.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = this.pendingRequests.map(req => `
+      <div class="friend-request-card">
+        <img src="${req.fromAvatar || 'images/elgalylogo.png'}" alt="${req.fromName}" class="request-avatar">
+        <div class="request-info">
+          <h4>${req.fromName}</h4>
+          <span>@${req.fromEexEmail || (req.fromNick + '.express.com')}</span>
+          <small>Quer se conectar para entregas coletivas!</small>
+        </div>
+        <div class="request-actions">
+          <button type="button" class="btn-comic btn-accept-req" data-id="${req.id}" data-name="${req.fromName}">
+            ✅ Aceitar
+          </button>
+          <button type="button" class="btn-comic btn-secondary btn-reject-req" data-id="${req.id}">
+            ❌ Recusar
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.btn-accept-req').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reqId = btn.dataset.id;
+        const req = this.pendingRequests.find(r => r.id === reqId);
+        if (!req) return;
+        btn.disabled = true;
+        await FirebaseService.acceptFriendRequest(req);
+        AppUI.showToast(`🎉 Parceria aceita com ${btn.dataset.name}!`);
+      });
+    });
+
+    list.querySelectorAll('.btn-reject-req').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reqId = btn.dataset.id;
+        btn.disabled = true;
+        await FirebaseService.rejectFriendRequest(reqId);
+        AppUI.showToast('Solicitação recusada.');
+      });
+    });
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE TEMAS (ThemeManager) — Modo Claro & Modo Escuro
 // ==========================================================================
 const ThemeManager = {
@@ -1206,6 +1445,7 @@ const AppUI = {
     HabitManager.init();
     EventManager.init();
     MemoriesManager.init();
+    FriendsManager.init();
     PWAManager.init();
     NotificationManager.init();
 
@@ -1335,7 +1575,8 @@ const AppUI = {
     if (tabName === 'encomendas') { this.renderTasks(); this.renderEvents(); }
     if (tabName === 'relatorios') { ReportEngine.renderReportPreview(); MemoriesManager.render(); }
     if (tabName === 'amigos') {
-      this.showToast('📦✨ Entregas Coletivas! O EEX-Friends está chegando em breve!');
+      FriendsManager.render();
+      FriendsManager.syncMyPublicProfile();
     }
     if (tabName === 'perfil') this.renderProfileView();
     if (tabName === 'configuracoes') this.renderConfiguracoes();
@@ -1947,11 +2188,115 @@ const AppUI = {
       });
     }
 
-    // 21. Teaser EEX-Friends: Botão Quero Ser o Primeiro a Testar
-    const btnNotifyFriends = document.getElementById('btnNotifyFriends');
-    if (btnNotifyFriends) {
-      btnNotifyFriends.addEventListener('click', () => {
-        this.showToast('🚀 Notificação ativada! Você será o primeiro a testar o EEX-Friends!');
+    // 21. EEX-Friends: Copiar Meu ID Express
+    const btnCopyMyEexId = document.getElementById('btnCopyMyEexId');
+    if (btnCopyMyEexId) {
+      btnCopyMyEexId.addEventListener('click', async () => {
+        const user = AuthManager.getCurrentUser();
+        const idText = user?.eexEmail || `${user?.nickname || 'agente'}.express.com`;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(idText);
+          } else {
+            const temp = document.createElement('textarea');
+            temp.value = idText;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+          }
+          AppUI.showToast(`📋 ID Express copiado: ${idText}`);
+        } catch (e) {
+          AppUI.showToast(`Seu ID Express é: ${idText}`);
+        }
+      });
+    }
+
+    // 22. EEX-Friends: Alternância de Sub-Abas (Mural, Buscar, Pedidos)
+    document.querySelectorAll('.friends-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const subtab = btn.dataset.subtab;
+        document.querySelectorAll('.friends-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.friends-subtab-pane').forEach(p => p.classList.remove('active'));
+        const targetPane = document.getElementById(`paneFriends${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
+        if (targetPane) targetPane.classList.add('active');
+
+        if (subtab === 'mural') FriendsManager.renderMural();
+        if (subtab === 'pedidos') FriendsManager.renderRequests();
+      });
+    });
+
+    // 23. EEX-Friends: Busca de Amigos
+    const formSearchFriends = document.getElementById('formSearchFriends');
+    const inputSearchFriend = document.getElementById('inputSearchFriend');
+    const resultsContainer = document.getElementById('friendsSearchResults');
+    if (formSearchFriends && inputSearchFriend && resultsContainer) {
+      formSearchFriends.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const q = inputSearchFriend.value.trim();
+        if (q.length < 2) {
+          AppUI.showToast('Digite pelo menos 2 letras do apelido do agente.');
+          return;
+        }
+
+        resultsContainer.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: var(--purple-dark); font-weight: 700;">
+            🔍 Buscando parceiros na Rede EEX...
+          </div>
+        `;
+
+        const found = await FirebaseService.searchPublicUsers(q);
+        if (found.length === 0) {
+          resultsContainer.innerHTML = `
+            <div style="text-align: center; padding: 24px; color: #6b7280; font-weight: 600;">
+              Nenhum agente encontrado com o apelido "${q}". Verifique a digitação ou peça o ID Express completo!
+            </div>
+          `;
+          return;
+        }
+
+        resultsContainer.innerHTML = found.map(u => {
+          const isAlreadyFriend = FriendsManager.friends.some(f => f.uid === u.uid);
+          return `
+            <div class="search-agent-card">
+              <img src="${u.avatar || 'images/elgalylogo.png'}" alt="${u.name}" class="search-agent-avatar">
+              <div class="search-agent-info">
+                <h4>${u.name}</h4>
+                <span>@${u.eexEmail || (u.nickname + '.express.com')}</span>
+                <small>📍 ${u.location || 'Nova Amerit - NA'}</small>
+              </div>
+              <div class="search-agent-action">
+                ${isAlreadyFriend 
+                  ? '<span class="already-partner-badge">🤝 Já é Parceiro</span>'
+                  : `<button type="button" class="btn-comic btn-send-request" data-uid="${u.uid}" data-nick="${u.nickname}" data-name="${u.name}">
+                      ➕ Enviar Pedido
+                    </button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        resultsContainer.querySelectorAll('.btn-send-request').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const targetUid = btn.dataset.uid;
+            const targetUser = found.find(u => u.uid === targetUid);
+            if (!targetUser) return;
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            const res = await FirebaseService.sendFriendRequest(targetUser);
+            if (res.success) {
+              btn.textContent = '✅ Pedido Enviado!';
+              AppUI.showToast(`🚀 Pedido de parceria enviado para ${targetUser.name}!`);
+            } else {
+              btn.disabled = false;
+              btn.textContent = '➕ Enviar Pedido';
+              AppUI.showToast('Erro ao enviar pedido: ' + (res.error || 'Tente novamente.'));
+            }
+          });
+        });
       });
     }
   },
