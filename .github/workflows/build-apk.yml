@@ -43,7 +43,14 @@ jobs:
           npx cap add android
           cp google-services.json android/app/google-services.json
           npx cap sync android
-          cp -r android-res/* android/app/src/main/res/
+          # Copia recursos visuais (ícones, monocromático, notificação)
+          cp -r android-res/drawable* android/app/src/main/res/ 2>/dev/null || true
+          cp -r android-res/mipmap* android/app/src/main/res/ 2>/dev/null || true
+          cp -r android-res/values android/app/src/main/res/ 2>/dev/null || true
+          # Copia som de notificação para res/raw/
+          mkdir -p android/app/src/main/res/raw
+          cp android-res/raw/eex_notification.mp3 android/app/src/main/res/raw/ 2>/dev/null || true
+          # Substitui arquivos de build personalizados
           cp android-overrides/MainActivity.java android/app/src/main/java/com/elgaly/express/MainActivity.java
           cp android-overrides/app-build.gradle android/app/build.gradle
           cp android-overrides/variables.gradle android/variables.gradle

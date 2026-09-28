@@ -7,8 +7,9 @@
   },
   "plugins": {
     "LocalNotifications": {
-      "smallIcon": "ic_launcher_foreground",
-      "iconColor": "#3a154d"
+      "smallIcon": "ic_stat_eex_arrow",
+      "iconColor": "#e62b7e",
+      "sound": "eex_notification.mp3"
     },
     "GoogleAuth": {
       "scopes": ["profile", "email"],
