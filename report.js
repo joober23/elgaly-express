@@ -1,4 +1,4 @@
-**
+/**
  * ELGALY EXPRESS - MOTOR DE RELATÓRIOS & GERADOR DE PDF
  * Analisa desempenho em 7, 15 ou 30 dias (pontualidade, velocidade, hábitos)
  * Inclui o logotipo oficial e dados do Agente EEX no PDF!

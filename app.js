@@ -1,11 +1,11 @@
-*
- * ELGALY EXPRESS - APLICAÃ‡ÃƒO DE ROTINAS & DESPACHO
- * AutenticaÃ§Ã£o exclusivamente via Google (Rede EEX).
- * Onboarding no primeiro acesso + CrachÃ¡s salvos com PIN de 6 dÃ­gitos.
+/**
+ * ELGALY EXPRESS - APLICAÇÃO DE ROTINAS & DESPACHO
+ * Autenticação exclusivamente via Google (Rede EEX).
+ * Onboarding no primeiro acesso + Crachás salvos com PIN de 6 dígitos.
  */
 
 // ==========================================================================
-// GERENCIADOR DE AUTENTICAÃ‡ÃƒO EEX (Somente Google + Rede EEX)
+// GERENCIADOR DE AUTENTICAÇÃO EEX (Somente Google + Rede EEX)
 // ==========================================================================
 const AuthManager = {
   currentUser: null,
@@ -41,7 +41,7 @@ const AuthManager = {
     this.currentUser = { ...this.currentUser, ...updatedFields };
     this.saveCurrent();
 
-    // Atualiza o crachÃ¡ salvo com novos dados (nome/avatar/eex)
+    // Atualiza o crachá salvo com novos dados (nome/avatar/eex)
     this.updateSavedBadge(this.currentUser);
 
     if (typeof FirebaseService !== 'undefined') {
@@ -66,7 +66,7 @@ const AuthManager = {
     HabitManager.habits = [];
     HabitManager.history = {};
     AppUI.renderAll();
-    AppUI.showToast('VocÃª saiu da sua conta.');
+    AppUI.showToast('Você saiu da sua conta.');
   },
 
   isLoggedIn() {
@@ -82,7 +82,7 @@ const AuthManager = {
   },
 
   // ============================================================
-  // SISTEMA DE CRACHÃS SALVOS â€” re-login rÃ¡pido com PIN de 6 dÃ­gitos
+  // SISTEMA DE CRACHÁS SALVOS — re-login rápido com PIN de 6 dígitos
   // ============================================================
   getSavedBadges() {
     try {
@@ -124,7 +124,7 @@ const AuthManager = {
     localStorage.setItem('elgaly_express_badges', JSON.stringify(badges));
   },
 
-  // Hash simples e determinÃ­stico â€” conforto de UX, nÃ£o seguranÃ§a criptogrÃ¡fica
+  // Hash simples e determinístico — conforto de UX, não segurança criptográfica
   hashPin(pin) {
     let h = 0;
     const str = 'eex_salt_2026_' + pin;
@@ -257,7 +257,7 @@ const TaskManager = {
 };
 
 // ==========================================================================
-// GERENCIADOR DE ROTINA DIÃRIA (HabitManager)
+// GERENCIADOR DE ROTINA DIÁRIA (HabitManager)
 // ==========================================================================
 const HabitManager = {
   habits: [],
@@ -395,7 +395,7 @@ const HabitManager = {
       pastDate.setDate(today.getDate() - i);
       const dow = pastDate.getDay();
 
-      // Se nÃ£o era dia previsto para esse hÃ¡bito (ex: fim de semana sem faculdade), nÃ£o quebra o streak
+      // Se não era dia previsto para esse hábito (ex: fim de semana sem faculdade), não quebra o streak
       if (!scheduledDays.includes(dow)) {
         continue;
       }
@@ -405,7 +405,7 @@ const HabitManager = {
       if (list.includes(habitId)) {
         streak++;
       } else {
-        break; // Dia previsto que nÃ£o foi cumprido: encerra o streak
+        break; // Dia previsto que não foi cumprido: encerra o streak
       }
     }
     return streak;
@@ -413,7 +413,7 @@ const HabitManager = {
 };
 
 // ==========================================================================
-// GERENCIADOR DE TEMAS (ThemeManager) â€” Modo Claro & Modo Escuro
+// GERENCIADOR DE TEMAS (ThemeManager) — Modo Claro & Modo Escuro
 // ==========================================================================
 const ThemeManager = {
   current: 'light',
@@ -434,19 +434,19 @@ const ThemeManager = {
     localStorage.setItem('elgaly_theme', theme);
 
     const btn = document.getElementById('btnThemeToggle');
-    if (btn) btn.innerHTML = theme === 'dark' ? 'â˜€ï¸ Alternar para Modo Claro' : 'ðŸŒ™ Alternar para Modo Escuro';
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
 
     const statusLabel = document.getElementById('themeStatusLabel');
-    if (statusLabel) statusLabel.textContent = theme === 'dark' ? 'ðŸŒ™ Modo Escuro Ativo' : 'â˜€ï¸ Modo Claro Ativo';
+    if (statusLabel) statusLabel.textContent = theme === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
 
     const iconBtn = document.getElementById('btnHeaderTheme');
-    if (iconBtn) iconBtn.innerHTML = theme === 'dark' ? 'â˜€ï¸' : 'ðŸŒ™';
+    if (iconBtn) iconBtn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
   }
 };
 
 // ==========================================================================
 // GERENCIADOR DE EVENTOS & LEMBRETES (EventManager)
-// Provas da faculdade, aniversÃ¡rios, reuniÃµes e compromissos com data fixa
+// Provas da faculdade, aniversários, reuniões e compromissos com data fixa
 // ==========================================================================
 const EventManager = {
   events: [],
@@ -535,11 +535,11 @@ const EventManager = {
 };
 
 // ==========================================================================
-// UTILITÃRIO DE AUTOCOMPLETE DE CIDADES DE SÃƒO PAULO (645 MunicÃ­pios)
+// UTILITÁRIO DE AUTOCOMPLETE DE CIDADES DE SÃO PAULO (645 Municípios)
 // ==========================================================================
 function setupCityAutocomplete(inputEl, suggestionsEl) {
   if (!inputEl || !suggestionsEl) return;
-  const cities = window.SP_CITIES || ['SÃ£o Paulo - SP', 'Campinas - SP', 'Guarulhos - SP'];
+  const cities = window.SP_CITIES || ['São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP'];
   const normalize = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
   inputEl.addEventListener('input', () => {
@@ -575,8 +575,8 @@ function setupCityAutocomplete(inputEl, suggestionsEl) {
 }
 
 // ==========================================================================
-// GERENCIADOR DE NOTIFICAÃ‡Ã•ES LOCAIS (Capacitor Native + Web)
-// NotificaÃ§Ãµes de 3 em 3 horas para hÃ¡bitos pendentes, prazos e eventos
+// GERENCIADOR DE NOTIFICAÇÕES LOCAIS (Capacitor Native + Web)
+// Notificações de 3 em 3 horas para hábitos pendentes, prazos e eventos
 // ==========================================================================
 const NotificationManager = {
   _plugin: null,
@@ -594,13 +594,13 @@ const NotificationManager = {
         this._plugin = window.Capacitor.Plugins.LocalNotifications;
         const status = await this._plugin.requestPermissions();
         this._ready = status && status.display === 'granted';
-        console.log(`ðŸ“± Capacitor LocalNotifications ativo: ${this._ready ? 'Concedido' : 'Negado'}`);
+        console.log(`📱 Capacitor LocalNotifications ativo: ${this._ready ? 'Concedido' : 'Negado'}`);
         if (this._ready) {
           this.scheduleAll();
         }
       }
     } catch (err) {
-      console.warn('âš ï¸ Falha ao inicializar NotificationManager:', err);
+      console.warn('⚠️ Falha ao inicializar NotificationManager:', err);
       this._ready = false;
     }
   },
@@ -622,8 +622,8 @@ const NotificationManager = {
   },
 
   /**
-   * Agenda todas as notificaÃ§Ãµes:
-   * 1. Rotina DiÃ¡ria: a cada 3 horas (08h, 11h, 14h, 17h, 20h) para os prÃ³ximos 7 dias
+   * Agenda todas as notificações:
+   * 1. Rotina Diária: a cada 3 horas (08h, 11h, 14h, 17h, 20h) para os próximos 7 dias
    * 2. Encomendas com prazo: 3 dias antes, 1 dia antes e no dia da entrega
    * 3. Eventos: 1 dia antes, 1 hora antes e na hora do evento
    */
@@ -640,7 +640,7 @@ const NotificationManager = {
     }
 
     try {
-      // 1. Cancela notificaÃ§Ãµes pendentes anteriores para re-agendamento limpo
+      // 1. Cancela notificações pendentes anteriores para re-agendamento limpo
       const pending = await this._plugin.getPending();
       if (pending && pending.notifications && pending.notifications.length > 0) {
         await this._plugin.cancel({
@@ -653,8 +653,8 @@ const NotificationManager = {
       let notifId = 1000;
 
       // -------------------------------------------------------------
-      // 1. ROTINA DIÃRIA (HÃBITOS PENDENTES) - De 3 em 3 horas
-      // HorÃ¡rios: 08:00, 11:00, 14:00, 17:00, 20:00
+      // 1. ROTINA DIÁRIA (HÁBITOS PENDENTES) - De 3 em 3 horas
+      // Horários: 08:00, 11:00, 14:00, 17:00, 20:00
       // -------------------------------------------------------------
       const habits = (typeof HabitManager !== 'undefined' && HabitManager.habits) ? HabitManager.habits : [];
       const routineHours = [8, 11, 14, 17, 20];
@@ -684,8 +684,8 @@ const NotificationManager = {
           if (schedTime > now) {
             notifications.push({
               id: notifId++,
-              title: 'ðŸ”„ Rotina EEX Pendente',
-              body: `VocÃª tem ${pendingHabits.length} hÃ¡bito(s) da rotina diÃ¡ria pendentes hoje! NÃ£o deixe acumular ðŸ’ª`,
+              title: '🔄 Rotina EEX Pendente',
+              body: `Você tem ${pendingHabits.length} hábito(s) da rotina diária pendentes hoje! Não deixe acumular 💪`,
               schedule: { at: schedTime },
               sound: 'eex_notification.mp3'
             });
@@ -708,42 +708,42 @@ const NotificationManager = {
 
         const title = task.title || 'Encomenda';
 
-        // 3 dias antes Ã s 09:00
+        // 3 dias antes às 09:00
         const threeDaysBefore = new Date(dueDate);
         threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
         threeDaysBefore.setHours(9, 0, 0, 0);
         if (threeDaysBefore > now) {
           notifications.push({
             id: notifId++,
-            title: 'ðŸ“¦ Entregar em 3 dias!',
-            body: `A encomenda "${title}" vence em 3 dias! Prepare o envio â°`,
+            title: '📦 Entregar em 3 dias!',
+            body: `A encomenda "${title}" vence em 3 dias! Prepare o envio ⏰`,
             schedule: { at: threeDaysBefore },
             sound: 'eex_notification.mp3'
           });
         }
 
-        // 1 dia antes Ã s 09:00
+        // 1 dia antes às 09:00
         const oneDayBefore = new Date(dueDate);
         oneDayBefore.setDate(oneDayBefore.getDate() - 1);
         oneDayBefore.setHours(9, 0, 0, 0);
         if (oneDayBefore > now) {
           notifications.push({
             id: notifId++,
-            title: 'ðŸš¨ Entregar amanhÃ£!',
-            body: `A encomenda "${title}" precisa ser despachada amanhÃ£! ðŸ“¦`,
+            title: '🚨 Entregar amanhã!',
+            body: `A encomenda "${title}" precisa ser despachada amanhã! 📦`,
             schedule: { at: oneDayBefore },
             sound: 'eex_notification.mp3'
           });
         }
 
-        // No dia da entrega Ã s 09:00
+        // No dia da entrega às 09:00
         const dayOf = new Date(dueDate);
         dayOf.setHours(9, 0, 0, 0);
         if (dayOf > now) {
           notifications.push({
             id: notifId++,
-            title: 'ðŸ”´ Dia de Entrega!',
-            body: `A encomenda "${title}" vence HOJE! Finalize e entregue no prazo! ðŸš¨`,
+            title: '🔴 Dia de Entrega!',
+            body: `A encomenda "${title}" vence HOJE! Finalize e entregue no prazo! 🚨`,
             schedule: { at: dayOf },
             sound: 'eex_notification.mp3'
           });
@@ -753,7 +753,7 @@ const NotificationManager = {
       // -------------------------------------------------------------
       // 3. EVENTOS & LEMBRETES
       // - 1 dia antes (09:00)
-      // - 1 hora antes do horÃ¡rio
+      // - 1 hora antes do horário
       // - No momento do evento
       // -------------------------------------------------------------
       const events = (typeof EventManager !== 'undefined' && EventManager.events) ? EventManager.events : [];
@@ -766,15 +766,15 @@ const NotificationManager = {
 
         const evTitle = ev.title || 'Evento';
 
-        // 1 dia antes Ã s 09:00
+        // 1 dia antes às 09:00
         const dayBefore = new Date(eventDateTime);
         dayBefore.setDate(dayBefore.getDate() - 1);
         dayBefore.setHours(9, 0, 0, 0);
         if (dayBefore > now) {
           notifications.push({
             id: notifId++,
-            title: 'ðŸ“… Evento AmanhÃ£!',
-            body: `Lembrete: "${evTitle}" acontece amanhÃ£ Ã s ${timeStr} ðŸŽ¯`,
+            title: '📅 Evento Amanhã!',
+            body: `Lembrete: "${evTitle}" acontece amanhã às ${timeStr} 🎯`,
             schedule: { at: dayBefore },
             sound: 'eex_notification.mp3'
           });
@@ -786,33 +786,33 @@ const NotificationManager = {
         if (oneHourBefore > now) {
           notifications.push({
             id: notifId++,
-            title: 'â° Evento prÃ³ximo!',
-            body: `O evento "${evTitle}" comeÃ§a em 1 hora! Prepare-se ðŸš€`,
+            title: '⏰ Evento próximo!',
+            body: `O evento "${evTitle}" começa em 1 hora! Prepare-se 🚀`,
             schedule: { at: oneHourBefore },
             sound: 'eex_notification.mp3'
           });
         }
 
-        // No horÃ¡rio do evento
+        // No horário do evento
         if (eventDateTime > now) {
           notifications.push({
             id: notifId++,
-            title: 'ðŸŽ¯ Evento agora!',
-            body: `O evento "${evTitle}" estÃ¡ acontecendo agora! ðŸ””`,
+            title: '🎯 Evento agora!',
+            body: `O evento "${evTitle}" está acontecendo agora! 🔔`,
             schedule: { at: eventDateTime },
             sound: 'eex_notification.mp3'
           });
         }
       }
 
-      // Agenda atÃ© 64 notificaÃ§Ãµes no dispositivo
+      // Agenda até 64 notificações no dispositivo
       if (notifications.length > 0) {
         const batch = notifications.slice(0, 64);
         await this._plugin.schedule({ notifications: batch });
-        console.log(`âœ… [NotificationManager] ${batch.length} notificaÃ§Ãµes locais agendadas.`);
+        console.log(`✅ [NotificationManager] ${batch.length} notificações locais agendadas.`);
       }
     } catch (err) {
-      console.error('âŒ [NotificationManager] Erro ao agendar notificaÃ§Ãµes:', err);
+      console.error('❌ [NotificationManager] Erro ao agendar notificações:', err);
     }
   },
 
@@ -824,7 +824,7 @@ const NotificationManager = {
           this._ready = res && res.display === 'granted';
         }
         if (!this._ready) {
-          AppUI.showToast('âŒ PermissÃ£o de notificaÃ§Ãµes negada no Android.');
+          AppUI.showToast('❌ Permissão de notificações negada no Android.');
           return;
         }
 
@@ -832,16 +832,16 @@ const NotificationManager = {
         await this._plugin.schedule({
           notifications: [{
             id: 9999,
-            title: 'ðŸš€ Elgaly Express: NotificaÃ§Ã£o Ativa!',
-            body: 'Suas notificaÃ§Ãµes nativas estÃ£o funcionando com sucesso! ðŸ“¦',
+            title: '🚀 Elgaly Express: Notificação Ativa!',
+            body: 'Suas notificações nativas estão funcionando com sucesso! 📦',
             schedule: { at: testDate },
             sound: 'eex_notification.mp3'
           }]
         });
-        AppUI.showToast('ðŸ”” NotificaÃ§Ã£o teste agendada para daqui a 5 segundos!');
+        AppUI.showToast('🔔 Notificação teste agendada para daqui a 5 segundos!');
       } catch (e) {
-        console.error('Erro ao testar notificaÃ§Ã£o:', e);
-        AppUI.showToast('âš ï¸ Erro ao enviar notificaÃ§Ã£o de teste.');
+        console.error('Erro ao testar notificação:', e);
+        AppUI.showToast('⚠️ Erro ao enviar notificação de teste.');
       }
     } else {
       PWAManager.testNotification();
@@ -850,8 +850,8 @@ const NotificationManager = {
 };
 
 // ==========================================================================
-// GERENCIADOR DE PWA & NOTIFICAÃ‡Ã•ES (PWAManager)
-// InstalaÃ§Ã£o na tela inicial do celular/PC e alertas operacionais
+// GERENCIADOR DE PWA & NOTIFICAÇÕES (PWAManager)
+// Instalação na tela inicial do celular/PC e alertas operacionais
 // ==========================================================================
 const PWAManager = {
   deferredPrompt: null,
@@ -866,7 +866,7 @@ const PWAManager = {
       });
     }
 
-    // 2. Intercepta evento de instalaÃ§Ã£o do app
+    // 2. Intercepta evento de instalação do app
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
@@ -877,16 +877,16 @@ const PWAManager = {
     window.addEventListener('appinstalled', () => {
       this.deferredPrompt = null;
       this.showInstallButtons(false);
-      AppUI.showToast('ðŸŽ‰ Elgaly Express instalado com sucesso na sua tela inicial!');
+      AppUI.showToast('🎉 Elgaly Express instalado com sucesso na sua tela inicial!');
       const statusEl = document.getElementById('pwaStatusText');
-      if (statusEl) statusEl.textContent = 'âœ… Aplicativo instalado neste dispositivo!';
+      if (statusEl) statusEl.textContent = '✅ Aplicativo instalado neste dispositivo!';
     });
 
-    // 4. Se jÃ¡ estiver rodando em standalone
+    // 4. Se já estiver rodando em standalone
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
       this.showInstallButtons(false);
       const statusEl = document.getElementById('pwaStatusText');
-      if (statusEl) statusEl.textContent = 'âš¡ VocÃª estÃ¡ usando a versÃ£o aplicativo (PWA)!';
+      if (statusEl) statusEl.textContent = '⚡ Você está usando a versão aplicativo (PWA)!';
     }
   },
 
@@ -898,7 +898,7 @@ const PWAManager = {
 
   async promptInstall() {
     if (!this.deferredPrompt) {
-      AppUI.showToast('ðŸ’¡ No menu do seu navegador (trÃªs pontinhos ou compartilhar), toque em "Adicionar Ã  Tela de InÃ­cio"!');
+      AppUI.showToast('💡 No menu do seu navegador (três pontinhos ou compartilhar), toque em "Adicionar à Tela de Início"!');
       return;
     }
     this.deferredPrompt.prompt();
@@ -911,13 +911,13 @@ const PWAManager = {
 
   async testNotification() {
     if (!('Notification' in window)) {
-      AppUI.showToast('âš ï¸ Este navegador nÃ£o tem suporte a notificaÃ§Ãµes.');
+      AppUI.showToast('⚠️ Este navegador não tem suporte a notificações.');
       return;
     }
 
     if (Notification.permission === 'granted') {
       this.sendSampleNotification();
-      AppUI.showToast('ðŸ”” NotificaÃ§Ã£o enviada!');
+      AppUI.showToast('🔔 Notificação enviada!');
       return;
     }
 
@@ -925,12 +925,12 @@ const PWAManager = {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         this.sendSampleNotification();
-        AppUI.showToast('ðŸŽ‰ NotificaÃ§Ãµes autorizadas com sucesso!');
+        AppUI.showToast('🎉 Notificações autorizadas com sucesso!');
       } else {
-        AppUI.showToast('âŒ PermissÃ£o de notificaÃ§Ãµes negada.');
+        AppUI.showToast('❌ Permissão de notificações negada.');
       }
     } else {
-      AppUI.showToast('âš ï¸ NotificaÃ§Ãµes bloqueadas nas configuraÃ§Ãµes do navegador.');
+      AppUI.showToast('⚠️ Notificações bloqueadas nas configurações do navegador.');
     }
   },
 
@@ -939,16 +939,16 @@ const PWAManager = {
     const name = user ? user.name : 'Agente';
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification('ðŸ“¦ Elgaly Express: Despacho em Rota!', {
-          body: `OlÃ¡, ${name}! Suas encomendas e rotinas diÃ¡rias estÃ£o sincronizadas e em dia.`,
+        reg.showNotification('📦 Elgaly Express: Despacho em Rota!', {
+          body: `Olá, ${name}! Suas encomendas e rotinas diárias estão sincronizadas e em dia.`,
           icon: 'images/icon-192.png',
           badge: 'images/icon-192.png',
           vibrate: [200, 100, 200]
         });
       });
     } else {
-      new Notification('ðŸ“¦ Elgaly Express: Despacho em Rota!', {
-        body: `OlÃ¡, ${name}! Suas encomendas e rotinas diÃ¡rias estÃ£o sincronizadas e em dia.`,
+      new Notification('📦 Elgaly Express: Despacho em Rota!', {
+        body: `Olá, ${name}! Suas encomendas e rotinas diárias estão sincronizadas e em dia.`,
         icon: 'images/icon-192.png'
       });
     }
@@ -956,8 +956,8 @@ const PWAManager = {
 };
 
 // ==========================================================================
-// CONTROLADOR DE UI & INTERAÃ‡ÃƒO (AppUI)
-// Com PortÃ£o de AutenticaÃ§Ã£o ObrigatÃ³rio, EdiÃ§Ã£o de Perfil e Upload de Fotos
+// CONTROLADOR DE UI & INTERAÇÃO (AppUI)
+// Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
 const AppUI = {
   currentTab: 'inicio',
@@ -1089,7 +1089,7 @@ const AppUI = {
   },
 
   bindEvents() {
-    // 1. Upload de Foto na EdiÃ§Ã£o do Perfil
+    // 1. Upload de Foto na Edição do Perfil
     const editAvatarInput = document.getElementById('editAvatarInput');
     const editAvatarPreview = document.getElementById('editAvatarPreview');
     if (editAvatarInput) {
@@ -1106,7 +1106,7 @@ const AppUI = {
       });
     }
 
-    // 2. BotÃ£o de Login Google (via Firebase)
+    // 2. Botão de Login Google (via Firebase)
     const btnsGoogle = document.querySelectorAll('.action-google-login');
     btnsGoogle.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1116,7 +1116,7 @@ const AppUI = {
       });
     });
 
-    // 3. FormulÃ¡rio de Onboarding da Rede EEX (primeiro acesso apÃ³s Google login)
+    // 3. Formulário de Onboarding da Rede EEX (primeiro acesso após Google login)
     const formOnboarding = document.getElementById('formOnboarding');
     if (formOnboarding) {
       // Preview ao vivo do nick
@@ -1129,7 +1129,7 @@ const AppUI = {
         });
       }
 
-      // Autocomplete de cidades de SP (Todos os 645 municÃ­pios)
+      // Autocomplete de cidades de SP (Todos os 645 municípios)
       const onbLocation = document.getElementById('onbLocation');
       const citySugg = document.getElementById('citySuggestions');
       setupCityAutocomplete(onbLocation, citySugg);
@@ -1162,11 +1162,11 @@ const AppUI = {
         if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
 
         if (rawNick.length < 2) {
-          if (errEl) { errEl.textContent = 'âš ï¸ O ID Express precisa ter pelo menos 2 caracteres!'; errEl.style.display = 'block'; }
+          if (errEl) { errEl.textContent = '⚠️ O ID Express precisa ter pelo menos 2 caracteres!'; errEl.style.display = 'block'; }
           return;
         }
         if (!/^[0-9]{6}$/.test(pin)) {
-          this.showToast('âŒ O PIN deve ter exatamente 6 dÃ­gitos numÃ©ricos!');
+          this.showToast('❌ O PIN deve ter exatamente 6 dígitos numéricos!');
           return;
         }
 
@@ -1196,7 +1196,7 @@ const AppUI = {
           });
         }
 
-        // Salva o crachÃ¡ com PIN para re-login rÃ¡pido
+        // Salva o crachá com PIN para re-login rápido
         AuthManager.saveBadge(user, pin);
 
         const modal = document.getElementById('modalOnboarding');
@@ -1213,11 +1213,11 @@ const AppUI = {
         }
 
         this.renderAll();
-        this.showToast(`ðŸš€ Bem-vindo Ã  Rede EEX, ${eexEmail}!`);
+        this.showToast(`🚀 Bem-vindo à Rede EEX, ${eexEmail}!`);
       });
     }
 
-    // 4. Modal de PIN (crachÃ¡ salvo)
+    // 4. Modal de PIN (crachá salvo)
     const formPinLogin = document.getElementById('formPinLogin');
     const btnCancelPinLogin = document.getElementById('btnCancelPinLogin');
     if (formPinLogin) {
@@ -1233,12 +1233,12 @@ const AppUI = {
           document.getElementById('modalPinLogin').classList.remove('active');
           document.getElementById('pinInput').value = '';
           this._pendingBadgeLogin = null;
-          // O Firebase tentarÃ¡ reutilizar a sessÃ£o ativa; se expirou, mostrarÃ¡ tela Google
+          // O Firebase tentará reutilizar a sessão ativa; se expirou, mostrará tela Google
           if (typeof FirebaseService !== 'undefined') {
             FirebaseService.loginWithGoogle();
           }
         } else {
-          if (errEl) errEl.textContent = 'âŒ PIN incorreto. Tente novamente.';
+          if (errEl) errEl.textContent = '❌ PIN incorreto. Tente novamente.';
           document.getElementById('pinInput').value = '';
         }
       });
@@ -1253,7 +1253,7 @@ const AppUI = {
       });
     }
 
-    // 5. Modal de EdiÃ§Ã£o de Perfil
+    // 5. Modal de Edição de Perfil
     const modalEditProfile = document.getElementById('modalEditProfile');
     const modalEditProfileClose = document.getElementById('modalEditProfileClose');
     const formEditProfile = document.getElementById('formEditProfile');
@@ -1280,7 +1280,7 @@ const AppUI = {
         await AuthManager.updateUserProfile(updateData);
         modalEditProfile.classList.remove('active');
         this.renderAll();
-        this.showToast('CrachÃ¡ e informaÃ§Ãµes atualizadas!');
+        this.showToast('Crachá e informações atualizadas!');
       });
     }
 
@@ -1303,7 +1303,7 @@ const AppUI = {
       });
     }
 
-    // 8. BotÃµes de Nova Encomenda
+    // 8. Botões de Nova Encomenda
     const btnsNewTask = document.querySelectorAll('.action-new-task');
     const modalTask = document.getElementById('modalTask');
     const formTask = document.getElementById('formTask');
@@ -1347,7 +1347,7 @@ const AppUI = {
       });
     }
 
-    // 9. Seletor de Dias da Semana para HÃ¡bitos
+    // 9. Seletor de Dias da Semana para Hábitos
     document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.classList.toggle('active');
@@ -1374,7 +1374,7 @@ const AppUI = {
       });
     });
 
-    // 10. BotÃµes de Novo HÃ¡bito
+    // 10. Botões de Novo Hábito
     const btnsNewHabit = document.querySelectorAll('.action-new-habit');
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
@@ -1384,7 +1384,7 @@ const AppUI = {
       btn.addEventListener('click', () => {
         if (!AuthManager.isLoggedIn()) return;
         document.getElementById('habitTitle').value = '';
-        // Reseta todos os dias como ativos por padrÃ£o
+        // Reseta todos os dias como ativos por padrão
         document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => b.classList.add('active'));
         modalHabit.classList.add('active');
       });
@@ -1412,7 +1412,7 @@ const AppUI = {
           this.renderDailyRoutine();
           this.renderHomeOverview();
           ReportEngine.renderReportPreview();
-          this.showToast('Novo hÃ¡bito registrado no check-in!');
+          this.showToast('Novo hábito registrado no check-in!');
         }
       });
     }
@@ -1453,7 +1453,7 @@ const AppUI = {
           this.showToast('Evento atualizado!');
         } else {
           await EventManager.addEvent(eventData);
-          this.showToast('ðŸ“… Lembrete de evento adicionado!');
+          this.showToast('📅 Lembrete de evento adicionado!');
         }
 
         modalEvent.classList.remove('active');
@@ -1485,7 +1485,7 @@ const AppUI = {
       });
     }
 
-    // 13. ConfiguraÃ§Ãµes: Alternar Tema (Modo Escuro / Claro)
+    // 13. Configurações: Alternar Tema (Modo Escuro / Claro)
     const btnThemeToggle = document.getElementById('btnThemeToggle');
     const btnHeaderTheme = document.getElementById('btnHeaderTheme');
     if (btnThemeToggle) {
@@ -1495,26 +1495,26 @@ const AppUI = {
       btnHeaderTheme.addEventListener('click', () => ThemeManager.toggle());
     }
 
-    // 14. ConfiguraÃ§Ãµes: Atualizar PIN
+    // 14. Configurações: Atualizar PIN
     const formChangePin = document.getElementById('formChangePin');
     if (formChangePin) {
       formChangePin.addEventListener('submit', (e) => {
         e.preventDefault();
         const newPin = (document.getElementById('cfgNewPin').value || '').trim();
         if (!/^[0-9]{6}$/.test(newPin)) {
-          this.showToast('âŒ O PIN deve ter 6 dÃ­gitos numÃ©ricos!');
+          this.showToast('❌ O PIN deve ter 6 dígitos numéricos!');
           return;
         }
         const user = AuthManager.getCurrentUser();
         if (user) {
           AuthManager.saveBadge(user, newPin);
-          this.showToast('ðŸ” PIN do crachÃ¡ atualizado com sucesso!');
+          this.showToast('🔐 PIN do crachá atualizado com sucesso!');
           document.getElementById('cfgNewPin').value = '';
         }
       });
     }
 
-    // 15. ConfiguraÃ§Ãµes: Atualizar LocalizaÃ§Ã£o com Autocomplete SP
+    // 15. Configurações: Atualizar Localização com Autocomplete SP
     const cfgLocationInput = document.getElementById('cfgLocation');
     const cfgCitySuggestions = document.getElementById('cfgCitySuggestions');
     setupCityAutocomplete(cfgLocationInput, cfgCitySuggestions);
@@ -1527,12 +1527,12 @@ const AppUI = {
         if (loc) {
           await AuthManager.updateUserProfile({ location: loc });
           this.renderAll();
-          this.showToast(`ðŸ“ Setor atualizado para ${loc}!`);
+          this.showToast(`📍 Setor atualizado para ${loc}!`);
         }
       });
     }
 
-    // 16. ConfiguraÃ§Ãµes: Logout
+    // 16. Configurações: Logout
     const btnSettingsLogout = document.getElementById('btnSettingsLogout');
     if (btnSettingsLogout) {
       btnSettingsLogout.addEventListener('click', () => {
@@ -1542,7 +1542,7 @@ const AppUI = {
       });
     }
 
-    // 17. ConfiguraÃ§Ãµes: PWA InstalaÃ§Ã£o & NotificaÃ§Ãµes
+    // 17. Configurações: PWA Instalação & Notificações
     document.querySelectorAll('.btn-pwa-install').forEach(btn => {
       btn.addEventListener('click', () => PWAManager.promptInstall());
     });
@@ -1551,11 +1551,11 @@ const AppUI = {
       btnPWANotify.addEventListener('click', () => NotificationManager.testNotification());
     }
 
-    // 18. Fechamento de Modais clicando fora â€” NÃƒO FECHA O ONBOARDING MANDATÃ“RIO
+    // 18. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
-          if (overlay.id === 'modalOnboarding') return; // Onboarding obrigatÃ³rio nÃ£o fecha ao clicar fora!
+          if (overlay.id === 'modalOnboarding') return; // Onboarding obrigatório não fecha ao clicar fora!
           overlay.classList.remove('active');
         }
       });
@@ -1586,7 +1586,7 @@ const AppUI = {
   },
 
   /**
-   * Renderiza tudo e gerencia o PortÃ£o ObrigatÃ³rio de AutenticaÃ§Ã£o
+   * Renderiza tudo e gerencia o Portão Obrigatório de Autenticação
    */
   renderAll() {
     const isLoggedIn = AuthManager.isLoggedIn();
@@ -1608,11 +1608,10 @@ const AppUI = {
       return;
     }
 
-    // UsuÃ¡rio logado: libera a navegaÃ§Ã£o e views
+    // Usuário logado: libera a navegação e views
     if (authGateway) authGateway.style.display = 'none';
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
-    // Bottom nav aparece no mobile; hamburguer continua escondido (CSS jÃ¡ faz isso)
     if (bottomNavBar) bottomNavBar.style.removeProperty('display');
 
     this.renderHeaderProfile();
@@ -1627,7 +1626,7 @@ const AppUI = {
   },
 
   /**
-   * Renderiza crachÃ¡s salvos no dispositivo para acesso rÃ¡pido com PIN
+   * Renderiza crachás salvos no dispositivo para acesso rápido com PIN
    */
   renderSavedBadges() {
     const list = document.getElementById('savedBadgesList');
@@ -1648,7 +1647,7 @@ const AppUI = {
           <div class="badge-chip-name">${badge.name}</div>
           <div class="badge-chip-eex">${badge.eexEmail}</div>
         </div>
-        <span class="badge-chip-pin-icon">ðŸ”‘</span>
+        <span class="badge-chip-pin-icon">🔑</span>
       </div>
     `).join('');
 
@@ -1705,7 +1704,7 @@ const AppUI = {
     }
 
     if (greetingSubtitle) {
-      greetingSubtitle.textContent = `Terminal de despacho conectado em ${user.location}. ${user.isGoogle ? 'Sincronizado na Nuvem (Firebase) â˜ï¸' : 'Perfil Local EEX ðŸ’¾'}`;
+      greetingSubtitle.textContent = `Terminal de despacho conectado em ${user.location}. ${user.isGoogle ? 'Sincronizado na Nuvem (Firebase) ☁️' : 'Perfil Local EEX 💾'}`;
     }
 
     const pendingTasks = tasks.filter(t => !t.completed).length;
@@ -1735,8 +1734,8 @@ const AppUI = {
       if (nextTasks.length === 0) {
         urgentList.innerHTML = `
           <div class="empty-state-card">
-            <h4>Tudo tranquilo por enquanto! ðŸ“¦</h4>
-            <p>VocÃª nÃ£o possui nenhuma encomenda pendente no momento. Aproveite para planejar suas prÃ³ximas missÃµes ou focar na sua rotina diÃ¡ria!</p>
+            <h4>Tudo tranquilo por enquanto! 📦</h4>
+            <p>Você não possui nenhuma encomenda pendente no momento. Aproveite para planejar suas próximas missões ou focar na sua rotina diária!</p>
           </div>
         `;
       } else {
@@ -1752,7 +1751,7 @@ const AppUI = {
             </div>
             <h4>${task.title}</h4>
             <p style="font-size: 0.85rem; font-weight: 700; color: ${isOverdue ? 'var(--red-alert)' : 'var(--purple-dark)'};">
-              ${isOverdue ? 'âš ï¸ Prazo Estourado!' : 'â° Prazo:'} ${task.dueDate ? new Date(task.dueDate).toLocaleString('pt-BR') : 'Sem data fixa'}
+              ${isOverdue ? '⚠️ Prazo Estourado!' : '⏰ Prazo:'} ${task.dueDate ? new Date(task.dueDate).toLocaleString('pt-BR') : 'Sem data fixa'}
             </p>
           `;
           urgentList.appendChild(item);
@@ -1774,9 +1773,9 @@ const AppUI = {
     if (habits.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <h3>Nenhum HÃ¡bito Cadastrado Ainda!</h3>
-          <p>Adicione hÃ¡bitos diÃ¡rios como beber Ã¡gua, revisar matÃ©rias da faculdade ou focar em projetos pessoais para acompanhar sua sequÃªncia!</p>
-          <button class="btn-comic action-new-habit" style="margin-top: 15px;">+ Criar Primeiro HÃ¡bito</button>
+          <h3>Nenhum Hábito Cadastrado Ainda!</h3>
+          <p>Adicione hábitos diários como beber água, revisar matérias da faculdade ou focar em projetos pessoais para acompanhar sua sequência!</p>
+          <button class="btn-comic action-new-habit" style="margin-top: 15px;">+ Criar Primeiro Hábito</button>
         </div>
       `;
       if (progressBar) progressBar.style.width = '0%';
@@ -1785,13 +1784,13 @@ const AppUI = {
     }
 
     const todayDow = new Date().getDay(); // 0 = Dom, 1 = Seg ...
-    const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b'];
+    const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
     const formatDaysBadge = (days) => {
-      if (!days || days.length === 7) return 'ðŸ“… Todos os dias';
-      if (days.length === 5 && [1,2,3,4,5].every(d => days.includes(d))) return 'ðŸ“… Seg a Sex';
-      if (days.length === 2 && [0,6].every(d => days.includes(d))) return 'ðŸ“… Fim de semana';
-      return 'ðŸ“… ' + days.map(d => DAY_NAMES[d]).join(', ');
+      if (!days || days.length === 7) return '📅 Todos os dias';
+      if (days.length === 5 && [1,2,3,4,5].every(d => days.includes(d))) return '📅 Seg a Sex';
+      if (days.length === 2 && [0,6].every(d => days.includes(d))) return '📅 Fim de semana';
+      return '📅 ' + days.map(d => DAY_NAMES[d]).join(', ');
     };
 
     const todayHabits = habits.filter(h => !h.days || h.days.includes(todayDow));
@@ -1800,7 +1799,7 @@ const AppUI = {
     let completedCount = 0;
     container.innerHTML = '';
 
-    // Renderiza hÃ¡bitos de hoje
+    // Renderiza hábitos de hoje
     todayHabits.forEach(habit => {
       const isDone = HabitManager.isCompletedToday(habit.id);
       if (isDone) completedCount++;
@@ -1809,17 +1808,17 @@ const AppUI = {
       const card = document.createElement('div');
       card.className = `habit-card ${isDone ? 'completed' : ''}`;
       card.innerHTML = `
-        <div class="habit-check-box">${isDone ? 'âœ“' : ''}</div>
+        <div class="habit-check-box">${isDone ? '✓' : ''}</div>
         <div class="habit-info">
           <div class="habit-title">${habit.title}</div>
           <div class="habit-meta">
             <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? 'Faculdade' : 'Pessoal'}</span>
             <span class="habit-days-badge">${formatDaysBadge(habit.days)}</span>
-            ${streak > 0 ? `<span class="habit-streak">ðŸ”¥ ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
+            ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
           </div>
         </div>
         <div class="habit-actions">
-          <button class="habit-btn-delete" title="Remover HÃ¡bito" data-id="${habit.id}">âœ•</button>
+          <button class="habit-btn-delete" title="Remover Hábito" data-id="${habit.id}">✕</button>
         </div>
       `;
 
@@ -1834,7 +1833,7 @@ const AppUI = {
       const delBtn = card.querySelector('.habit-btn-delete');
       delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (confirm(`Remover "${habit.title}" da sua rotina diÃ¡ria?`)) {
+        if (confirm(`Remover "${habit.title}" da sua rotina diária?`)) {
           await HabitManager.deleteHabit(habit.id);
           this.renderDailyRoutine();
           this.renderHomeOverview();
@@ -1845,13 +1844,13 @@ const AppUI = {
       container.appendChild(card);
     });
 
-    // Se houver hÃ¡bitos programados para outros dias (descanso hoje)
+    // Se houver hábitos programados para outros dias (descanso hoje)
     if (restHabits.length > 0) {
       const restBox = document.createElement('div');
       restBox.className = 'rest-habits-box';
       restBox.style.gridColumn = '1 / -1';
       restBox.innerHTML = `
-        <div class="rest-habits-title">ðŸ›Œ Rotinas em Descanso Hoje (${restHabits.length} programados para outros dias)</div>
+        <div class="rest-habits-title">🛌 Rotinas em Descanso Hoje (${restHabits.length} programados para outros dias)</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           ${restHabits.map(h => `
             <span style="background: var(--card-bg); border: 2px solid var(--purple-main); border-radius: 10px; padding: 6px 12px; font-size: 0.85rem; font-weight: 700; color: var(--purple-dark);">
@@ -1866,7 +1865,7 @@ const AppUI = {
     const totalToday = todayHabits.length;
     const pct = totalToday > 0 ? Math.round((completedCount / totalToday) * 100) : 100;
     if (progressBar) progressBar.style.width = `${pct}%`;
-    if (progressText) progressText.textContent = `${completedCount} de ${totalToday} hÃ¡bitos de hoje entregues (${pct}%)`;
+    if (progressText) progressText.textContent = `${completedCount} de ${totalToday} hábitos de hoje entregues (${pct}%)`;
 
     if (completedCount === totalToday && totalToday > 0) {
       if (progressBar) progressBar.style.background = 'linear-gradient(90deg, #4ade80, #10b981)';
@@ -1941,22 +1940,22 @@ const AppUI = {
 
         if (evt.completed) {
           badgeClass = 'past';
-          badgeText = 'âœ… CONCLUÃDO';
+          badgeText = '✅ CONCLUÍDO';
         } else if (diffDays === 0) {
           badgeClass = 'today';
-          badgeText = 'ðŸš¨ Ã‰ HOJE!';
+          badgeText = '🚨 É HOJE!';
         } else if (diffDays === 1) {
           badgeClass = 'tomorrow';
-          badgeText = 'â° Ã‰ AMANHÃƒ!';
+          badgeText = '⏰ É AMANHÃ!';
         } else if (diffDays > 1 && diffDays <= 7) {
           badgeClass = 'upcoming';
-          badgeText = `ðŸ“… EM ${diffDays} DIAS`;
+          badgeText = `📅 EM ${diffDays} DIAS`;
         } else if (diffDays > 7) {
           badgeClass = 'upcoming';
-          badgeText = `ðŸ“… EM ${diffDays} DIAS`;
+          badgeText = `📅 EM ${diffDays} DIAS`;
         } else {
           badgeClass = 'past';
-          badgeText = 'âš ï¸ PASSOU';
+          badgeText = '⚠️ PASSOU';
         }
 
         const dateFormatted = new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -1965,21 +1964,21 @@ const AppUI = {
         card.className = `event-card ${evt.completed ? 'completed' : ''}`;
         card.innerHTML = `
           <div class="event-header">
-            <span class="habit-tag ${evt.category}">${evt.category === 'faculdade' ? 'ðŸŽ“ Faculdade' : (evt.category === 'trabalho' ? 'ðŸ’¼ Trabalho' : 'ðŸŒŸ Pessoal')}</span>
+            <span class="habit-tag ${evt.category}">${evt.category === 'faculdade' ? '🎓 Faculdade' : (evt.category === 'trabalho' ? '💼 Trabalho' : '🌟 Pessoal')}</span>
             <span class="event-countdown-badge ${badgeClass}">${badgeText}</span>
           </div>
           <div class="event-title">${evt.title}</div>
           <div class="event-date-row">
-            <span>ðŸ—“ï¸ ${dateFormatted}</span>
-            ${evt.time ? `<span>â€¢ â° ${evt.time}</span>` : ''}
+            <span>🗓️ ${dateFormatted}</span>
+            ${evt.time ? `<span>• ⏰ ${evt.time}</span>` : ''}
           </div>
           ${evt.description ? `<div class="event-desc">${evt.description}</div>` : ''}
           <div class="event-footer">
             <button class="btn-comic btn-secondary btn-toggle-event" data-id="${evt.id}" style="font-size: 0.8rem; padding: 4px 10px;">
-              ${evt.completed ? 'â†º Reabrir' : 'âœ“ Concluir'}
+              ${evt.completed ? '↺ Reabrir' : '✓ Concluir'}
             </button>
             <div class="event-actions">
-              <button class="btn-event-action btn-del-event" data-id="${evt.id}" title="Excluir">ðŸ—‘ï¸</button>
+              <button class="btn-event-action btn-del-event" data-id="${evt.id}" title="Excluir">🗑️</button>
             </div>
           </div>
         `;
@@ -2019,9 +2018,9 @@ const AppUI = {
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
     const statusLabel = document.getElementById('themeStatusLabel');
-    if (statusLabel) statusLabel.textContent = ThemeManager.current === 'dark' ? 'ðŸŒ™ Modo Escuro Ativo' : 'â˜€ï¸ Modo Claro Ativo';
+    if (statusLabel) statusLabel.textContent = ThemeManager.current === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
     const btnTheme = document.getElementById('btnThemeToggle');
-    if (btnTheme) btnTheme.innerHTML = ThemeManager.current === 'dark' ? 'â˜€ï¸ Alternar para Modo Claro' : 'ðŸŒ™ Alternar para Modo Escuro';
+    if (btnTheme) btnTheme.innerHTML = ThemeManager.current === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
   },
 
   renderTasks() {
@@ -2053,7 +2052,7 @@ const AppUI = {
       container.innerHTML = `
         <div class="empty-state">
           <h3>Nenhuma Encomenda Cadastrada!</h3>
-          <p>Organize suas entregas acadÃªmicas e seus projetos pessoais com datas e prioridades.</p>
+          <p>Organize suas entregas acadêmicas e seus projetos pessoais com datas e prioridades.</p>
           <button class="btn-comic action-new-task" style="margin-top: 15px;">+ Cadastrar Primeira Encomenda</button>
         </div>
       `;
@@ -2085,20 +2084,20 @@ const AppUI = {
               const dEarly = Math.round(diffHours / 24);
               speedBadgeHtml = `
                 <div class="task-speed-badge speed-fast">
-                  âš¡ <strong>Agilidade Express!</strong> ConcluÃ­do ${dEarly > 0 ? dEarly + 'd' : Math.round(diffHours) + 'h'} antes do prazo.
+                  ⚡ <strong>Agilidade Express!</strong> Concluído ${dEarly > 0 ? dEarly + 'd' : Math.round(diffHours) + 'h'} antes do prazo.
                 </div>
               `;
             } else if (diffHours >= 0) {
               speedBadgeHtml = `
                 <div class="task-speed-badge speed-fast">
-                  âœ… <strong>No Prazo!</strong> ConcluÃ­do dentro do limite.
+                  ✅ <strong>No Prazo!</strong> Concluído dentro do limite.
                 </div>
               `;
             } else {
               const lateHours = Math.abs(Math.round(diffHours));
               speedBadgeHtml = `
                 <div class="task-speed-badge speed-late">
-                  ðŸ¢ <strong>Atraso Dimensional!</strong> Entregue ${lateHours > 24 ? Math.round(lateHours / 24) + 'd' : lateHours + 'h'} apÃ³s a data.
+                  🐢 <strong>Atraso Dimensional!</strong> Entregue ${lateHours > 24 ? Math.round(lateHours / 24) + 'd' : lateHours + 'h'} após a data.
                 </div>
               `;
             }
@@ -2111,7 +2110,7 @@ const AppUI = {
                 <strong>${formattedDate}</strong>
               </div>
               <div class="deadline-status-text status-ontime">
-                âœ“ Encomenda Finalizada
+                ✓ Encomenda Finalizada
               </div>
             </div>
           `;
@@ -2131,7 +2130,7 @@ const AppUI = {
                   <strong>${formattedDate}</strong>
                 </div>
                 <div class="deadline-status-text ${isUrgent ? 'status-urgent' : 'status-ontime'}">
-                  ${isUrgent ? 'â³ URGENTE: Restam ' : 'â±ï¸ Faltam '}${daysLeft > 0 ? daysLeft + 'd ' : ''}${hoursLeft}h
+                  ${isUrgent ? '⏳ URGENTE: Restam ' : '⏱️ Faltam '}${daysLeft > 0 ? daysLeft + 'd ' : ''}${hoursLeft}h
                 </div>
               </div>
             `;
@@ -2146,7 +2145,7 @@ const AppUI = {
                   <strong style="color: #dc2626;">${formattedDate}</strong>
                 </div>
                 <div class="deadline-status-text status-late">
-                  âš ï¸ ATRASADA hÃ¡ ${overdueDays > 0 ? overdueDays + 'd ' : ''}${overdueHours % 24}h!
+                  ⚠️ ATRASADA há ${overdueDays > 0 ? overdueDays + 'd ' : ''}${overdueHours % 24}h!
                 </div>
               </div>
             `;
@@ -2160,7 +2159,7 @@ const AppUI = {
               <strong>Sem data fixa</strong>
             </div>
             <div class="deadline-status-text status-ontime">
-              ðŸ“¦ Fluxo ContÃ­nuo
+              📦 Fluxo Contínuo
             </div>
           </div>
         `;
@@ -2168,9 +2167,9 @@ const AppUI = {
 
       const priorityLabels = {
         baixa: 'Baixa',
-        media: 'MÃ©dia',
+        media: 'Média',
         alta: 'Alta',
-        cosmica: 'CÃ³smica âš¡'
+        cosmica: 'Cósmica ⚡'
       };
 
       card.innerHTML = `
@@ -2183,20 +2182,20 @@ const AppUI = {
         </div>
 
         <h3 class="task-title">${task.title}</h3>
-        <p class="task-desc">${task.description || 'Sem observaÃ§Ãµes adicionais.'}</p>
+        <p class="task-desc">${task.description || 'Sem observações adicionais.'}</p>
 
         ${deadlineHtml}
         ${speedBadgeHtml}
 
         <div class="task-card-footer">
           <button class="btn-task-action ${task.completed ? 'btn-reopen' : 'btn-complete'}" data-action="toggle" data-id="${task.id}">
-            ${task.completed ? 'â†º Reabrir' : 'âœ“ Concluir Entrega'}
+            ${task.completed ? '↺ Reabrir' : '✓ Concluir Entrega'}
           </button>
           <button class="btn-task-action btn-edit" data-action="edit" data-id="${task.id}" title="Editar Encomenda">
-            âœŽ
+            ✎
           </button>
           <button class="btn-task-action btn-delete" data-action="delete" data-id="${task.id}" title="Excluir Encomenda">
-            âœ•
+            ✕
           </button>
         </div>
       `;
@@ -2247,10 +2246,10 @@ const AppUI = {
           <h3>${user.name}</h3>
           <div class="eex-retro-email">${user.eexEmail}</div>
           <p style="font-size: 0.9rem; color: #4b5563; margin-top: 5px;">
-            Setor de OperaÃ§Ãµes: <strong>${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</strong>
+            Setor de Operações: <strong>${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</strong>
           </p>
           <p style="font-size: 0.85rem; color: #6b7280;">
-            Tipo de Acesso: ${user.isGoogle ? 'â˜ï¸ Sincronizado na Nuvem (Firebase / Google)' : 'ðŸ’¾ Perfil Local EEX'}
+            Tipo de Acesso: ${user.isGoogle ? '☁️ Sincronizado na Nuvem (Firebase / Google)' : '💾 Perfil Local EEX'}
           </p>
         </div>
       </div>
@@ -2266,13 +2265,13 @@ const AppUI = {
         </div>
         <div class="badge-stat">
           <strong>${habits.length}</strong>
-          <span>HÃBITOS ATIVOS</span>
+          <span>HÁBITOS ATIVOS</span>
         </div>
       </div>
 
       <div class="retro-badge-actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
         <button class="btn-comic btn-secondary" id="btnOpenEditProfile">
-          âœŽ Editar Perfil & Foto
+          ✎ Editar Perfil & Foto
         </button>
         <button class="btn-comic btn-outline" onclick="AuthManager.logout()">
           Sair da Conta (${user.eexEmail})
@@ -2358,4 +2357,3 @@ const AppUI = {
 document.addEventListener('DOMContentLoaded', () => {
   AppUI.init();
 });
-

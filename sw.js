@@ -1,4 +1,4 @@
-**
+/**
  * ELGALY EXPRESS - SERVICE WORKER (PWA)
  * Suporte offline, cache inteligente de recursos e notificações
  */
