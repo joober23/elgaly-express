@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(GoogleAuth.class);
+        registerPlugin(EexWidgetPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

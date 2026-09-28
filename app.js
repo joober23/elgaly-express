@@ -339,6 +339,7 @@ const HabitManager = {
     }
 
     this.saveHistoryLocally();
+    WidgetManager.update();
 
     if (typeof FirebaseService !== 'undefined') {
       await FirebaseService.saveHabitHistoryToCloud(this.history);
@@ -409,6 +410,92 @@ const HabitManager = {
       }
     }
     return streak;
+  },
+
+  getTodayStats() {
+    const todayDow = new Date().getDay();
+    const scheduled = this.habits.filter(h => !h.days || h.days.includes(todayDow));
+    const completed = scheduled.filter(h => this.isCompletedToday(h.id));
+    const pending = scheduled.filter(h => !this.isCompletedToday(h.id));
+    const allDone = scheduled.length > 0 && pending.length === 0;
+    const streak = this.habits.length > 0 ? Math.max(...this.habits.map(h => this.calculateStreak(h.id)), 0) : 0;
+
+    return {
+      scheduledCount: scheduled.length,
+      completedCount: completed.length,
+      pendingCount: pending.length,
+      allDone: allDone,
+      streak: streak
+    };
+  }
+};
+
+// ==========================================================================
+// GERENCIADOR DE WIDGET (EEX Widget: Agente Midnight & Agente Brave)
+// ==========================================================================
+const WidgetManager = {
+  update() {
+    if (typeof HabitManager === 'undefined') return;
+    const stats = HabitManager.getTodayStats();
+
+    const title = stats.allDone 
+      ? 'ROTA ENTREGUE! 🚀' 
+      : (stats.pendingCount > 0 ? 'ROTA PENDENTE! 🚨' : 'CENTRAL EM ESPERA');
+
+    const subtitle = stats.allDone
+      ? 'Agente Brave comemora: rotina 100% cumprida! Você é uma lenda!'
+      : (stats.pendingCount > 0
+          ? `Agente Midnight em pânico: faltam ${stats.pendingCount} hábito(s) hoje!`
+          : 'Agente Midnight ansiosa: faça seu check-in dimensional!');
+
+    // 1. Atualiza Widget Nativo Android via plugin Capacitor (se estiver no APK)
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.EexWidget) {
+      try {
+        window.Capacitor.Plugins.EexWidget.update({
+          streak: stats.streak,
+          pending: stats.pendingCount,
+          allDone: stats.allDone,
+          title: title,
+          subtitle: subtitle
+        });
+      } catch (e) {
+        console.warn('Erro ao atualizar EexWidget nativo:', e);
+      }
+    }
+
+    // 2. Renderiza Widget no Início do App
+    this.renderInAppWidget(stats, title, subtitle);
+  },
+
+  renderInAppWidget(stats, title, subtitle) {
+    const container = document.getElementById('eexMascotWidget');
+    if (!container) return;
+
+    const isDone = stats.allDone;
+    const mascotImg = isDone ? 'images/brave.png' : 'images/midnight.png';
+    const agentName = isDone ? 'Agente Brave' : 'Agente Midnight';
+    const badgeText = `🔥 ${stats.streak} ${stats.streak === 1 ? 'DIA' : 'DIAS'} DE SEQUÊNCIA`;
+
+    container.className = `eex-mascot-widget ${isDone ? 'widget-mood-done' : 'widget-mood-pending'}`;
+    container.innerHTML = `
+      <div class="mascot-widget-avatar-wrap">
+        <img src="${mascotImg}" alt="${agentName}" class="mascot-widget-img ${isDone ? 'mascot-cheer' : 'mascot-cry'}">
+        <span class="mascot-widget-agent-tag">${agentName}</span>
+      </div>
+      <div class="mascot-widget-body">
+        <div class="mascot-widget-badge-row">
+          <span class="mascot-widget-badge">${badgeText}</span>
+          <span class="mascot-widget-counter">${isDone ? '✅ 100% Concluído' : `⏳ ${stats.completedCount}/${stats.scheduledCount} Hábitos`}</span>
+        </div>
+        <h3 class="mascot-widget-title">${title}</h3>
+        <p class="mascot-widget-desc">${subtitle}</p>
+        <div class="mascot-widget-footer">
+          <a href="#rotina" class="btn-comic btn-sm ${isDone ? 'btn-secondary' : ''}">
+            ${isDone ? '✨ Ver Rotina Feita' : '⚡ Despachar Hábitos Agora'}
+          </a>
+        </div>
+      </div>
+    `;
   }
 };
 
@@ -1759,6 +1846,7 @@ const AppUI = {
       }
     }
 
+    WidgetManager.update();
     this.renderEvents();
   },
 

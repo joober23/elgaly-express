@@ -2856,3 +2856,173 @@ footer {
   color: var(--black);
 }
 
+/* ==========================================================================
+   WIDGET DOS AGENTES (ESTILO DUOLINGO: MIDNIGHT & BRAVE)
+   ========================================================================== */
+.eex-mascot-widget {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 4px solid var(--black);
+  border-radius: 24px;
+  padding: 18px 22px;
+  margin-top: 18px;
+  margin-bottom: 24px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.eex-mascot-widget.widget-mood-pending {
+  background: var(--card-bg);
+  box-shadow: 8px 8px 0px var(--magenta-bright);
+}
+
+.eex-mascot-widget.widget-mood-done {
+  background: #fef9c3;
+  box-shadow: 8px 8px 0px var(--green-mint);
+}
+
+.mascot-widget-avatar-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mascot-widget-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  filter: drop-shadow(4px 4px 0px rgba(26, 8, 38, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.mascot-widget-img.mascot-cry {
+  animation: mascotTremble 3s infinite ease-in-out;
+}
+
+.mascot-widget-img.mascot-cheer {
+  animation: mascotBounce 2s infinite ease-in-out;
+}
+
+@keyframes mascotTremble {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  10%, 30% { transform: rotate(-5deg) scale(1.03); }
+  20%, 40% { transform: rotate(5deg) scale(1.03); }
+  50% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes mascotBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.04); }
+}
+
+.mascot-widget-agent-tag {
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  background: var(--black);
+  color: var(--white);
+  padding: 2px 10px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.mascot-widget-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.mascot-widget-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.mascot-widget-badge {
+  font-family: var(--font-main);
+  font-size: 0.88rem;
+  background: var(--yellow-bright);
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 8px;
+  padding: 2px 10px;
+  box-shadow: 2px 2px 0px var(--black);
+}
+
+.mascot-widget-counter {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--purple-dark);
+}
+
+.mascot-widget-title {
+  font-size: 1.55rem;
+  font-family: var(--font-main);
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.widget-mood-pending .mascot-widget-title {
+  color: var(--magenta-bright);
+}
+
+.widget-mood-done .mascot-widget-title {
+  color: var(--purple-dark);
+}
+
+.mascot-widget-desc {
+  font-size: 0.92rem;
+  color: #4b5563;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+.mascot-widget-footer {
+  display: flex;
+  gap: 8px;
+}
+
+/* Modo escuro para o widget in-app */
+[data-theme="dark"] .eex-mascot-widget.widget-mood-pending {
+  background: #240d3a;
+  box-shadow: 8px 8px 0px var(--magenta-bright);
+}
+
+[data-theme="dark"] .eex-mascot-widget.widget-mood-done {
+  background: #1c2b1e;
+  box-shadow: 8px 8px 0px var(--green-mint);
+}
+
+[data-theme="dark"] .mascot-widget-counter {
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .mascot-widget-desc {
+  color: #e9d5ff;
+}
+
+[data-theme="dark"] .widget-mood-done .mascot-widget-title {
+  color: var(--yellow-bright);
+}
+
+/* Responsividade mobile para o widget */
+@media (max-width: 600px) {
+  .eex-mascot-widget {
+    flex-direction: column;
+    text-align: center;
+    padding: 18px 14px;
+    gap: 12px;
+  }
+  .mascot-widget-badge-row {
+    justify-content: center;
+  }
+  .mascot-widget-footer {
+    justify-content: center;
+  }
+}
+
+
