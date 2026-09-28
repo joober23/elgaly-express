@@ -1,4 +1,4 @@
-/**
+**
  * ELGALY EXPRESS - SERVIÇO DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
  * Gerencia Login com Google, Perfis Customizados e Banco de Dados Cloud Firestore em tempo real.
  */

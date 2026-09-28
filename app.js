@@ -1,4 +1,4 @@
-﻿/**
+*
  * ELGALY EXPRESS - APLICAÃ‡ÃƒO DE ROTINAS & DESPACHO
  * AutenticaÃ§Ã£o exclusivamente via Google (Rede EEX).
  * Onboarding no primeiro acesso + CrachÃ¡s salvos com PIN de 6 dÃ­gitos.
