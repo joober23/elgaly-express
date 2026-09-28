@@ -49,6 +49,7 @@ jobs:
           cp -r android-res/values android/app/src/main/res/ 2>/dev/null || true
           cp -r android-res/layout android/app/src/main/res/ 2>/dev/null || true
           cp -r android-res/xml android/app/src/main/res/ 2>/dev/null || true
+          cp -r android-res/font android/app/src/main/res/ 2>/dev/null || true
           mkdir -p android/app/src/main/res/raw
           cp android-res/raw/eex_notification.mp3 android/app/src/main/res/raw/ 2>/dev/null || true
           # Substitui arquivos nativos e componentes do widget

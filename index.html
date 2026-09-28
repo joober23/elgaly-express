@@ -441,6 +441,19 @@
               <div style="margin-top: 10px; font-size: 0.95rem; font-weight: 700; color: #6b7280;">
                 Documento oficial em A4 com o logotipo oficial, dados do agente e carimbo de aprovação.
               </div>
+            <!-- Seção de Registros Diários (Fotos com Adesivos EEX) -->
+            <div class="daily-memories-section" style="margin-top: 36px;">
+              <div class="daily-memories-header">
+                <div>
+                  <h3 style="font-size: 1.6rem; color: var(--purple-dark); margin-bottom: 4px;">📸 Registros Diários do Entregador</h3>
+                  <p style="font-size: 0.95rem; color: #4b5563; font-weight: 600;">
+                    Galeria de momentos marcantes capturados nas suas rotinas e despachos com adesivos dos agentes!
+                  </p>
+                </div>
+              </div>
+              <div class="daily-memories-grid" id="dailyMemoriesGrid">
+                <!-- Preenchido dinamicamente pelo MemoriesManager -->
+              </div>
             </div>
 
           </div>
@@ -748,6 +761,96 @@
           Salvar Evento
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE AVISO: É MELHOR MENTIR DO QUE SE DAR MAL!
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalWarnUnmark">
+    <div class="modal-content" style="max-width: 460px; text-align: center;">
+      <div style="margin-bottom: 12px;">
+        <img src="images/midnight.png" alt="Agente Midnight" style="width: 100px; height: 100px; object-fit: contain; animation: mascotTremble 2.5s infinite;">
+      </div>
+      <h2 style="color: var(--magenta-bright); font-size: 1.8rem; margin-bottom: 8px;">É MELHOR MENTIR DO QUE SE DAR MAL!</h2>
+      <p style="font-size: 0.95rem; color: #4b5563; line-height: 1.45; margin-bottom: 16px;">
+        Agente, desmarcar uma rotina já concluída fará sua <strong>sequência (streak) ZERAR IMEDIATAMENTE</strong>!<br>
+        Mesmo que você tenha outros hábitos ativos na central. Tem certeza absoluta que quer admitir essa derrota?
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn-comic" id="btnKeepHabitDone" style="background: var(--yellow-bright); color: var(--black);">
+          🫡 Manter como Feito (Recomendado!)
+        </button>
+        <button type="button" class="btn-comic btn-outline" id="btnConfirmResetStreak" style="font-size: 0.85rem;">
+          💀 Assumir a Culpa e Zerar Streak
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE REGISTRO DO MOMENTO BACANA (FOTO + ADESIVOS EEX)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalMomentCapture">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close" id="modalMomentClose" aria-label="Fechar">&times;</button>
+      <div style="text-align: center; margin-bottom: 14px;">
+        <h2 style="font-size: 1.7rem; color: var(--purple-dark); margin-bottom: 4px;">📸 Momento Bacana!</h2>
+        <p style="font-size: 0.9rem; color: #4b5563; font-weight: 600;">
+          Que tal registrar esse momento de vitória com uma foto e adesivos da EEX?
+        </p>
+      </div>
+
+      <div class="moment-creator-box">
+        <!-- Prévia da Foto com Adesivo Interativo -->
+        <div class="moment-preview-stage" id="momentPreviewStage">
+          <img id="momentPhotoPreview" src="images/widgetbackground.png" alt="Prévia" style="display: none;">
+          <div id="momentPlaceholder" class="moment-upload-placeholder">
+            <span style="font-size: 2.2rem;">📷</span>
+            <span>Toque para tirar uma foto ou escolher da galeria</span>
+          </div>
+          <!-- Adesivo sobreposto -->
+          <img id="momentStickerOverlay" src="images/brave.png" alt="Adesivo" class="moment-sticker-stamp">
+          <input type="file" accept="image/*" capture="environment" id="momentFileInput" class="moment-file-input">
+        </div>
+
+        <!-- Seletor de Adesivos EEX -->
+        <div style="margin-top: 14px;">
+          <label style="font-weight: 800; font-size: 0.9rem; color: var(--purple-dark); display: block; margin-bottom: 6px;">
+            🏷️ Escolha seu Adesivo EEX:
+          </label>
+          <div class="moment-stickers-selector">
+            <button type="button" class="moment-sticker-btn active" data-sticker="brave">
+              <img src="images/brave.png" alt="Brave">
+              <span>Brave ✨</span>
+            </button>
+            <button type="button" class="moment-sticker-btn" data-sticker="midnight">
+              <img src="images/midnight.png" alt="Midnight">
+              <span>Midnight 😭</span>
+            </button>
+            <button type="button" class="moment-sticker-btn" data-sticker="fire">
+              <img src="images/fireon.png" alt="Fogo">
+              <span>Chama 🔥</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Legenda do Momento -->
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="momentCaptionInput">✍️ Legenda da Conquista:</label>
+          <input type="text" id="momentCaptionInput" maxlength="100" placeholder="Ex: Treino concluído! / Revisei a matéria toda!">
+        </div>
+
+        <!-- Ações -->
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button type="button" class="btn-comic btn-secondary" id="btnSkipMoment" style="flex: 1;">
+            Pular
+          </button>
+          <button type="button" class="btn-comic" id="btnSaveMoment" style="flex: 2;">
+            🚀 Guardar Registro
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

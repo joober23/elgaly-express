@@ -369,6 +369,18 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('events').doc(eventId).delete();
+  },
+
+  async saveMemoryToCloud(memory) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    await this.db.collection('users').doc(uid).collection('memories').doc(memory.id).set(memory, { merge: true });
+  },
+
+  async deleteMemoryFromCloud(memoryId) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    await this.db.collection('users').doc(uid).collection('memories').doc(memoryId).delete();
   }
 };
 

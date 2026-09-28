@@ -34,17 +34,41 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Receiver do Widget da Tela Inicial (EEX Widget: Midnight & Brave) -->
+        <!-- Widgets da Tela Inicial: 2x4, 2x2 e 1x4 -->
         <receiver
             android:name=".EexWidgetProvider"
-            android:label="Elgaly Express Status"
+            android:label="Elgaly Express (2x4)"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/eex_widget_info" />
+                android:resource="@xml/eex_widget_info_4x2" />
+        </receiver>
+
+        <receiver
+            android:name=".EexWidgetProvider2x2"
+            android:label="Elgaly Express (2x2)"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/eex_widget_info_2x2" />
+        </receiver>
+
+        <receiver
+            android:name=".EexWidgetProvider4x1"
+            android:label="Elgaly Express (1x4)"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/eex_widget_info_4x1" />
         </receiver>
 
     </application>

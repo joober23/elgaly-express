@@ -380,6 +380,23 @@ const HabitManager = {
     }
   },
 
+  async resetHabitStreak(id) {
+    const todayKey = this.getTodayKey();
+    // Remove de hoje
+    if (this.history[todayKey]) {
+      this.history[todayKey] = this.history[todayKey].filter(hId => hId !== id);
+    }
+    // Zera o streak removendo o histórico deste hábito completamente
+    Object.keys(this.history).forEach(k => {
+      this.history[k] = this.history[k].filter(hId => hId !== id);
+    });
+    this.saveHistoryLocally();
+    WidgetManager.update();
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveHabitHistoryToCloud(this.history);
+    }
+  },
+
   calculateStreak(habitId) {
     const habit = this.habits.find(h => h.id === habitId);
     const scheduledDays = (habit && habit.days && habit.days.length > 0) ? habit.days : [0, 1, 2, 3, 4, 5, 6];
@@ -474,7 +491,8 @@ const WidgetManager = {
     const isDone = stats.allDone;
     const mascotImg = isDone ? 'images/brave.png' : 'images/midnight.png';
     const agentName = isDone ? 'Agente Brave' : 'Agente Midnight';
-    const badgeText = `🔥 ${stats.streak} ${stats.streak === 1 ? 'DIA' : 'DIAS'} DE SEQUÊNCIA`;
+    const fireIcon = isDone ? 'images/fireon.png' : 'images/fireoff.png';
+    const streakText = `${stats.streak} ${stats.streak === 1 ? 'DIA' : 'DIAS'} DE SEQUÊNCIA`;
 
     container.className = `eex-mascot-widget ${isDone ? 'widget-mood-done' : 'widget-mood-pending'}`;
     container.innerHTML = `
@@ -484,7 +502,10 @@ const WidgetManager = {
       </div>
       <div class="mascot-widget-body">
         <div class="mascot-widget-badge-row">
-          <span class="mascot-widget-badge">${badgeText}</span>
+          <span class="mascot-widget-badge" style="display:inline-flex;align-items:center;gap:4px;">
+            <img src="${fireIcon}" alt="Fogo" style="width:16px;height:22px;object-fit:contain;">
+            ${streakText}
+          </span>
           <span class="mascot-widget-counter">${isDone ? '✅ 100% Concluído' : `⏳ ${stats.completedCount}/${stats.scheduledCount} Hábitos`}</span>
         </div>
         <h3 class="mascot-widget-title">${title}</h3>
@@ -496,6 +517,100 @@ const WidgetManager = {
         </div>
       </div>
     `;
+  }
+};
+
+// ==========================================================================
+// GERENCIADOR DE REGISTROS DIÁRIOS (Memórias com Fotos e Adesivos EEX)
+// ==========================================================================
+const MemoriesManager = {
+  memories: [],
+
+  init() {
+    try {
+      this.memories = JSON.parse(localStorage.getItem('elgaly_express_daily_memories') || '[]');
+    } catch {
+      this.memories = [];
+    }
+  },
+
+  saveLocally() {
+    localStorage.setItem('elgaly_express_daily_memories', JSON.stringify(this.memories));
+  },
+
+  async addMemory(item) {
+    const memory = {
+      id: 'mem-' + Date.now(),
+      habitTitle: item.habitTitle || 'Rotina Concluída',
+      photo: item.photo,
+      caption: item.caption || 'Momento bacana da rotina!',
+      sticker: item.sticker || 'brave',
+      date: new Date().toLocaleDateString('pt-BR'),
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    };
+    this.memories.unshift(memory);
+    this.saveLocally();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveMemoryToCloud(memory);
+    }
+    this.render();
+    return memory;
+  },
+
+  async deleteMemory(id) {
+    this.memories = this.memories.filter(m => m.id !== id);
+    this.saveLocally();
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.deleteMemoryFromCloud(id);
+    }
+    this.render();
+  },
+
+  render() {
+    const grid = document.getElementById('dailyMemoriesGrid');
+    if (!grid) return;
+
+    if (this.memories.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 28px; background: var(--card-bg); border: 3px dashed var(--purple-main); border-radius: 18px;">
+          <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">📷</span>
+          <h4 style="font-size: 1.15rem; color: var(--purple-dark); margin-bottom: 4px;">Nenhum Registro Diário Ainda</h4>
+          <p style="font-size: 0.88rem; color: #6b7280; font-weight: 600;">
+            Ao concluir hábitos na sua rotina, tire fotos e adicione adesivos dos agentes para preencher este mural!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = this.memories.map(mem => `
+      <div class="daily-memory-card">
+        <div class="memory-polaroid-frame">
+          <img src="${mem.photo}" alt="${mem.caption}" class="memory-polaroid-img">
+          <img src="images/${mem.sticker === 'midnight' ? 'midnight.png' : (mem.sticker === 'fire' ? 'fireon.png' : 'brave.png')}" alt="Sticker" class="memory-polaroid-sticker">
+        </div>
+        <div class="memory-card-body">
+          <div class="memory-card-habit">✨ ${mem.habitTitle}</div>
+          <div class="memory-card-caption">"${mem.caption}"</div>
+          <div class="memory-card-meta">
+            <span>📅 ${mem.date} às ${mem.time}</span>
+            <button class="memory-del-btn" data-id="${mem.id}" title="Excluir Registro">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.memory-del-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (confirm('Deseja excluir este registro diário?')) {
+          this.deleteMemory(id);
+        }
+      });
+    });
   }
 };
 
@@ -1062,6 +1177,7 @@ const AppUI = {
     TaskManager.init();
     HabitManager.init();
     EventManager.init();
+    MemoriesManager.init();
     PWAManager.init();
     NotificationManager.init();
 
@@ -1170,7 +1286,7 @@ const AppUI = {
     if (tabName === 'inicio') this.renderHomeOverview();
     if (tabName === 'rotina') this.renderDailyRoutine();
     if (tabName === 'encomendas') { this.renderTasks(); this.renderEvents(); }
-    if (tabName === 'relatorios') ReportEngine.renderReportPreview();
+    if (tabName === 'relatorios') { ReportEngine.renderReportPreview(); MemoriesManager.render(); }
     if (tabName === 'perfil') this.renderProfileView();
     if (tabName === 'configuracoes') this.renderConfiguracoes();
   },
@@ -1660,6 +1776,126 @@ const AppUI = {
         ReportEngine.exportPDF();
       });
     }
+
+    // 19. Modal de Aviso: É MELHOR MENTIR DO QUE SE DAR MAL!
+    const btnKeepHabitDone = document.getElementById('btnKeepHabitDone');
+    const btnConfirmResetStreak = document.getElementById('btnConfirmResetStreak');
+    const modalWarnUnmark = document.getElementById('modalWarnUnmark');
+
+    if (btnKeepHabitDone && modalWarnUnmark) {
+      btnKeepHabitDone.addEventListener('click', () => {
+        modalWarnUnmark.classList.remove('active');
+        this._pendingUnmarkHabit = null;
+      });
+    }
+
+    if (btnConfirmResetStreak && modalWarnUnmark) {
+      btnConfirmResetStreak.addEventListener('click', async () => {
+        if (this._pendingUnmarkHabit) {
+          await HabitManager.resetHabitStreak(this._pendingUnmarkHabit.id);
+          this.renderDailyRoutine();
+          this.renderHomeOverview();
+          ReportEngine.renderReportPreview();
+          this.showToast('💀 Hábito desmarcado e streak zerado! Às vezes era melhor ter mentido...');
+        }
+        modalWarnUnmark.classList.remove('active');
+        this._pendingUnmarkHabit = null;
+      });
+    }
+
+    // 20. Modal de Registro do Momento Bacana
+    const modalMomentCapture = document.getElementById('modalMomentCapture');
+    const modalMomentClose = document.getElementById('modalMomentClose');
+    const btnSkipMoment = document.getElementById('btnSkipMoment');
+    const btnSaveMoment = document.getElementById('btnSaveMoment');
+    const momentFileInput = document.getElementById('momentFileInput');
+
+    if (modalMomentClose && modalMomentCapture) {
+      modalMomentClose.addEventListener('click', () => {
+        modalMomentCapture.classList.remove('active');
+      });
+    }
+    if (btnSkipMoment && modalMomentCapture) {
+      btnSkipMoment.addEventListener('click', () => {
+        modalMomentCapture.classList.remove('active');
+      });
+    }
+
+    if (momentFileInput) {
+      momentFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            this._momentPhotoBase64 = ev.target.result;
+            const preview = document.getElementById('momentPhotoPreview');
+            const placeholder = document.getElementById('momentPlaceholder');
+            if (preview) { preview.src = this._momentPhotoBase64; preview.style.display = 'block'; }
+            if (placeholder) placeholder.style.display = 'none';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    document.querySelectorAll('.moment-sticker-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.moment-sticker-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this._selectedMomentSticker = btn.dataset.sticker;
+        const stickerOverlay = document.getElementById('momentStickerOverlay');
+        if (stickerOverlay) {
+          if (this._selectedMomentSticker === 'midnight') stickerOverlay.src = 'images/midnight.png';
+          else if (this._selectedMomentSticker === 'fire') stickerOverlay.src = 'images/fireon.png';
+          else stickerOverlay.src = 'images/brave.png';
+        }
+      });
+    });
+
+    if (btnSaveMoment && modalMomentCapture) {
+      btnSaveMoment.addEventListener('click', async () => {
+        const caption = (document.getElementById('momentCaptionInput').value || '').trim();
+        const habitTitle = this._currentMomentHabit ? this._currentMomentHabit.title : 'Rotina Concluída';
+        const stickerChoice = this._selectedMomentSticker || 'brave';
+
+        // Renderiza no Canvas para embutir o adesivo na imagem
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const baseImg = new Image();
+
+        baseImg.onload = () => {
+          const maxDim = 800;
+          const scale = Math.min(maxDim / baseImg.width, maxDim / baseImg.height, 1);
+          canvas.width = Math.round(baseImg.width * scale);
+          canvas.height = Math.round(baseImg.height * scale);
+          ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+
+          // Carrega e desenha o adesivo no canto inferior direito
+          const stickerImg = new Image();
+          stickerImg.onload = async () => {
+            const stickerSize = Math.round(canvas.width * 0.28);
+            ctx.drawImage(stickerImg, canvas.width - stickerSize - 16, canvas.height - stickerSize - 16, stickerSize, stickerSize);
+            const finalPhoto = canvas.toDataURL('image/jpeg', 0.85);
+
+            await MemoriesManager.addMemory({
+              habitTitle: habitTitle,
+              photo: finalPhoto,
+              caption: caption || 'Momento bacana da rotina!',
+              sticker: stickerChoice
+            });
+
+            modalMomentCapture.classList.remove('active');
+            AppUI.showToast('📸 Momento bacana registrado com sucesso no relatório!');
+          };
+
+          if (stickerChoice === 'midnight') stickerImg.src = 'images/midnight.png';
+          else if (stickerChoice === 'fire') stickerImg.src = 'images/fireon.png';
+          else stickerImg.src = 'images/brave.png';
+        };
+
+        baseImg.src = this._momentPhotoBase64 || 'images/widgetbackground.png';
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -1912,10 +2148,21 @@ const AppUI = {
 
       card.addEventListener('click', async (e) => {
         if (e.target.classList.contains('habit-btn-delete')) return;
+        const alreadyDone = HabitManager.isCompletedToday(habit.id);
+        if (alreadyDone) {
+          // Já concluído: avisa que é melhor mentir do que se dar mal!
+          this.promptUnmarkHabit(habit);
+          return;
+        }
+
+        // Marcando como concluído!
         await HabitManager.toggleHabit(habit.id);
         this.renderDailyRoutine();
         this.renderHomeOverview();
         ReportEngine.renderReportPreview();
+
+        // Abre modal para registrar esse momento bacana!
+        this.openMomentCaptureModal(habit);
       });
 
       const delBtn = card.querySelector('.habit-btn-delete');
@@ -1960,6 +2207,37 @@ const AppUI = {
     } else {
       if (progressBar) progressBar.style.background = 'linear-gradient(90deg, var(--yellow-bright), var(--magenta-bright))';
     }
+  },
+
+  promptUnmarkHabit(habit) {
+    this._pendingUnmarkHabit = habit;
+    const modal = document.getElementById('modalWarnUnmark');
+    if (modal) modal.classList.add('active');
+  },
+
+  openMomentCaptureModal(habit) {
+    this._currentMomentHabit = habit;
+    this._selectedMomentSticker = 'brave';
+    this._momentPhotoBase64 = null;
+
+    const modal = document.getElementById('modalMomentCapture');
+    const preview = document.getElementById('momentPhotoPreview');
+    const placeholder = document.getElementById('momentPlaceholder');
+    const captionInput = document.getElementById('momentCaptionInput');
+    const stickerOverlay = document.getElementById('momentStickerOverlay');
+    const fileInput = document.getElementById('momentFileInput');
+
+    if (preview) { preview.src = ''; preview.style.display = 'none'; }
+    if (placeholder) placeholder.style.display = 'flex';
+    if (captionInput) captionInput.value = '';
+    if (fileInput) fileInput.value = '';
+    if (stickerOverlay) stickerOverlay.src = 'images/brave.png';
+
+    document.querySelectorAll('.moment-sticker-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sticker === 'brave');
+    });
+
+    if (modal) modal.classList.add('active');
   },
 
   openEventModal(event = null) {
