@@ -31,6 +31,22 @@
 <body>
 
   <!-- ==========================================================================
+       TELA SPLASH / CARREGAMENTO OFICIAL (ELGALY ARROW GIRATÓRIO)
+       ========================================================================== -->
+  <div class="eex-splash-screen" id="eexSplashScreen">
+    <div class="eex-splash-box">
+      <div class="eex-splash-arrow-wrap">
+        <img src="images/elgalylogo_arrow.png" alt="Carregando..." class="eex-splash-arrow">
+      </div>
+      <h2 class="eex-splash-title">ELGALY EXPRESS</h2>
+      <p class="eex-splash-subtitle" id="eexSplashStatus">CONECTANDO À REDE EEX...</p>
+      <div class="eex-splash-bar-outer">
+        <div class="eex-splash-bar-inner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
        MENU LATERAL MOBILE (DRAWER GAVETA DESLIZANTE)
        ========================================================================== -->
   <div class="drawer-overlay" id="drawerOverlay"></div>
@@ -46,6 +62,7 @@
       <a href="#rotina" class="drawer-nav-link" data-tab="rotina">☀️ Rotina Diária</a>
       <a href="#encomendas" class="drawer-nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
       <a href="#relatorios" class="drawer-nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#amigos" class="drawer-nav-link" data-tab="amigos">🤝 EEX-Friends</a>
       <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
       <a href="#configuracoes" class="drawer-nav-link" data-tab="configuracoes">⚙️ Configurações</a>
       
@@ -100,6 +117,7 @@
       <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
       <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
       <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
+      <a href="#amigos" class="nav-link" data-tab="amigos">🤝 EEX-Friends</a>
       <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil EEX</a>
       <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
       <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
@@ -454,6 +472,75 @@
               <div class="daily-memories-grid" id="dailyMemoriesGrid">
                 <!-- Preenchido dinamicamente pelo MemoriesManager -->
               </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
+           VISUALIZAÇÃO: EEX-FRIENDS (SISTEMA DE AMIGOS - TEASER / EM BREVE)
+           ========================================================================== -->
+      <div class="app-view" id="view-amigos">
+        <section class="site-section">
+          <div class="friends-teaser-container">
+            
+            <div class="friends-badge-pill">
+              <span>⚡ CENTRAL EEX INFORMA</span>
+            </div>
+
+            <div class="friends-hero-card">
+              <div class="friends-mascots-wrap">
+                <img src="images/brave.png" alt="Agente Brave" class="friends-mascot-img brave-friend">
+                <div class="friends-connection-bubble">🤝</div>
+                <img src="images/midnight.png" alt="Agente Midnight" class="friends-mascot-img midnight-friend">
+              </div>
+
+              <h1 class="friends-hero-title">ENTREGAS... COLETIVAS! 📦✨</h1>
+              <p class="friends-hero-subtitle">
+                Se conecte com seus amigos através do <strong>EEX-FRIENDS</strong>! Em breve!
+              </p>
+
+              <div class="friends-status-strip">
+                <span class="status-dot-pulse"></span>
+                <span>Módulo de Cooperação Dimensional em desenvolvimento pela Central EEX</span>
+              </div>
+            </div>
+
+            <!-- Grade de Recursos Futuros -->
+            <div class="friends-features-grid">
+              <div class="friends-feature-card">
+                <div class="feature-icon">🔥</div>
+                <h4>Streaks em Equipe</h4>
+                <p>Mantenha o fogo aceso juntos! Se todos cumprirem as rotinas do dia, a chama ganha bônus de energia dimensional.</p>
+              </div>
+
+              <div class="friends-feature-card">
+                <div class="feature-icon">📸</div>
+                <h4>Mural de Registros</h4>
+                <p>Veja os momentos bacanas e fotos com adesivos registrados pelos seus amigos diretamente no mural conjunto!</p>
+              </div>
+
+              <div class="friends-feature-card">
+                <div class="feature-icon">📦</div>
+                <h4>Despacho Cooperativo</h4>
+                <p>Envie encomendas, desafios e lembretes amigáveis para seus parceiros de rota não perderem prazos.</p>
+              </div>
+
+              <div class="friends-feature-card">
+                <div class="feature-icon">🏷️</div>
+                <h4>Rede por ID Express</h4>
+                <p>Adicione amigos facilmente buscando por <code>@seunick.express.com</code> e colecione crachás parceiros!</p>
+              </div>
+            </div>
+
+            <!-- Card Interativo de Notificação -->
+            <div class="friends-cta-card">
+              <h3>Fique Ligado, Agente!</h3>
+              <p>Os entregadores e agentes de Nova Amerit estarão prontos para a ação em equipe muito em breve.</p>
+              <button type="button" class="btn-comic" id="btnNotifyFriends" style="background: var(--yellow-bright); color: var(--black); margin-top: 10px;">
+                🔔 Quero Ser o Primeiro a Testar!
+              </button>
             </div>
 
           </div>
@@ -883,6 +970,10 @@
     <a href="#relatorios" class="bottom-nav-item" data-tab="relatorios">
       <span class="bottom-nav-icon">📊</span>
       <span class="bottom-nav-label">Relatórios</span>
+    </a>
+    <a href="#amigos" class="bottom-nav-item" data-tab="amigos">
+      <span class="bottom-nav-icon">🤝</span>
+      <span class="bottom-nav-label">Amigos</span>
     </a>
     <a href="#perfil" class="bottom-nav-item" data-tab="perfil">
       <span class="bottom-nav-icon">👤</span>

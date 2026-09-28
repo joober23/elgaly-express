@@ -65,6 +65,10 @@ const AuthManager = {
     TaskManager.tasks = [];
     HabitManager.habits = [];
     HabitManager.history = {};
+    if (typeof MemoriesManager !== 'undefined') {
+      MemoriesManager.memories = [];
+      localStorage.removeItem('elgaly_express_daily_memories');
+    }
     AppUI.renderAll();
     AppUI.showToast('Você saiu da sua conta.');
   },
@@ -1171,6 +1175,30 @@ const AppUI = {
   onboardingAvatarBase64: null,
   _pendingBadgeLogin: null,
 
+  isMobileDevice() {
+    return (
+      (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      window.innerWidth <= 768
+    );
+  },
+
+  showSplash(message = 'CARREGANDO...') {
+    const splash = document.getElementById('eexSplashScreen');
+    const msgEl = document.getElementById('eexSplashStatus');
+    if (msgEl) msgEl.textContent = message;
+    if (splash) splash.classList.remove('hidden');
+  },
+
+  hideSplash() {
+    const splash = document.getElementById('eexSplashScreen');
+    if (splash) {
+      setTimeout(() => {
+        splash.classList.add('hidden');
+      }, 400);
+    }
+  },
+
   init() {
     ThemeManager.init();
     AuthManager.init();
@@ -1896,6 +1924,14 @@ const AppUI = {
         baseImg.src = this._momentPhotoBase64 || 'images/widgetbackground.png';
       });
     }
+
+    // 21. Teaser EEX-Friends: Botão Quero Ser o Primeiro a Testar
+    const btnNotifyFriends = document.getElementById('btnNotifyFriends');
+    if (btnNotifyFriends) {
+      btnNotifyFriends.addEventListener('click', () => {
+        this.showToast('🚀 Notificação ativada! Você será o primeiro a testar o EEX-Friends!');
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -1928,6 +1964,7 @@ const AppUI = {
       if (bottomNavBar) bottomNavBar.style.display = 'none';
       this.renderSavedBadges();
       this.renderHeaderProfile();
+      this.hideSplash();
       return;
     }
 
@@ -1946,6 +1983,7 @@ const AppUI = {
     this.renderConfiguracoes();
     ReportEngine.renderReportPreview();
     NotificationManager.scheduleAll();
+    this.hideSplash();
   },
 
   /**
@@ -2216,6 +2254,12 @@ const AppUI = {
   },
 
   openMomentCaptureModal(habit) {
+    // Restrição solicitada pelo usuário: apenas no celular é permitido registrar foto
+    if (!this.isMobileDevice()) {
+      this.showToast('🎉 Rotina concluída! 📱 Para registrar foto e adesivos, acesse pelo celular!');
+      return;
+    }
+
     this._currentMomentHabit = habit;
     this._selectedMomentSticker = 'brave';
     this._momentPhotoBase64 = null;

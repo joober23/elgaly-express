@@ -310,6 +310,22 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar eventos do Firestore:', err);
     });
+
+    // 5. Escuta memórias e fotos com adesivos em tempo real
+    this.unsubscribeMemories = userDoc.collection('memories').onSnapshot(snapshot => {
+      const cloudMemories = [];
+      snapshot.forEach(doc => {
+        cloudMemories.push({ id: doc.id, ...doc.data() });
+      });
+      cloudMemories.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      if (typeof MemoriesManager !== 'undefined') {
+        MemoriesManager.memories = cloudMemories;
+        MemoriesManager.saveLocally();
+        MemoriesManager.render();
+      }
+    }, err => {
+      console.warn('Erro ao escutar memórias do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
@@ -317,6 +333,7 @@ const FirebaseService = {
     if (this.unsubscribeHabits) { this.unsubscribeHabits(); this.unsubscribeHabits = null; }
     if (this.unsubscribeHistory) { this.unsubscribeHistory(); this.unsubscribeHistory = null; }
     if (this.unsubscribeEvents) { this.unsubscribeEvents(); this.unsubscribeEvents = null; }
+    if (this.unsubscribeMemories) { this.unsubscribeMemories(); this.unsubscribeMemories = null; }
   },
 
   // ========================================================
