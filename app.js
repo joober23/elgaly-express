@@ -50,10 +50,42 @@ const AuthManager = {
         location: this.currentUser.location,
         avatar: this.currentUser.avatar,
         eexEmail: this.currentUser.eexEmail,
-        nickname: this.currentUser.nickname
+        nickname: this.currentUser.nickname,
+        bonusXp: this.currentUser.bonusXp || 0
       });
     }
     return this.currentUser;
+  },
+
+  getXp() {
+    return (this.currentUser && typeof this.currentUser.bonusXp === 'number') ? this.currentUser.bonusXp : 0;
+  },
+
+  async addXp(amount, reason = '') {
+    if (!this.currentUser) return;
+    const current = this.getXp();
+    this.currentUser.bonusXp = current + amount;
+    this.saveCurrent();
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveProfileToCloud({
+        bonusXp: this.currentUser.bonusXp
+      });
+    }
+
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      FriendsManager.syncMyPublicProfile();
+    }
+
+    if (reason && typeof AppUI !== 'undefined' && AppUI.showToast) {
+      AppUI.showToast(`✨ +${amount} XP: ${reason}`);
+    }
+
+    // Atualiza visão de perfil em tempo real se estiver aberta
+    const activeView = document.querySelector('.app-view.active-view');
+    if (activeView && activeView.id === 'view-perfil' && typeof AppUI !== 'undefined' && AppUI.renderProfileView) {
+      AppUI.renderProfileView();
+    }
   },
 
   async logout() {
@@ -239,12 +271,27 @@ const TaskManager = {
       await FirebaseService.saveTaskToCloud(task);
     }
 
-    if (task.completed && typeof confetti === 'function') {
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.7 }
-      });
+    if (task.completed) {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+      }
+
+      if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+        let isEarly = false;
+        if (task.dueDate) {
+          const due = new Date(task.dueDate + 'T23:59:59');
+          if (due >= new Date()) isEarly = true;
+        }
+        if (isEarly) {
+          AuthManager.addXp(45, 'Entrega antecipada antes do prazo! ⚡📦');
+        } else {
+          AuthManager.addXp(25, 'Encomenda entregue com sucesso! 📦');
+        }
+      }
     }
 
     return task;
@@ -336,8 +383,12 @@ const HabitManager = {
     }
 
     const idx = this.history[todayKey].indexOf(id);
-    if (idx === -1) {
+    const wasCompleted = (idx !== -1);
+    if (!wasCompleted) {
       this.history[todayKey].push(id);
+      if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+        AuthManager.addXp(15, 'Hábito da rotina cumprido! ☀️');
+      }
     } else {
       this.history[todayKey].splice(idx, 1);
     }
@@ -347,6 +398,11 @@ const HabitManager = {
 
     if (typeof FirebaseService !== 'undefined') {
       await FirebaseService.saveHabitHistoryToCloud(this.history);
+    }
+
+    // SINCRONIZAÇÃO EM TEMPO REAL COM AMIGOS:
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      FriendsManager.syncMyPublicProfile();
     }
 
     return this.isCompletedToday(id);
@@ -372,6 +428,10 @@ const HabitManager = {
       await FirebaseService.saveHabitToCloud(newHabit);
     }
 
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      FriendsManager.syncMyPublicProfile();
+    }
+
     return newHabit;
   },
 
@@ -381,6 +441,10 @@ const HabitManager = {
 
     if (typeof FirebaseService !== 'undefined') {
       await FirebaseService.deleteHabitFromCloud(id);
+    }
+
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      FriendsManager.syncMyPublicProfile();
     }
   },
 
@@ -666,6 +730,10 @@ const FriendsManager = {
         time: m.time
       }));
 
+      const career = (typeof AppUI !== 'undefined' && AppUI.calculateCareerStats) 
+        ? AppUI.calculateCareerStats() 
+        : { totalXp: 0, level: 1, rankTitle: 'Recruta da Rota Express 📦' };
+
       await FirebaseService.updatePublicProfile({
         name: user.name,
         nickname: user.nickname,
@@ -678,7 +746,10 @@ const FriendsManager = {
         sosActive: this.sosActive,
         radioStatus: this.radioStatus,
         todayHabits: todayHabits,
-        recentMemories: recentMemories
+        recentMemories: recentMemories,
+        xp: career.totalXp,
+        rankLevel: career.level,
+        rankTitle: career.rankTitle
       });
     } catch (e) {
       console.warn('Erro ao sincronizar perfil público:', e);
@@ -858,7 +929,10 @@ const FriendsManager = {
         btn.disabled = true;
         btn.textContent = '⚡';
         await FirebaseService.sendPoke(uid);
-        AppUI.showToast(`📢 Você deu uma força para ${name}!`);
+        if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+          AuthManager.addXp(10, `Apoio/buzina enviada para ${name}! 📢⚡`);
+        }
+        AppUI.showToast(`📢 Você deu uma força para ${name}! (+10 XP)`);
         setTimeout(() => {
           btn.disabled = false;
           btn.textContent = '📢';
@@ -1125,6 +1199,9 @@ const FriendsManager = {
     // Marca como aberta no Firebase
     if (typeof FirebaseService !== 'undefined' && pkg.id) {
       FirebaseService.markPackageOpened(pkg.id);
+      if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+        AuthManager.addXp(35, 'Encomenda postal recebida e desembalada! 🎁✨');
+      }
     }
   },
 
@@ -1149,6 +1226,281 @@ const FriendsManager = {
     if (modal) modal.classList.remove('active');
     this.syncMyPublicProfile();
     this.render();
+  }
+};
+
+// ==========================================================================
+// GAZETA DA PROVIDÊNCIA & ATUALIZAÇÕES DA C.E.O. (ProvidenteNewsManager)
+// Boletim oficial em formato de jornal e carta selada por Providente
+// ==========================================================================
+const ProvidenteNewsManager = {
+  currentEditionIndex: 0,
+  latestVersion: 'v2.5',
+
+  editions: [
+    {
+      version: 'v2.5',
+      date: 'Setembro / 2026',
+      headline: 'A ERA CELESTIAL: 100 PATENTES, O OLHO DE PROVIDENTE & SINCRO TOTAL!',
+      subheadline: 'Edição Extraordinária da Diretoria // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'O Céu é o Limite! Patente 100 e Faixas Holográficas!',
+        text: 'Nossa frota agora conta com 100 Patentes Oficiais! A cada 10 níveis você desbloqueia um título glorioso, culminando no cobiçado "Nível 100 - O Olho de Providente"! E tem mais: a faixa holográfica do seu crachá agora evolui visualmente a cada patente conquistada, brilhando com prismas e luz divina!',
+        tags: ['100 Níveis', 'Faixa Evolutiva', 'XP Social & Bônus']
+      },
+      sad: {
+        title: 'Adeus ao .express.com poluindo o topo da tela!',
+        text: 'A C.E.O. Providente ordenou a desobstrução visual: removemos aquele endereço longo e fixo do cabeçalho para dar lugar a este lindo Boletim Oficial e a um design muito mais limpo e confortável em celulares e PCs.',
+        tags: ['Header Mais Limpo', 'Foco no Que Importa']
+      },
+      angry: {
+        title: 'Providente deu bronca nos bugs de sincronização!',
+        text: 'Chega de hábitos fantasmas! A C.E.O. desceu até a central de roteamento: agora quando você marca um hábito na sua rotina diária, ele é transmitido IMEDIATAMENTE para os seus amigos! Seu parceiro agora vê seu progresso em tempo real no mural e no passaporte!',
+        tags: ['Sincronização Imediata', 'Bug da Rotina Corrigido', 'Navegação PC Aprimorada']
+      }
+    },
+    {
+      version: 'v2.4',
+      date: 'Setembro / 2026',
+      headline: 'PASSAPORTE DOS PARCEIROS, GALERIA POLAROID & RÁDIO BIP!',
+      subheadline: 'Expansão da Malha de Amizades de Nova Amerit',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Abram alas para o Passaporte EEX-Friends!',
+        text: 'Agora você pode clicar no cartão de qualquer amigo para abrir o Passaporte Completo dele: veja a lista de hábitos do dia, galeria de fotos com carimbos e stickers e o humor dos mascotes Brave & Midnight em tempo real!',
+        tags: ['Passaporte Completo', 'Galeria de Fotos', 'Rádio Comunicador', 'SOS Resgate']
+      },
+      sad: {
+        title: 'Midnight ainda tem ataques de pânico se você atrasar!',
+        text: 'Aviso da chefia: quando a rotina está incompleta, a mascote Midnight entra em modo desespero no passaporte. Não deixe sua colega na mão!',
+        tags: ['Alerta da Mascote']
+      },
+      angry: {
+        title: 'Bugs de IDs com arroba e sufixo eliminados!',
+        text: 'Providente corrigiu a busca de amigos: agora você pode colar com ou sem @, com ou sem .express.com, e o sistema encontra seu amigo na hora!',
+        tags: ['Busca Flexível', 'Correção de ID']
+      }
+    },
+    {
+      version: 'v2.3',
+      date: 'Setembro / 2026',
+      headline: 'ENCOMENDAS POSTAIS DIMENSIONAIS ENTRE AMIGOS!',
+      subheadline: 'O Serviço Postal Particular da Frota EEX Entra em Operação',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Despacho de Caixas & Selos Colecionáveis!',
+        text: 'Agora você pode enviar caixas postais dimensionais com presentes, mensagens rápidas e selos colecionáveis (Brave Veloz, Café Turbo, Frágil) para seus amigos, com direito a cerimônia de unboxing com confetes!',
+        tags: ['Encomendas Postais', 'Selos Oficiais', 'Unboxing Animado']
+      },
+      sad: {
+        title: 'Não aceitamos encomendas sem remetente!',
+        text: 'Para manter a segurança de Nova Amerit, todas as encomendas exigem credencial autenticada na Rede EEX.',
+        tags: ['Segurança Postal']
+      },
+      angry: {
+        title: 'Resolvidos erros no envio de caixas pesadas!',
+        text: 'A equipe de engenharia eliminou as falhas que travavam caixas postais na fronteira dimensional.',
+        tags: ['Entrega Garantida']
+      }
+    },
+    {
+      version: 'v2.2',
+      date: 'Setembro / 2026',
+      headline: 'REDE EEX: CRACHÁ RÁPIDO COM PIN DE 6 DÍGITOS!',
+      subheadline: 'Autenticação Unificada Google + Carteira Local de Crachás',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Acesso Ultrarrápido pelo Crachá Salvo!',
+        text: 'Guarde seus crachás na tela inicial do dispositivo e acerte suas rotinas inserindo apenas seu PIN numérico de 6 dígitos!',
+        tags: ['Crachás com PIN', 'Onboarding Integrado', 'Nuvem Firestore']
+      },
+      sad: {
+        title: 'Fim dos cadastros locais sem backup na nuvem!',
+        text: 'Cadastros offline foram aposentados para proteger suas informações de perda caso limpe os dados do navegador.',
+        tags: ['Adeus Cadastros Locais']
+      },
+      angry: {
+        title: 'Fim das falhas de login em múltiplos aparelhos!',
+        text: 'Providente sincronizou todas as contas com o Google Auth e Firestore.',
+        tags: ['Sincronia Total']
+      }
+    },
+    {
+      version: 'v2.1',
+      date: 'Agosto / 2026',
+      headline: 'APP ANDROID NATIVO & ALERTAS DE NOTIFICAÇÃO!',
+      subheadline: 'Elgaly Express no Bolso com Capacitor 6',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Notificações Locais no Celular!',
+        text: 'Agora você recebe lembretes de rotina a cada 3 horas e avisos antecipados de entregas diretamente na barra de notificações do seu Android!',
+        tags: ['APK Android', 'Push Notifications', 'Capacitor']
+      },
+      sad: {
+        title: 'Avisos sonoros do celular podem te acordar!',
+        text: 'Se não quiser ser acordado de madrugada pela Midnight, configure seus horários de rotina com sabedoria!',
+        tags: ['Lembretes Ativos']
+      },
+      angry: {
+        title: 'Corrigido agendamento fantasma de notificações!',
+        text: 'Bugs de notificações duplicadas em horários passados foram erradicados.',
+        tags: ['Alarmes Precisos']
+      }
+    },
+    {
+      version: 'v2.0',
+      date: 'Julho / 2026',
+      headline: 'RENASCIMENTO NEO-BRUTALISTA: O ESTILO ANOS 2000!',
+      subheadline: 'Nova Era Visual para o Sistema de Despacho & Rotinas',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Estilo Comic Radical com Bordas Grossas!',
+        text: 'O Elgaly Express ganhou sua identidade definitiva inspirada na estética retrô anos 2000, paleta roxo/amarelo vibrante e tipografia expressiva!',
+        tags: ['Neo-Brutalismo', 'Anos 2000', 'Novo Design']
+      },
+      sad: {
+        title: 'Layout cinza sem graça foi jogado no triturador!',
+        text: 'Aquele visual corporativo sem personalidade agora é coisa do passado.',
+        tags: ['Visual Antigo Descartado']
+      },
+      angry: {
+        title: 'Bugs de quebra de layout em telas pequenas resolvidos!',
+        text: 'A responsividade mobile foi reconstruída do zero para funcionar como um console portátil!',
+        tags: ['Responsividade Total']
+      }
+    }
+  ],
+
+  init() {
+    this.updateBadge();
+  },
+
+  hasUnread() {
+    const lastRead = localStorage.getItem('elgaly_providente_last_read');
+    return lastRead !== this.latestVersion;
+  },
+
+  updateBadge() {
+    const badges = document.querySelectorAll('.providente-badge, #providenteNewsBadge, #providenteBadge');
+    const isUnread = this.hasUnread();
+    badges.forEach(b => {
+      b.style.display = isUnread ? 'inline-block' : 'none';
+    });
+  },
+
+  markAsRead() {
+    localStorage.setItem('elgaly_providente_last_read', this.latestVersion);
+    this.updateBadge();
+  },
+
+  openModal(editionIndex = 0) {
+    this.currentEditionIndex = editionIndex;
+    const modal = document.getElementById('modalProvidenteUpdates');
+    if (!modal) return;
+    this.renderEdition(editionIndex);
+    modal.classList.add('active');
+    this.markAsRead();
+  },
+
+  closeModal() {
+    const modal = document.getElementById('modalProvidenteUpdates');
+    if (modal) modal.classList.remove('active');
+  },
+
+  renderEdition(index) {
+    this.currentEditionIndex = index;
+    const ed = this.editions[index] || this.editions[0];
+    const container = document.getElementById('providenteGazetteContent');
+    if (!container) return;
+
+    // Renderiza abas de navegação de edições
+    const navContainer = document.getElementById('providenteEditionsTabs');
+    if (navContainer) {
+      navContainer.innerHTML = this.editions.map((e, idx) => `
+        <button type="button" class="btn-comic edition-tab-btn ${idx === index ? 'active' : ''}" data-idx="${idx}">
+          ${e.version} ${idx === 0 ? '🌟 (Atual)' : ''}
+        </button>
+      `).join('');
+
+      navContainer.querySelectorAll('.edition-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetIdx = parseInt(btn.dataset.idx, 10);
+          this.renderEdition(targetIdx);
+        });
+      });
+    }
+
+    container.innerHTML = `
+      <div class="gazette-paper">
+        <div class="gazette-top-meta">
+          <span>📰 EDIÇÃO Nº ${this.editions.length - index} // ${ed.version}</span>
+          <span>📅 ${ed.date}</span>
+          <span class="gazette-stamp-pill">${ed.badge}</span>
+        </div>
+
+        <h2 class="gazette-headline">${ed.headline}</h2>
+        <div class="gazette-subheadline">${ed.subheadline}</div>
+
+        <div class="gazette-sections-grid">
+          <!-- 1. NOTÍCIAS BOAS & CELEBRAÇÃO (HAPPY PROVIDENT) -->
+          <div class="gazette-card card-happy">
+            <div class="gazette-card-header">
+              <img src="images/happy_provident.png" alt="Providente Feliz" class="providente-art bounce-subtle">
+              <div>
+                <span class="gazette-section-label">✨ O QUE TEM DE NOVO / CELEBRAÇÃO</span>
+                <h3 class="gazette-card-title">${ed.happy.title}</h3>
+              </div>
+            </div>
+            <p class="gazette-card-text">${ed.happy.text}</p>
+            <div class="gazette-tag-list">
+              ${ed.happy.tags.map(t => `<span class="gazette-tag tag-green">${t}</span>`).join('')}
+            </div>
+          </div>
+
+          <!-- 2. AVISOS & MUDANÇAS (SAD PROVIDENT) -->
+          <div class="gazette-card card-sad">
+            <div class="gazette-card-header">
+              <img src="images/sad_provident.png" alt="Providente Chateada" class="providente-art">
+              <div>
+                <span class="gazette-section-label">⚠️ DESPEDIDAS & AVISOS DA C.E.O.</span>
+                <h3 class="gazette-card-title">${ed.sad.title}</h3>
+              </div>
+            </div>
+            <p class="gazette-card-text">${ed.sad.text}</p>
+            <div class="gazette-tag-list">
+              ${ed.sad.tags.map(t => `<span class="gazette-tag tag-orange">${t}</span>`).join('')}
+            </div>
+          </div>
+
+          <!-- 3. CORREÇÕES DE BUGS & BRONCA (ANGRY PROVIDENT) -->
+          <div class="gazette-card card-angry">
+            <div class="gazette-card-header">
+              <img src="images/angry-provident.png" alt="Providente Brava" class="providente-art shake-subtle">
+              <div>
+                <span class="gazette-section-label">🛠️ EXPULSANDO BUGS & ERROS</span>
+                <h3 class="gazette-card-title">${ed.angry.title}</h3>
+              </div>
+            </div>
+            <p class="gazette-card-text">${ed.angry.text}</p>
+            <div class="gazette-tag-list">
+              ${ed.angry.tags.map(t => `<span class="gazette-tag tag-red">${t}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="gazette-seal-footer">
+          <div class="gazette-signature">
+            <div class="seal-icon">👁️✨</div>
+            <div>
+              <strong>PROVIDENTE</strong>
+              <small>C.E.O. & Guardiã Dourada da Elgaly Express // Nova Amerit</small>
+            </div>
+          </div>
+          <div class="gazette-bar-code">||| | | |||| | ||| | ||||| EEX-OFFICIAL-GAZETTE</div>
+        </div>
+      </div>
+    `;
   }
 };
 
@@ -1741,6 +2093,7 @@ const AppUI = {
     EventManager.init();
     MemoriesManager.init();
     FriendsManager.init();
+    ProvidenteNewsManager.init();
     PWAManager.init();
     NotificationManager.init();
 
@@ -2699,7 +3052,10 @@ const AppUI = {
         btnFriendModalPoke.disabled = true;
         btnFriendModalPoke.textContent = '⚡ Enviando reforço...';
         await FirebaseService.sendPoke(friend.uid);
-        AppUI.showToast(`📢 Você deu uma força para ${friend.name || friend.nickname}!`);
+        if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+          AuthManager.addXp(10, `Apoio/buzina enviada para ${friend.name || friend.nickname}! 📢⚡`);
+        }
+        AppUI.showToast(`📢 Você deu uma força para ${friend.name || friend.nickname}! (+10 XP)`);
         setTimeout(() => {
           btnFriendModalPoke.disabled = false;
           btnFriendModalPoke.textContent = '📢 Dar uma Força!';
@@ -2758,7 +3114,10 @@ const AppUI = {
 
         if (res.success) {
           modalSendPackage.classList.remove('active');
-          AppUI.showToast(`📦 Encomenda despachada com sucesso para ${friend.name || friend.nickname}!`);
+          if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+            AuthManager.addXp(30, 'Encomenda postal despachada para parceiro! 📦💌');
+          }
+          AppUI.showToast(`📦 Encomenda despachada com sucesso para ${friend.name || friend.nickname}! (+30 XP)`);
         } else {
           AppUI.showToast('Erro ao despachar encomenda: ' + (res.error || 'Tente novamente.'));
         }
@@ -2771,6 +3130,41 @@ const AppUI = {
     if (btnDismissPackage && modalOpenPackage) {
       btnDismissPackage.addEventListener('click', () => {
         modalOpenPackage.classList.remove('active');
+      });
+    }
+
+    // 29. Gazeta da Providência (Atualizações da C.E.O.)
+    const btnProvidenteNews = document.getElementById('btnProvidenteNews');
+    const btnDrawerProvidenteNews = document.getElementById('btnDrawerProvidenteNews');
+    const btnCloseProvidenteNews = document.getElementById('btnCloseProvidenteNews');
+    const btnAckProvidenteNews = document.getElementById('btnAckProvidenteNews');
+
+    if (btnProvidenteNews) {
+      btnProvidenteNews.addEventListener('click', () => {
+        ProvidenteNewsManager.openModal(0);
+      });
+    }
+
+    if (btnDrawerProvidenteNews) {
+      btnDrawerProvidenteNews.addEventListener('click', () => {
+        const drawer = document.getElementById('mobileDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        if (drawer) drawer.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+        ProvidenteNewsManager.openModal(0);
+      });
+    }
+
+    if (btnCloseProvidenteNews) {
+      btnCloseProvidenteNews.addEventListener('click', () => {
+        ProvidenteNewsManager.closeModal();
+      });
+    }
+
+    if (btnAckProvidenteNews) {
+      btnAckProvidenteNews.addEventListener('click', () => {
+        ProvidenteNewsManager.closeModal();
+        AppUI.showToast('🌟 Comunicado da C.E.O. Providente assimilado com louvor!');
       });
     }
   },
@@ -3471,6 +3865,57 @@ const AppUI = {
     });
   },
 
+  calculateCareerStats() {
+    const user = AuthManager.getCurrentUser();
+    const tasks = TaskManager.getAllTasks ? TaskManager.getAllTasks() : (TaskManager.tasks || []);
+    const completedTasks = tasks.filter(t => t.completed).length;
+    const stats = HabitManager.getTodayStats ? HabitManager.getTodayStats() : { streak: 0 };
+    const streak = stats.streak || 0;
+    const friendsCount = (FriendsManager.friends || []).length;
+    const memories = MemoriesManager.memories || [];
+    const bonusXp = (user && typeof user.bonusXp === 'number') ? user.bonusXp : 0;
+
+    // Cálculo consolidado de XP
+    const totalXp = bonusXp + (completedTasks * 25) + (streak * 20) + (friendsCount * 30) + (memories.length * 10);
+
+    // Sistema de 100 Níveis (1 a 100)
+    const level = Math.min(100, Math.max(1, Math.floor(totalXp / 100) + 1));
+
+    // 10 Tiers a cada 10 patentes até o Nível 100 (O Olho de Providente)
+    const tiers = [
+      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-bronze', stripText: 'EEX ★ RECRUTA' },
+      { min: 10, max: 19,  title: 'Mensageiro de Asfalto Cósmico ⚡', color: '#06b6d4', tierName: 'Cobre Veloz', stripClass: 'holo-copper', stripText: '⚡ EEX SPEED ⚡' },
+      { min: 20, max: 29,  title: 'Piloto de Salto Dimensional 🚀', color: '#3b82f6', tierName: 'Prata Prismática', stripClass: 'holo-silver', stripText: '🚀 EEX DIMENSIONAL 🚀' },
+      { min: 30, max: 39,  title: 'Especialista de Carga Estelar 🌌', color: '#6366f1', tierName: 'Aço Meteórico', stripClass: 'holo-steel', stripText: '🌌 EEX STELLAR 🌌' },
+      { min: 40, max: 49,  title: 'Inspetor Postal de Nova Amerit 🛡️', color: '#eab308', tierName: 'Ouro Lapidado', stripClass: 'holo-gold', stripText: '🛡️ EEX INSPECTOR 🛡️' },
+      { min: 50, max: 59,  title: 'Comandante de Frota EEX 🎖️', color: '#ec4899', tierName: 'Quartzo Rosa', stripClass: 'holo-rose', stripText: '🎖️ EEX COMMANDER 🎖️' },
+      { min: 60, max: 69,  title: 'Guardião dos Vórtices de Entrega 🌀', color: '#0ea5e9', tierName: 'Safira Dimensional', stripClass: 'holo-sapphire', stripText: '🌀 EEX VORTEX 🌀' },
+      { min: 70, max: 79,  title: 'Marechal de Rotinas Cósmicas 👑', color: '#10b981', tierName: 'Esmeralda Imperial', stripClass: 'holo-emerald', stripText: '👑 EEX MARSHAL 👑' },
+      { min: 80, max: 89,  title: 'Arauto da Luz Dourada 🌟', color: '#f59e0b', tierName: 'Rubi Solar', stripClass: 'holo-ruby', stripText: '🌟 EEX HERALD 🌟' },
+      { min: 90, max: 99,  title: 'Grão-Mestre da Providência ⚜️', color: '#8b5cf6', tierName: 'Diamante Astral', stripClass: 'holo-diamond', stripText: '⚜️ EEX GRAND MASTER ⚜️' },
+      { min: 100, max: 100, title: 'O Olho de Providente 👁️✨', color: '#ffd700', tierName: 'Celestial Supremo', stripClass: 'holo-providente', stripText: '👁️✨ O OLHO DE PROVIDENTE • C.E.O. ✨👁️' }
+    ];
+
+    const currentTier = tiers.find(t => level >= t.min && level <= t.max) || tiers[0];
+
+    const currentLevelBaseXp = (level - 1) * 100;
+    const nextLevelXp = level >= 100 ? 10000 : level * 100;
+    const progressInLevel = level >= 100 ? 100 : (totalXp - currentLevelBaseXp);
+    const progressPercent = level >= 100 ? 100 : Math.min(100, Math.max(0, Math.round((progressInLevel / 100) * 100)));
+
+    return {
+      totalXp,
+      level,
+      rankTitle: currentTier.title,
+      rankColor: currentTier.color,
+      tierName: currentTier.tierName,
+      stripClass: currentTier.stripClass,
+      stripText: currentTier.stripText,
+      nextLevelXp,
+      progressPercent
+    };
+  },
+
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
     if (!user) return;
@@ -3486,31 +3931,8 @@ const AppUI = {
     const friendsCount = (FriendsManager.friends || []).length;
     const memories = MemoriesManager.memories || [];
 
-    // Cálculo da Patente Dimensional
-    const careerScore = (completedTasks * 10) + (streak * 20) + (friendsCount * 15) + (memories.length * 5);
-    let rankTitle = 'Recruta da Rota Express';
-    let rankLevel = 1;
-    let rankColor = '#a855f7';
-    let rankNext = 50;
-
-    if (careerScore >= 300) {
-      rankTitle = 'Comandante Supremo de Nova Amerit 👑';
-      rankLevel = 4;
-      rankColor = '#eab308';
-      rankNext = 500;
-    } else if (careerScore >= 150) {
-      rankTitle = 'Especialista de Despacho Dimensional ⚡';
-      rankLevel = 3;
-      rankColor = '#3b82f6';
-      rankNext = 300;
-    } else if (careerScore >= 50) {
-      rankTitle = 'Piloto de Rota Express 🚀';
-      rankLevel = 2;
-      rankColor = '#10b981';
-      rankNext = 150;
-    }
-
-    const rankProgress = Math.min(100, Math.round((careerScore / rankNext) * 100));
+    // Cálculo da Patente Dimensional Expandida (100 Níveis)
+    const career = this.calculateCareerStats();
 
     // Conquistas / Selos Colecionáveis
     const achievements = [
@@ -3593,7 +4015,7 @@ const AppUI = {
               <div class="grand-badge-photo-box">
                 <img src="${user.avatar || 'images/elgalylogo.png'}" alt="Foto" id="grandPassAvatar" class="grand-badge-avatar">
                 <button type="button" class="btn-change-photo-badge" id="btnQuickEditPhoto" title="Trocar Foto">✎</button>
-                <div class="hologram-strip">EEX ★ EEX</div>
+                <div class="hologram-strip ${career.stripClass}">${career.stripText}</div>
               </div>
               <div class="badge-barcode">
                 <div class="barcode-lines"></div>
@@ -3602,8 +4024,8 @@ const AppUI = {
             </div>
 
             <div class="grand-badge-info-column">
-              <div class="badge-rank-pill" style="border-color: ${rankColor}; color: ${rankColor};">
-                NÍVEL ${rankLevel} • ${rankTitle}
+              <div class="badge-rank-pill" style="border-color: ${career.rankColor}; color: ${career.rankColor};">
+                NÍVEL ${career.level} • ${career.rankTitle}
               </div>
 
               <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
@@ -3615,17 +4037,18 @@ const AppUI = {
               <div class="grand-agent-meta">
                 <div class="meta-row">📍 <strong>Setor:</strong> ${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</div>
                 <div class="meta-row">☁️ <strong>Status:</strong> Conectado via Nuvem Firebase / Google</div>
+                <div class="meta-row">🎖️ <strong>Patente:</strong> Tier ${career.tierName} (Nível ${career.level}/100)</div>
                 <div class="meta-row">📅 <strong>Membro desde:</strong> ${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('pt-BR') : '2026'}</div>
               </div>
 
-              <!-- Barra de XP / Nível -->
+              <!-- Barra de XP / Nível com 100 Patentes -->
               <div class="badge-xp-bar-wrap">
                 <div class="xp-bar-labels">
-                  <span>Pontos de Frota: <strong>${careerScore} XP</strong></span>
-                  <span>Próxima Patente: <strong>${rankNext} XP</strong></span>
+                  <span>Pontos de Frota: <strong>${career.totalXp} XP</strong></span>
+                  <span>${career.level >= 100 ? '⭐ PATENTE MÁXIMA DA PROVIDENTE!' : `Próximo Nível (${career.level + 1}): <strong>${career.nextLevelXp} XP</strong>`}</span>
                 </div>
                 <div class="xp-progress-track">
-                  <div class="xp-progress-fill" style="width: ${rankProgress}%; background: ${rankColor};"></div>
+                  <div class="xp-progress-fill" style="width: ${career.progressPercent}%; background: ${career.rankColor};"></div>
                 </div>
               </div>
             </div>

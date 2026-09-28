@@ -5127,3 +5127,725 @@ footer {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   BOTÃO DE NOTIFICAÇÕES DA PROVIDENTE (C.E.O. NEWS)
+   ========================================================================== */
+.btn-providente-news {
+  position: relative;
+  background: var(--yellow-bright);
+  color: var(--black);
+  border: 2.5px solid var(--black);
+  border-radius: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-main);
+  font-weight: 800;
+  box-shadow: 2px 2px 0px var(--black);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-providente-news:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px var(--black);
+  background: #facc15;
+}
+
+.providente-badge {
+  background: #e11d48;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   NAVEGAÇÃO DESKTOP INTUITIVA & ESTRUTURADA
+   ========================================================================== */
+nav.desktop-nav {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid var(--black);
+  border-radius: 24px;
+  padding: 8px 14px;
+  box-shadow: 4px 4px 0px var(--black);
+}
+
+[data-theme="dark"] nav.desktop-nav {
+  background: #230838;
+  border-color: #f9e000;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.nav-tabs-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 2.5px dashed var(--purple-main);
+  padding-left: 12px;
+  flex-shrink: 0;
+}
+
+nav.desktop-nav a.nav-link {
+  color: var(--purple-dark);
+  text-decoration: none;
+  background: transparent;
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font-main);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+nav.desktop-nav a.nav-link:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: var(--purple-main);
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px var(--black);
+}
+
+nav.desktop-nav a.nav-link.active {
+  background: var(--purple-main);
+  color: var(--white);
+  border-color: var(--black);
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0px var(--black);
+}
+
+[data-theme="dark"] nav.desktop-nav a.nav-link {
+  color: #e9d5ff;
+}
+
+[data-theme="dark"] nav.desktop-nav a.nav-link.active {
+  background: var(--yellow-bright);
+  color: var(--black);
+  border-color: #000;
+}
+
+.desktop-nav .nav-btn {
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-weight: 800;
+  border: 2.5px solid var(--black);
+  box-shadow: 2.5px 2.5px 0px var(--black);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.desktop-nav .nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px var(--black);
+}
+
+/* ==========================================================================
+   FAIXAS HOLOGRÁFICAS EVOLUTIVAS DA PATENTE (1 A 100 NÍVEIS)
+   ========================================================================== */
+.hologram-strip {
+  width: 100%;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-align: center;
+  padding: 4px 0;
+  margin-top: 6px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  text-transform: uppercase;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 1px 1px 0px var(--black);
+  transition: all 0.3s ease;
+}
+
+/* Tier 1 (1-9): Bronze Rota Express */
+.holo-bronze {
+  background: linear-gradient(90deg, #d97706, #fbbf24, #d97706);
+  color: #451a03;
+}
+
+/* Tier 2 (10-19): Cobre Veloz Cósmico */
+.holo-copper {
+  background: linear-gradient(90deg, #b45309, #f97316, #06b6d4, #b45309);
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Tier 3 (20-29): Prata Prismática Dimensional */
+.holo-silver {
+  background: linear-gradient(90deg, #e2e8f0, #38bdf8, #f472b6, #e2e8f0);
+  background-size: 200% auto;
+  animation: holoRainbow 4s linear infinite;
+  color: #0f172a;
+}
+
+/* Tier 4 (30-39): Aço Meteórico Estelar */
+.holo-steel {
+  background: linear-gradient(90deg, #475569, #818cf8, #c084fc, #475569);
+  background-size: 200% auto;
+  animation: holoRainbow 3.5s linear infinite;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Tier 5 (40-49): Ouro Lapidado Inspector */
+.holo-gold {
+  background: linear-gradient(90deg, #eab308, #fef08a, #ca8a04, #fef08a, #eab308);
+  background-size: 200% auto;
+  animation: holoRainbow 3s linear infinite;
+  color: #713f12;
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5), 1px 1px 0 #000;
+}
+
+/* Tier 6 (50-59): Quartzo Rosa Commander */
+.holo-rose {
+  background: linear-gradient(90deg, #ec4899, #f472b6, #a855f7, #ec4899);
+  background-size: 200% auto;
+  animation: holoRainbow 3s linear infinite;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.6), 1px 1px 0 #000;
+}
+
+/* Tier 7 (60-69): Safira Dimensional Vortex */
+.holo-sapphire {
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #06b6d4, #0284c7);
+  background-size: 200% auto;
+  animation: holoRainbow 2.5s linear infinite;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.6), 1px 1px 0 #000;
+}
+
+/* Tier 8 (70-79): Esmeralda Imperial Marechal */
+.holo-emerald {
+  background: linear-gradient(90deg, #059669, #34d399, #fde047, #059669);
+  background-size: 200% auto;
+  animation: holoRainbow 2.5s linear infinite;
+  color: #064e3b;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 1px 1px 0 #000;
+}
+
+/* Tier 9 (80-89): Rubi Solar Arauto */
+.holo-ruby {
+  background: linear-gradient(90deg, #dc2626, #f97316, #fde047, #dc2626);
+  background-size: 200% auto;
+  animation: holoRainbow 2s linear infinite;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.7), 1px 1px 0 #000;
+}
+
+/* Tier 10 (90-99): Diamante Astral Grão-Mestre */
+.holo-diamond {
+  background: linear-gradient(90deg, #a855f7, #38bdf8, #f43f5e, #facc15, #a855f7);
+  background-size: 300% auto;
+  animation: holoRainbow 2s linear infinite;
+  color: #ffffff;
+  font-weight: 900;
+  text-shadow: 1px 1px 2px #000;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 2px 2px 0 #000;
+}
+
+/* Tier 11 (NÍVEL 100): O OLHO DE PROVIDENTE (CELESTIAL DIVINO SUPREMO) */
+.holo-providente {
+  background: linear-gradient(90deg, #ffd700, #fff7ed, #f59e0b, #fef08a, #ffd700);
+  background-size: 200% auto;
+  animation: celestialGlow 2s ease-in-out infinite, holoRainbow 1.8s linear infinite;
+  color: #78350f !important;
+  font-weight: 900 !important;
+  letter-spacing: 2px !important;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.95), 0 0 8px rgba(255, 255, 255, 0.9), 2px 2px 0 #000 !important;
+  text-shadow: 0 0 4px #fef08a;
+}
+
+@keyframes holoRainbow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes celestialGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.8), 2px 2px 0 #000;
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 28px rgba(255, 215, 0, 1), 0 0 12px #fff, 2px 2px 0 #000;
+  }
+}
+
+/* ==========================================================================
+   MODAL DA GAZETA DA PROVIDÊNCIA (JORNAL RETRÔ & CARTA DA C.E.O.)
+   ========================================================================== */
+.gazette-modal-box {
+  max-width: 760px !important;
+  width: 95% !important;
+  background: #fdfbf7 !important;
+  color: #1c1917 !important;
+  border: 4px solid var(--black) !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-shadow: 8px 8px 0px var(--black) !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+[data-theme="dark"] .gazette-modal-box {
+  background: #1e102a !important;
+  color: #f3e8ff !important;
+  border-color: #ffd700 !important;
+  box-shadow: 8px 8px 0px #000 !important;
+}
+
+.gazette-header-bar {
+  background: #fef08a;
+  border-bottom: 3.5px solid var(--black);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+}
+
+[data-theme="dark"] .gazette-header-bar {
+  background: #3b0764;
+  border-bottom-color: #ffd700;
+}
+
+.gazette-masthead-wrap {
+  flex: 1;
+}
+
+.gazette-masthead-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #854d0e;
+  border-bottom: 2px dashed #ca8a04;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .gazette-masthead-top {
+  color: #fef08a;
+  border-bottom-color: #9333ea;
+}
+
+.gazette-bulletin-tag {
+  background: #e11d48;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--black);
+  font-size: 0.68rem;
+}
+
+.gazette-main-title {
+  font-family: var(--font-display, 'Darumadrop One', cursive) !important;
+  font-size: 2.2rem !important;
+  margin: 0 !important;
+  color: #1f2937 !important;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+}
+
+[data-theme="dark"] .gazette-main-title {
+  color: #ffd700 !important;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.gazette-tagline {
+  font-size: 0.85rem;
+  font-style: italic;
+  font-weight: 700;
+  color: #4b5563;
+  margin: 4px 0 0 0;
+}
+
+[data-theme="dark"] .gazette-tagline {
+  color: #d8b4fe;
+}
+
+.gazette-close-btn {
+  background: var(--magenta-bright);
+  color: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--black);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.gazette-close-btn:hover {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.gazette-editions-bar {
+  background: #f3f4f6;
+  border-bottom: 2.5px solid var(--black);
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .gazette-editions-bar {
+  background: #150524;
+  border-bottom-color: #ffd700;
+}
+
+.editions-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #374151;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .editions-label {
+  color: #e9d5ff;
+}
+
+.gazette-editions-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.edition-tab-btn {
+  font-size: 0.78rem !important;
+  padding: 4px 10px !important;
+  border-radius: 10px !important;
+  background: var(--white) !important;
+  color: var(--black) !important;
+  border: 2px solid var(--black) !important;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--black) !important;
+}
+
+.edition-tab-btn.active {
+  background: var(--yellow-bright) !important;
+  font-weight: 900 !important;
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--black) !important;
+}
+
+.gazette-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gazette-paper {
+  background: #fff;
+  border: 2.5px solid var(--black);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+[data-theme="dark"] .gazette-paper {
+  background: #2a113d;
+  border-color: #a855f7;
+}
+
+.gazette-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+[data-theme="dark"] .gazette-top-meta {
+  color: #c084fc;
+  border-bottom-color: #4c1d95;
+}
+
+.gazette-stamp-pill {
+  background: #10b981;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  border: 1px solid var(--black);
+}
+
+.gazette-headline {
+  font-family: var(--font-display, 'Darumadrop One', cursive) !important;
+  font-size: 1.6rem !important;
+  color: #111827 !important;
+  margin: 0 0 6px 0 !important;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .gazette-headline {
+  color: #ffd700 !important;
+}
+
+.gazette-subheadline {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4b5563;
+  margin-bottom: 18px;
+  border-bottom: 2px dashed #d1d5db;
+  padding-bottom: 10px;
+}
+
+[data-theme="dark"] .gazette-subheadline {
+  color: #e9d5ff;
+  border-bottom-color: #6b21a8;
+}
+
+.gazette-sections-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gazette-card {
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.gazette-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.providente-art {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--black);
+  padding: 4px;
+  box-shadow: 2px 2px 0 var(--black);
+  flex-shrink: 0;
+}
+
+.gazette-section-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.gazette-card-title {
+  font-family: var(--font-display, 'Darumadrop One', cursive) !important;
+  font-size: 1.35rem !important;
+  margin: 0 !important;
+  line-height: 1.2;
+}
+
+.gazette-card-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.gazette-tag-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gazette-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--black);
+}
+
+/* Card 1: Happy Provident (Novidades) */
+.card-happy {
+  background: #ecfdf5;
+  border-color: #059669;
+}
+.card-happy .gazette-section-label { color: #047857; }
+.card-happy .gazette-card-title { color: #065f46; }
+.card-happy .gazette-card-text { color: #064e3b; }
+.tag-green { background: #a7f3d0; color: #064e3b; }
+
+[data-theme="dark"] .card-happy {
+  background: #064e3b;
+  border-color: #34d399;
+}
+[data-theme="dark"] .card-happy .gazette-section-label { color: #6ee7b7; }
+[data-theme="dark"] .card-happy .gazette-card-title { color: #a7f3d0; }
+[data-theme="dark"] .card-happy .gazette-card-text { color: #ecfdf5; }
+
+/* Card 2: Sad Provident (Avisos / Despedidas) */
+.card-sad {
+  background: #f8fafc;
+  border-color: #64748b;
+}
+.card-sad .gazette-section-label { color: #475569; }
+.card-sad .gazette-card-title { color: #1e293b; }
+.card-sad .gazette-card-text { color: #334155; }
+.tag-orange { background: #fed7aa; color: #7c2d12; }
+
+[data-theme="dark"] .card-sad {
+  background: #1e293b;
+  border-color: #94a3b8;
+}
+[data-theme="dark"] .card-sad .gazette-section-label { color: #94a3b8; }
+[data-theme="dark"] .card-sad .gazette-card-title { color: #cbd5e1; }
+[data-theme="dark"] .card-sad .gazette-card-text { color: #f1f5f9; }
+
+/* Card 3: Angry Provident (Correção de Bugs) */
+.card-angry {
+  background: #fff1f2;
+  border-color: #e11d48;
+}
+.card-angry .gazette-section-label { color: #be123c; }
+.card-angry .gazette-card-title { color: #9f1239; }
+.card-angry .gazette-card-text { color: #881337; }
+.tag-red { background: #fecdd3; color: #881337; }
+
+[data-theme="dark"] .card-angry {
+  background: #4c0519;
+  border-color: #f43f5e;
+}
+[data-theme="dark"] .card-angry .gazette-section-label { color: #fb7185; }
+[data-theme="dark"] .card-angry .gazette-card-title { color: #fecdd3; }
+[data-theme="dark"] .card-angry .gazette-card-text { color: #fff1f2; }
+
+.gazette-seal-footer {
+  margin-top: 20px;
+  border-top: 2.5px solid var(--black);
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+[data-theme="dark"] .gazette-seal-footer {
+  border-top-color: #a855f7;
+}
+
+.gazette-signature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seal-icon {
+  font-size: 2.2rem;
+}
+
+.gazette-signature strong {
+  display: block;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.gazette-signature small {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+[data-theme="dark"] .gazette-signature small {
+  color: #c084fc;
+}
+
+.gazette-bar-code {
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #9ca3af;
+}
+
+.gazette-modal-footer {
+  background: #fef08a;
+  border-top: 3.5px solid var(--black);
+  padding: 14px 20px;
+  text-align: center;
+}
+
+[data-theme="dark"] .gazette-modal-footer {
+  background: #3b0764;
+  border-top-color: #ffd700;
+}
+
+.btn-ack-gazette {
+  width: 100%;
+  font-size: 1.05rem !important;
+  padding: 12px 18px !important;
+  background: var(--yellow-bright) !important;
+  color: var(--black) !important;
+}
+
+.bounce-subtle {
+  animation: bounceSubtle 2s infinite ease-in-out;
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.shake-subtle {
+  animation: shakeSubtle 2.5s infinite ease-in-out;
+}
+
+@keyframes shakeSubtle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}

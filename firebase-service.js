@@ -362,7 +362,10 @@ const FirebaseService = {
             const poke = change.doc.data();
             const ageMs = Date.now() - (poke.timestamp || 0);
             if (ageMs < 120000 && typeof AppUI !== 'undefined') { // Recebido nos últimos 2 minutos
-              AppUI.showToast(`⚡ Agente ${poke.fromName} (@${poke.fromNick}) buzinou! Não esqueça da rotina! 📢`);
+              AppUI.showToast(`⚡ Agente ${poke.fromName} (@${poke.fromNick}) buzinou e te deu um Boost de +15 XP! 📢`);
+              if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
+                AuthManager.addXp(15, `Boost de parceiro recebido de ${poke.fromName}! ⚡`);
+              }
             }
           }
         });
@@ -483,6 +486,9 @@ const FirebaseService = {
         pendingToday: data.pendingToday || 0,
         sosActive: !!data.sosActive,
         radioStatus: data.radioStatus || '',
+        xp: typeof data.xp === 'number' ? data.xp : 0,
+        rankLevel: typeof data.rankLevel === 'number' ? data.rankLevel : 1,
+        rankTitle: data.rankTitle || 'Recruta da Rota Express 📦',
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 

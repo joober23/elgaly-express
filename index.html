@@ -65,6 +65,11 @@
       <a href="#amigos" class="drawer-nav-link" data-tab="amigos">🤝 EEX-Friends</a>
       <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
       <a href="#configuracoes" class="drawer-nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+
+      <button type="button" class="drawer-nav-btn" id="btnDrawerProvidenteNews" style="width: 100%; text-align: left; background: var(--yellow-bright); color: var(--black); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 10px 0 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <span>📰 Gazeta da Providência (C.E.O.)</span>
+        <span class="providente-badge pulse-anim" style="background: #e11d48; color: #fff; font-size: 0.72rem; padding: 2px 6px; border-radius: 8px;">NOVO</span>
+      </button>
       
       <div style="display: flex; gap: 8px; margin-top: 10px;">
         <button class="btn-comic action-new-task" style="flex: 1;">
@@ -101,27 +106,36 @@
         <div id="logoFallback" class="logo-fallback">ELGALY EXPRESS</div>
       </a>
 
-      <!-- Área de Autenticação / Perfil + Tema -->
+      <!-- Área de Autenticação / Perfil + Tema + Gazeta Providente -->
       <div class="header-auth-box">
         <button id="btnHeaderTheme" class="btn-theme-toggle" title="Alternar Modo Escuro / Claro" aria-label="Alternar Tema">🌙</button>
-        <a href="#perfil" class="header-user-badge">
+        
+        <button id="btnProvidenteNews" class="btn-theme-toggle btn-providente-news" title="Gazeta da Providência (Boletim da C.E.O.)" aria-label="Atualizações do Sistema">
+          <span class="providente-icon">📰</span>
+          <span class="providente-badge pulse-anim" id="providenteNewsBadge">NOVO</span>
+        </button>
+
+        <a href="#perfil" class="header-user-badge" title="Meu Passaporte EEX">
           <img src="images/elgalylogo.png" alt="Avatar" class="header-user-avatar">
-          <span class="header-user-nick">agente.express.com</span>
         </a>
       </div>
     </div>
     
-    <!-- Navegação Desktop (Abas) -->
+    <!-- Navegação Desktop (Abas Estruturadas & Intuitivas) -->
     <nav class="desktop-nav">
-      <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
-      <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
-      <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
-      <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
-      <a href="#amigos" class="nav-link" data-tab="amigos">🤝 EEX-Friends</a>
-      <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil EEX</a>
-      <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
-      <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
-      <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
+      <div class="nav-tabs-group">
+        <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
+        <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+        <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
+        <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
+        <a href="#amigos" class="nav-link" data-tab="amigos">🤝 EEX-Friends</a>
+        <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil</a>
+        <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+      </div>
+      <div class="nav-actions-group">
+        <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
+        <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
+      </div>
     </nav>
   </header>
 
@@ -1309,6 +1323,48 @@
       <button type="button" class="btn-comic btn-secondary" id="btnCancelRadio" style="width: 100%; margin-top: 12px;">
         Desligar Rádio
       </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 5: GAZETA DA PROVIDÊNCIA (Atualizações & Boletim Oficial da C.E.O.)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalProvidenteUpdates">
+    <div class="modal-content gazette-modal-box">
+      
+      <!-- Cabeçalho de Jornal & Selo Oficial -->
+      <div class="gazette-header-bar">
+        <div class="gazette-masthead-wrap">
+          <div class="gazette-masthead-top">
+            <span>ELGALY EXPRESS // ARQUIVO CENTRAL DE NOVA AMERIT</span>
+            <span class="gazette-bulletin-tag">BOLETIM OFICIAL DA C.E.O.</span>
+          </div>
+          <h1 class="gazette-main-title">A GAZETA DA PROVIDÊNCIA</h1>
+          <p class="gazette-tagline">"Despachos Oficiais, Inovações da Frota e Comunicados da Presidência"</p>
+        </div>
+        <button type="button" class="gazette-close-btn" id="btnCloseProvidenteNews" aria-label="Fechar Jornal">&times;</button>
+      </div>
+
+      <!-- Barra de Histórico de Edições -->
+      <div class="gazette-editions-bar">
+        <span class="editions-label">📜 Histórico de Edições:</span>
+        <div class="gazette-editions-tabs" id="providenteEditionsTabs">
+          <!-- Renderizado pelo ProvidenteNewsManager -->
+        </div>
+      </div>
+
+      <!-- Conteúdo do Jornal (Edição Selecionada) -->
+      <div class="gazette-body" id="providenteGazetteContent">
+        <!-- Preenchido dinamicamente -->
+      </div>
+
+      <!-- Rodapé do Modal -->
+      <div class="gazette-modal-footer">
+        <button type="button" class="btn-comic btn-ack-gazette" id="btnAckProvidenteNews">
+          🌟 Compreendido, C.E.O. Providente! Rumo às Entregas! 🚀
+        </button>
+      </div>
+
     </div>
   </div>
 
