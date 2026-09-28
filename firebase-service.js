@@ -369,6 +369,22 @@ const FirebaseService = {
       }, err => {
         console.warn('Erro ao escutar pokes:', err);
       });
+
+    // 9. Escuta encomendas / cartinhas express recebidas
+    this.unsubscribePackages = userDoc.collection('packages')
+      .where('opened', '==', false)
+      .onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const pkg = { id: change.doc.id, ...change.doc.data() };
+            if (typeof FriendsManager !== 'undefined') {
+              FriendsManager.onPackageReceived(pkg);
+            }
+          }
+        });
+      }, err => {
+        console.warn('Erro ao escutar encomendas recebidas:', err);
+      });
   },
 
   stopRealtimeSync() {
@@ -380,6 +396,7 @@ const FirebaseService = {
     if (this.unsubscribeFriends) { this.unsubscribeFriends(); this.unsubscribeFriends = null; }
     if (this.unsubscribeRequests) { this.unsubscribeRequests(); this.unsubscribeRequests = null; }
     if (this.unsubscribePokes) { this.unsubscribePokes(); this.unsubscribePokes = null; }
+    if (this.unsubscribePackages) { this.unsubscribePackages(); this.unsubscribePackages = null; }
   },
 
   // ========================================================
@@ -454,7 +471,7 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     try {
-      await this.db.collection('public_profiles').doc(uid).set({
+      const payload = {
         uid: uid,
         name: data.name || 'Agente Express',
         nickname: (data.nickname || '').toLowerCase().trim(),
@@ -464,8 +481,19 @@ const FirebaseService = {
         streak: data.streak || 0,
         allDoneToday: !!data.allDoneToday,
         pendingToday: data.pendingToday || 0,
+        sosActive: !!data.sosActive,
+        radioStatus: data.radioStatus || '',
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      };
+
+      if (data.todayHabits && Array.isArray(data.todayHabits)) {
+        payload.todayHabits = data.todayHabits;
+      }
+      if (data.recentMemories && Array.isArray(data.recentMemories)) {
+        payload.recentMemories = data.recentMemories;
+      }
+
+      await this.db.collection('public_profiles').doc(uid).set(payload, { merge: true });
     } catch (e) {
       console.warn('Erro ao atualizar perfil público:', e);
     }
@@ -638,6 +666,45 @@ const FirebaseService = {
     } catch (e) {
       console.warn('Erro ao buzinar/cutucar amigo:', e);
       return { success: false };
+    }
+  },
+
+  async sendPackage(toUid, packageData) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return { success: false, error: 'Não autenticado' };
+    const currentUser = AuthManager.getCurrentUser();
+    if (!currentUser) return { success: false, error: 'Perfil não carregado' };
+
+    try {
+      await this.db.collection('users').doc(toUid).collection('packages').add({
+        fromUid: this.auth.currentUser.uid,
+        fromName: currentUser.name || 'Agente Express',
+        fromNick: currentUser.nickname || 'agente',
+        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        fromEexEmail: currentUser.eexEmail || 'agente.express.com',
+        stamp: packageData.stamp || 'selo-brave',
+        boxType: packageData.boxType || 'caixa-reforcada',
+        message: packageData.message || 'Uma entrega dimensional surpresa para você!',
+        opened: false,
+        timestamp: Date.now(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true };
+    } catch (e) {
+      console.error('Erro ao enviar encomenda express:', e);
+      return { success: false, error: e.message };
+    }
+  },
+
+  async markPackageOpened(packageId) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    try {
+      await this.db.collection('users').doc(uid).collection('packages').doc(packageId).update({
+        opened: true,
+        openedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch (e) {
+      console.warn('Erro ao marcar encomenda como aberta:', e);
     }
   }
 };

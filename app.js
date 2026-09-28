@@ -625,6 +625,10 @@ const FriendsManager = {
   friends: [],
   pendingRequests: [],
   currentSubtab: 'mural',
+  sosActive: false,
+  radioStatus: '',
+  activeFriendForProfile: null,
+  activeFriendForPackage: null,
 
   init() {
     try {
@@ -643,6 +647,25 @@ const FriendsManager = {
     if (!user || typeof FirebaseService === 'undefined') return;
     try {
       const stats = HabitManager.getTodayStats();
+      const todayHabits = (HabitManager.habits || [])
+        .filter(h => HabitManager.isScheduledForToday(h))
+        .map(h => ({
+          id: h.id,
+          title: h.title,
+          category: h.category || 'geral',
+          done: HabitManager.isCompletedToday(h.id)
+        }));
+
+      const recentMemories = (MemoriesManager.memories || []).slice(0, 8).map(m => ({
+        id: m.id,
+        habitTitle: m.habitTitle,
+        photo: m.photo,
+        caption: m.caption,
+        sticker: m.sticker,
+        date: m.date,
+        time: m.time
+      }));
+
       await FirebaseService.updatePublicProfile({
         name: user.name,
         nickname: user.nickname,
@@ -651,7 +674,11 @@ const FriendsManager = {
         location: user.location,
         streak: stats.streak,
         allDoneToday: stats.allDone,
-        pendingToday: stats.pending
+        pendingToday: stats.pending,
+        sosActive: this.sosActive,
+        radioStatus: this.radioStatus,
+        todayHabits: todayHabits,
+        recentMemories: recentMemories
       });
     } catch (e) {
       console.warn('Erro ao sincronizar perfil público:', e);
@@ -711,6 +738,18 @@ const FriendsManager = {
     if (countBadge) countBadge.textContent = this.friends.length;
     this.updateBadge();
 
+    // Atualiza estado do botão SOS
+    const btnSos = document.getElementById('btnToggleSos');
+    if (btnSos) {
+      if (this.sosActive) {
+        btnSos.textContent = '🚨 SOS ATIVADO!';
+        btnSos.classList.add('sos-active');
+      } else {
+        btnSos.textContent = '🚨 SOS Resgate';
+        btnSos.classList.remove('sos-active');
+      }
+    }
+
     this.renderMural();
     this.renderRequests();
   },
@@ -734,6 +773,7 @@ const FriendsManager = {
 
     grid.innerHTML = this.friends.map(friend => {
       const isDone = !!friend.allDoneToday;
+      const isSos = !!friend.sosActive;
       const mascotImg = isDone ? 'images/brave.png' : 'images/midnight.png';
       const mascotStatus = isDone 
         ? '✨ Brave comemora: rotina de hoje 100% cumprida!' 
@@ -742,10 +782,16 @@ const FriendsManager = {
             : '😭 Midnight ansiosa: check-in de hoje pendente!');
 
       return `
-        <div class="friend-card ${isDone ? 'done-today' : 'pending-today'}">
+        <div class="friend-card ${isDone ? 'done-today' : 'pending-today'} ${isSos ? 'friend-card-sos' : ''}" data-uid="${friend.uid}">
+          ${isSos ? `
+            <div class="friend-sos-ribbon">
+              🚨 PEDIDO DE RESGATE SOS! AJUDE ANTES DA MEIA-NOITE! 🚨
+            </div>
+          ` : ''}
+
           <div class="friend-card-top">
-            <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-avatar">
-            <div class="friend-details">
+            <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-avatar btn-open-profile" data-uid="${friend.uid}" title="Ver Passaporte Completo">
+            <div class="friend-details btn-open-profile" data-uid="${friend.uid}" style="cursor: pointer;">
               <h4 class="friend-name">${friend.name || 'Agente'}</h4>
               <span class="friend-nick">@${friend.eexEmail || (friend.nickname + '.express.com')}</span>
               <span class="friend-location">📍 ${friend.location || 'Nova Amerit - NA'}</span>
@@ -756,14 +802,27 @@ const FriendsManager = {
             </div>
           </div>
 
+          ${friend.radioStatus ? `
+            <div class="friend-radio-pill">
+              <span class="radio-icon">📻</span>
+              <span class="radio-msg">"${friend.radioStatus}"</span>
+            </div>
+          ` : ''}
+
           <div class="friend-mascot-status">
             <img src="${mascotImg}" alt="Status" class="friend-status-mascot ${isDone ? 'bounce' : 'shake'}">
             <span class="friend-status-text">${mascotStatus}</span>
           </div>
 
           <div class="friend-card-actions">
-            <button type="button" class="btn-comic btn-poke" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}">
-              📢 Dar uma Força!
+            <button type="button" class="btn-comic btn-view-profile" data-uid="${friend.uid}">
+              🪪 Ver Passaporte & Rotina
+            </button>
+            <button type="button" class="btn-comic btn-send-package" data-uid="${friend.uid}" title="Mandar Encomenda Express">
+              📦
+            </button>
+            <button type="button" class="btn-comic btn-poke" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Dar uma Força!">
+              📢
             </button>
             <button type="button" class="btn-comic btn-secondary btn-del-friend" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Remover Parceiro">
               ✕
@@ -773,24 +832,43 @@ const FriendsManager = {
       `;
     }).join('');
 
-    // Eventos dos botões de cada amigo
+    // Eventos de clique nos cards
+    grid.querySelectorAll('.btn-view-profile, .btn-open-profile').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uid = el.dataset.uid;
+        if (uid) FriendsManager.openFriendProfile(uid);
+      });
+    });
+
+    grid.querySelectorAll('.btn-send-package').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uid = btn.dataset.uid;
+        const friend = FriendsManager.friends.find(f => f.uid === uid);
+        if (friend) FriendsManager.openSendPackageModal(friend);
+      });
+    });
+
     grid.querySelectorAll('.btn-poke').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const uid = btn.dataset.uid;
         const name = btn.dataset.name;
         btn.disabled = true;
-        btn.textContent = '⚡ Enviando...';
+        btn.textContent = '⚡';
         await FirebaseService.sendPoke(uid);
         AppUI.showToast(`📢 Você deu uma força para ${name}!`);
         setTimeout(() => {
           btn.disabled = false;
-          btn.textContent = '📢 Dar uma Força!';
+          btn.textContent = '📢';
         }, 3000);
       });
     });
 
     grid.querySelectorAll('.btn-del-friend').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const uid = btn.dataset.uid;
         const name = btn.dataset.name;
         if (confirm(`Deseja desfazer a parceria com ${name}?`)) {
@@ -854,6 +932,223 @@ const FriendsManager = {
         AppUI.showToast('Solicitação recusada.');
       });
     });
+  },
+
+  // ==========================================================
+  // PASSAPORTE DO PARCEIRO (VER ROTINA E FOTOS DO AMIGO)
+  // ==========================================================
+  async openFriendProfile(uid) {
+    let friend = this.friends.find(f => f.uid === uid);
+    if (!friend && typeof FirebaseService !== 'undefined' && FirebaseService.db) {
+      try {
+        const doc = await FirebaseService.db.collection('public_profiles').doc(uid).get();
+        if (doc.exists) friend = { uid: doc.id, ...doc.data() };
+      } catch (e) {
+        console.warn('Erro ao carregar perfil do parceiro:', e);
+      }
+    }
+    if (!friend) {
+      AppUI.showToast('Não foi possível carregar o perfil do agente.');
+      return;
+    }
+
+    this.activeFriendForProfile = friend;
+    const modal = document.getElementById('modalFriendProfile');
+    if (!modal) return;
+
+    // 1. Crachá retrô anos 2000
+    const badgeContainer = document.getElementById('friendModalBadge');
+    if (badgeContainer) {
+      badgeContainer.innerHTML = `
+        <div class="friend-badge-inner">
+          <div class="friend-badge-header">
+            <span class="badge-tag">REDE EEX // CREDENCIAL OPERACIONAL</span>
+          </div>
+          <div class="friend-badge-body">
+            <div class="friend-badge-photo-wrap">
+              <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-badge-photo">
+              <span class="friend-badge-stamp">OFICIAL</span>
+            </div>
+            <div class="friend-badge-info">
+              <h2 class="friend-badge-name">${friend.name || 'Agente'}</h2>
+              <div class="friend-badge-eex">@${friend.eexEmail || (friend.nickname + '.express.com')}</div>
+              <div class="friend-badge-detail">📍 Setor: <strong>${friend.location || 'Nova Amerit - NA'}</strong></div>
+              <div class="friend-badge-streak">
+                🔥 Sequência: <strong>${friend.streak || 0} Dias Consecutivos</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Banner de Status do Mascote
+    const bannerEl = document.getElementById('friendModalMascotBanner');
+    if (bannerEl) {
+      const isDone = !!friend.allDoneToday;
+      bannerEl.innerHTML = `
+        <div class="friend-modal-mascot-card ${isDone ? 'mascot-celebrate' : 'mascot-panic'}">
+          <img src="images/${isDone ? 'brave.png' : 'midnight.png'}" class="friend-modal-mascot-img ${isDone ? 'bounce' : 'shake'}" alt="Mascote">
+          <div>
+            <h4>${isDone ? 'Agente Brave Comemora!' : 'Agente Midnight em Alerta!'}</h4>
+            <p>${isDone 
+              ? 'Todas as entregas da rotina de hoje foram 100% cumpridas! Excelente trabalho!' 
+              : (friend.pendingToday > 0 
+                  ? `Ainda restam ${friend.pendingToday} hábitos pendentes para fechar a rota de hoje!` 
+                  : 'Ainda não começou o check-in de hoje. Dê uma força!')}
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. Lista de Hábitos de Hoje do Amigo
+    const habitsList = document.getElementById('friendModalHabitsList');
+    if (habitsList) {
+      const habits = friend.todayHabits || [];
+      if (habits.length === 0) {
+        habitsList.innerHTML = `
+          <div class="empty-subtab-box">
+            <span>📋</span>
+            <p>O agente ainda não sincronizou a lista detalhada de hábitos de hoje.</p>
+          </div>
+        `;
+      } else {
+        habitsList.innerHTML = habits.map(h => `
+          <div class="friend-habit-item ${h.done ? 'habit-done' : 'habit-pending'}">
+            <span class="friend-habit-icon">${h.done ? '✅' : '⏳'}</span>
+            <div class="friend-habit-info">
+              <strong class="friend-habit-title">${h.title}</strong>
+              <small class="friend-habit-cat">Setor: ${h.category || 'Geral'}</small>
+            </div>
+            <span class="friend-habit-status-badge">${h.done ? 'CONCLUÍDO' : 'EM ROTA'}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 4. Galeria de Fotos / Momentos com Stickers do Amigo
+    const photosGrid = document.getElementById('friendModalPhotosGrid');
+    if (photosGrid) {
+      const memories = friend.recentMemories || [];
+      if (memories.length === 0) {
+        photosGrid.innerHTML = `
+          <div class="empty-subtab-box">
+            <span>📷</span>
+            <p>Nenhum registro fotográfico publicado recentemente por este parceiro.</p>
+          </div>
+        `;
+      } else {
+        photosGrid.innerHTML = memories.map(mem => `
+          <div class="friend-photo-polaroid">
+            <div class="friend-polaroid-img-wrap">
+              <img src="${mem.photo}" alt="${mem.caption}" class="friend-polaroid-img">
+              <img src="images/${mem.sticker === 'midnight' ? 'midnight.png' : (mem.sticker === 'fire' ? 'fireon.png' : 'brave.png')}" alt="Adesivo" class="friend-polaroid-sticker">
+            </div>
+            <div class="friend-polaroid-body">
+              <strong>✨ ${mem.habitTitle || 'Rotina EEX'}</strong>
+              <p>"${mem.caption || ''}"</p>
+              <small>📅 ${mem.date || 'Hoje'} às ${mem.time || ''}</small>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Default para a aba de rotina
+    document.querySelectorAll('.btn-friend-nav').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.friend-tab-section').forEach(s => s.classList.remove('active'));
+    const defBtn = document.querySelector('.btn-friend-nav[data-friend-tab="rotina"]');
+    if (defBtn) defBtn.classList.add('active');
+    const defSec = document.getElementById('friendTabRotina');
+    if (defSec) defSec.classList.add('active');
+
+    modal.classList.add('active');
+  },
+
+  // ==========================================================
+  // ENVIAR ENCOMENDA EXPRESS
+  // ==========================================================
+  openSendPackageModal(friend) {
+    this.activeFriendForPackage = friend;
+    const modal = document.getElementById('modalSendPackage');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('sendPkgTargetName');
+    const nickEl = document.getElementById('sendPkgTargetNick');
+    if (nameEl) nameEl.textContent = friend.name || 'Agente';
+    if (nickEl) nickEl.textContent = `@${friend.eexEmail || (friend.nickname + '.express.com')}`;
+
+    const inputMsg = document.getElementById('pkgMessage');
+    if (inputMsg) inputMsg.value = '';
+
+    modal.classList.add('active');
+  },
+
+  // ==========================================================
+  // RECEBIMENTO DE ENCOMENDA EXPRESS (UNBOXING)
+  // ==========================================================
+  onPackageReceived(pkg) {
+    const modal = document.getElementById('modalOpenPackage');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('unboxingSenderName');
+    const nickEl = document.getElementById('unboxingSenderNick');
+    const msgEl = document.getElementById('unboxingMessageText');
+    const stampBadge = document.getElementById('unboxingStampBadge');
+    const stampIcon = document.getElementById('unboxingStampIcon');
+    const stampTitle = document.getElementById('unboxingStampTitle');
+    const boxIcon = document.getElementById('unboxingBoxIcon');
+
+    if (nameEl) nameEl.textContent = pkg.fromName || 'Agente Parceiro';
+    if (nickEl) nickEl.textContent = `@${pkg.fromEexEmail || (pkg.fromNick + '.express.com')}`;
+    if (msgEl) msgEl.textContent = pkg.message || 'Entrega com sucesso total!';
+
+    // Mapeamento do selo postal
+    const stampMap = {
+      'selo-brave': { icon: '🐾', title: 'Selo de Honra Brave' },
+      'selo-cafe': { icon: '☕', title: 'Vale Café Dimensional' },
+      'selo-turbo': { icon: '⚡', title: 'Carga Turbo de Energia' },
+      'selo-fragil': { icon: '⚠️', title: 'Aviso: Cuidado Frágil' }
+    };
+    const s = stampMap[pkg.stamp] || stampMap['selo-brave'];
+    if (stampIcon) stampIcon.textContent = s.icon;
+    if (stampTitle) stampTitle.textContent = s.title;
+
+    // Embalagem
+    if (boxIcon) {
+      boxIcon.textContent = pkg.boxType === 'envelope-confidencial' ? '✉️' : (pkg.boxType === 'pacote-fita' ? '🎁' : '📦');
+    }
+
+    modal.classList.add('active');
+
+    // Marca como aberta no Firebase
+    if (typeof FirebaseService !== 'undefined' && pkg.id) {
+      FirebaseService.markPackageOpened(pkg.id);
+    }
+  },
+
+  // ==========================================================
+  // SOS & RÁDIO COMUNICADOR
+  // ==========================================================
+  toggleSos() {
+    this.sosActive = !this.sosActive;
+    if (this.sosActive) {
+      AppUI.showToast('🚨 RESGATE SOS ATIVADO! Seus parceiros foram alertados para mandar reforços!');
+    } else {
+      AppUI.showToast('🟢 Alerta SOS cancelado. Situação sob controle!');
+    }
+    this.render();
+    this.syncMyPublicProfile();
+  },
+
+  sendRadioStatus(statusText) {
+    this.radioStatus = statusText;
+    AppUI.showToast(`📻 [RÁDIO EEX]: Câmbio, status transmitido: "${statusText}"`);
+    const modal = document.getElementById('modalRadioBip');
+    if (modal) modal.classList.remove('active');
+    this.syncMyPublicProfile();
+    this.render();
   }
 };
 
@@ -2331,6 +2626,151 @@ const AppUI = {
             }
           });
         });
+      });
+    }
+
+    // 24. EEX-Friends: Botão de Alerta SOS Resgate
+    const btnToggleSos = document.getElementById('btnToggleSos');
+    if (btnToggleSos) {
+      btnToggleSos.addEventListener('click', () => {
+        FriendsManager.toggleSos();
+      });
+    }
+
+    // 25. EEX-Friends: Rádio Comunicador Bip
+    const btnRadioBip = document.getElementById('btnRadioBip');
+    const modalRadioBip = document.getElementById('modalRadioBip');
+    const btnCancelRadio = document.getElementById('btnCancelRadio');
+    if (btnRadioBip && modalRadioBip) {
+      btnRadioBip.addEventListener('click', () => {
+        modalRadioBip.classList.add('active');
+      });
+    }
+    if (btnCancelRadio && modalRadioBip) {
+      btnCancelRadio.addEventListener('click', () => {
+        modalRadioBip.classList.remove('active');
+      });
+    }
+    document.querySelectorAll('.radio-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const status = btn.dataset.status;
+        if (status) FriendsManager.sendRadioStatus(status);
+      });
+    });
+
+    // 26. EEX-Friends: Modal de Perfil do Parceiro (Passaporte)
+    const modalFriendProfile = document.getElementById('modalFriendProfile');
+    const btnCloseFriendProfile = document.getElementById('btnCloseFriendProfile');
+    if (btnCloseFriendProfile && modalFriendProfile) {
+      btnCloseFriendProfile.addEventListener('click', () => {
+        modalFriendProfile.classList.remove('active');
+      });
+    }
+
+    // Alternância de abas internas no perfil do amigo (Rotina vs Fotos)
+    document.querySelectorAll('.btn-friend-nav').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.friendTab;
+        document.querySelectorAll('.btn-friend-nav').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.friend-tab-section').forEach(s => s.classList.remove('active'));
+        const targetSection = document.getElementById(`friendTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+        if (targetSection) targetSection.classList.add('active');
+      });
+    });
+
+    // Ações dentro do modal de perfil do amigo
+    const btnFriendModalSendPackage = document.getElementById('btnFriendModalSendPackage');
+    if (btnFriendModalSendPackage) {
+      btnFriendModalSendPackage.addEventListener('click', () => {
+        if (FriendsManager.activeFriendForProfile) {
+          if (modalFriendProfile) modalFriendProfile.classList.remove('active');
+          FriendsManager.openSendPackageModal(FriendsManager.activeFriendForProfile);
+        }
+      });
+    }
+
+    const btnFriendModalPoke = document.getElementById('btnFriendModalPoke');
+    if (btnFriendModalPoke) {
+      btnFriendModalPoke.addEventListener('click', async () => {
+        const friend = FriendsManager.activeFriendForProfile;
+        if (!friend) return;
+        btnFriendModalPoke.disabled = true;
+        btnFriendModalPoke.textContent = '⚡ Enviando reforço...';
+        await FirebaseService.sendPoke(friend.uid);
+        AppUI.showToast(`📢 Você deu uma força para ${friend.name || friend.nickname}!`);
+        setTimeout(() => {
+          btnFriendModalPoke.disabled = false;
+          btnFriendModalPoke.textContent = '📢 Dar uma Força!';
+        }, 3000);
+      });
+    }
+
+    // 27. EEX-Friends: Envio de Encomenda Express
+    const formSendPackage = document.getElementById('formSendPackage');
+    const modalSendPackage = document.getElementById('modalSendPackage');
+    const btnCancelSendPackage = document.getElementById('btnCancelSendPackage');
+    const inputPkgMsg = document.getElementById('pkgMessage');
+
+    if (btnCancelSendPackage && modalSendPackage) {
+      btnCancelSendPackage.addEventListener('click', () => {
+        modalSendPackage.classList.remove('active');
+      });
+    }
+
+    // Chips de mensagens rápidas
+    document.querySelectorAll('.chip-msg').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (inputPkgMsg) {
+          inputPkgMsg.value = chip.textContent.trim();
+          inputPkgMsg.focus();
+        }
+      });
+    });
+
+    if (formSendPackage && modalSendPackage) {
+      formSendPackage.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const friend = FriendsManager.activeFriendForPackage;
+        if (!friend) return;
+
+        const stamp = formSendPackage.querySelector('input[name="pkgStamp"]:checked')?.value || 'selo-brave';
+        const boxType = document.getElementById('pkgBoxType')?.value || 'caixa-reforcada';
+        const message = inputPkgMsg?.value.trim() || 'Uma entrega dimensional surpresa para você!';
+
+        const submitBtn = formSendPackage.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = '⚡ Despachando Encomenda...';
+        }
+
+        const res = await FirebaseService.sendPackage(friend.uid, {
+          stamp: stamp,
+          boxType: boxType,
+          message: message
+        });
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '🚀 Selar & Despachar Encomenda!';
+        }
+
+        if (res.success) {
+          modalSendPackage.classList.remove('active');
+          AppUI.showToast(`📦 Encomenda despachada com sucesso para ${friend.name || friend.nickname}!`);
+        } else {
+          AppUI.showToast('Erro ao despachar encomenda: ' + (res.error || 'Tente novamente.'));
+        }
+      });
+    }
+
+    // 28. EEX-Friends: Desembrulho da Encomenda Recebida
+    const modalOpenPackage = document.getElementById('modalOpenPackage');
+    const btnDismissPackage = document.getElementById('btnDismissPackage');
+    if (btnDismissPackage && modalOpenPackage) {
+      btnDismissPackage.addEventListener('click', () => {
+        modalOpenPackage.classList.remove('active');
       });
     }
   },

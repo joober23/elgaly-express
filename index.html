@@ -501,15 +501,23 @@
                 </div>
               </div>
 
-              <!-- Cartão de Compartilhamento do Seu ID Express -->
+              <!-- Cartão de Compartilhamento do Seu ID Express & Ações da Frota -->
               <div class="my-eex-share-card">
                 <div class="my-eex-share-info">
                   <span class="share-label">🏷️ SEU ID EXPRESS PARA AMIGOS:</span>
                   <strong class="share-code" id="myEexIdDisplay">carregando...</strong>
                 </div>
-                <button type="button" class="btn-comic" id="btnCopyMyEexId" style="background: var(--yellow-bright); color: var(--black);">
-                  📋 Copiar ID Express
-                </button>
+                <div class="friends-hero-btn-row">
+                  <button type="button" class="btn-comic" id="btnCopyMyEexId" style="background: var(--yellow-bright); color: var(--black);">
+                    📋 Copiar ID Express
+                  </button>
+                  <button type="button" class="btn-comic btn-sos-toggle" id="btnToggleSos">
+                    🚨 SOS Resgate
+                  </button>
+                  <button type="button" class="btn-comic btn-radio-toggle" id="btnRadioBip">
+                    📻 Rádio Bip
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1105,6 +1113,209 @@
         <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">🔓 Entrar</button>
       </form>
       <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: PASSAPORTE DO PARCEIRO EEX (Visualizar Perfil, Rotina e Fotos do Amigo)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalFriendProfile">
+    <div class="modal-content friend-profile-modal-box">
+      <div class="friend-modal-header">
+        <div class="friend-modal-badge-card" id="friendModalBadge">
+          <!-- Preenchido dinamicamente com crachá anos 2000 do amigo -->
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseFriendProfile" aria-label="Fechar">✕</button>
+      </div>
+
+      <!-- Abas internas do perfil do amigo: Rotina e Fotos -->
+      <div class="friend-profile-nav">
+        <button type="button" class="btn-friend-nav active" data-friend-tab="rotina">📋 Rotina de Hoje</button>
+        <button type="button" class="btn-friend-nav" data-friend-tab="fotos">📸 Galeria de Momentos</button>
+      </div>
+
+      <!-- Conteúdo da Aba 1: Rotina de Hoje -->
+      <div class="friend-tab-section active" id="friendTabRotina">
+        <div id="friendModalMascotBanner"></div>
+        <div class="friend-habits-list" id="friendModalHabitsList">
+          <!-- Lista de hábitos preenchida dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2: Fotos de Momentos -->
+      <div class="friend-tab-section" id="friendTabFotos">
+        <div class="friend-photos-grid" id="friendModalPhotosGrid">
+          <!-- Fotos com stickers preenchidas dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Ações rápidas no rodapé do perfil do amigo -->
+      <div class="friend-modal-footer">
+        <button type="button" class="btn-comic btn-friend-action-package" id="btnFriendModalSendPackage">
+          📦 Enviar Encomenda Express
+        </button>
+        <button type="button" class="btn-comic btn-friend-action-poke" id="btnFriendModalPoke">
+          📢 Dar uma Força!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: ENVIAR ENCOMENDA EXPRESS (Cartinhas & Presentes Retrô)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalSendPackage">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="text-align: center; margin-bottom: 14px;">
+        <span style="font-size: 2.5rem; display: block; margin-bottom: 4px;">📦✨</span>
+        <h3 style="margin: 0; color: var(--purple-dark); font-family: var(--font-display, 'Darumadrop One', cursive); font-size: 1.6rem;">
+          DESPACHAR ENCOMENDA EXPRESS
+        </h3>
+        <p style="font-size: 0.85rem; color: #6b7280; font-weight: 600; margin: 4px 0 0;">
+          Para: <strong id="sendPkgTargetName" style="color: var(--purple-main);">Agente</strong> 
+          (<span id="sendPkgTargetNick">@nick.express.com</span>)
+        </p>
+      </div>
+
+      <form id="formSendPackage" class="comic-form">
+        <!-- 1. Escolha do Selo Dimensional -->
+        <div class="form-group">
+          <label>🏷️ Escolha o Selo Postal EEX:</label>
+          <div class="stamp-selector-grid">
+            <label class="stamp-option-card">
+              <input type="radio" name="pkgStamp" value="selo-brave" checked>
+              <div class="stamp-card-inner">
+                <span class="stamp-icon">🐾</span>
+                <strong>Brave de Honra</strong>
+                <small>+100 de Força</small>
+              </div>
+            </label>
+            <label class="stamp-option-card">
+              <input type="radio" name="pkgStamp" value="selo-cafe">
+              <div class="stamp-card-inner">
+                <span class="stamp-icon">☕</span>
+                <strong>Café Dimensional</strong>
+                <small>Energia Total</small>
+              </div>
+            </label>
+            <label class="stamp-option-card">
+              <input type="radio" name="pkgStamp" value="selo-turbo">
+              <div class="stamp-card-inner">
+                <span class="stamp-icon">⚡</span>
+                <strong>Carga Turbo</strong>
+                <small>Foco Absoluto</small>
+              </div>
+            </label>
+            <label class="stamp-option-card">
+              <input type="radio" name="pkgStamp" value="selo-fragil">
+              <div class="stamp-card-inner">
+                <span class="stamp-icon">⚠️</span>
+                <strong>Cuidado: Frágil</strong>
+                <small>Não Desista!</small>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. Escolha da Embalagem -->
+        <div class="form-group">
+          <label for="pkgBoxType">📦 Tipo de Embalagem:</label>
+          <select id="pkgBoxType" class="select-comic">
+            <option value="caixa-reforcada">📦 Caixa de Papelão Reforçada EEX</option>
+            <option value="envelope-confidencial">✉️ Envelope Confidencial da Central</option>
+            <option value="pacote-fita">🎁 Pacote Especial com Fita Amarela</option>
+          </select>
+        </div>
+
+        <!-- 3. Mensagem do Bilhete / Pager -->
+        <div class="form-group">
+          <label for="pkgMessage">📝 Mensagem da Encomenda (máx. 120 caracteres):</label>
+          <input type="text" id="pkgMessage" maxlength="120" placeholder="Ex: Bora fechar essa rota juntos! 💪" required autocomplete="off">
+          <div class="quick-messages-chips">
+            <button type="button" class="chip-msg">Bora fechar a rota hoje! 💪</button>
+            <button type="button" class="chip-msg">Você manda muito, parabéns! 🌟</button>
+            <button type="button" class="chip-msg">Toma um café e não desiste! ☕</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-comic" style="width: 100%; margin-top: 10px; background: var(--yellow-bright); color: var(--black);">
+          🚀 Selar & Despachar Encomenda!
+        </button>
+        <button type="button" class="btn-comic btn-secondary" id="btnCancelSendPackage" style="width: 100%; margin-top: 6px;">
+          Cancelar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: ABRIR ENCOMENDA RECEBIDA (Desembrulho com Confetes & Animação)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalOpenPackage">
+    <div class="modal-content package-unboxing-box" style="max-width: 440px; text-align: center;">
+      <div class="package-unboxing-mascot">
+        <img src="images/brave.png" alt="Brave" class="unboxing-brave-img">
+      </div>
+      <div class="unboxing-stamp-badge" id="unboxingStampBadge">
+        <span id="unboxingStampIcon">🐾</span>
+        <span id="unboxingStampTitle">Selo de Honra Brave</span>
+      </div>
+      <div class="unboxing-package-graphic">
+        <div class="unboxing-box-icon" id="unboxingBoxIcon">📦</div>
+        <div class="unboxing-ribbon">ENTREGA ESPECIAL EEX</div>
+      </div>
+      <h3 style="font-family: var(--font-display, 'Darumadrop One', cursive); font-size: 1.5rem; color: var(--purple-dark); margin: 8px 0 2px;">
+        VOCÊ RECEBEU UMA ENCOMENDA!
+      </h3>
+      <p style="font-size: 0.85rem; color: #6b7280; margin: 0 0 14px;">
+        Despachada por <strong id="unboxingSenderName" style="color: var(--purple-main);">Agente</strong> 
+        (<span id="unboxingSenderNick">@nick.express.com</span>)
+      </p>
+
+      <div class="unboxing-message-card">
+        <div class="unboxing-quote-mark">“</div>
+        <p id="unboxingMessageText">Mensagem inspiradora do seu parceiro de entregas!</p>
+        <div class="unboxing-date" id="unboxingDate">Hoje</div>
+      </div>
+
+      <button type="button" class="btn-comic" id="btnDismissPackage" style="width: 100%; margin-top: 14px; background: var(--yellow-bright); color: var(--black);">
+        🎉 Recebido com Sucesso! Guardar no Histórico
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4: RÁDIO COMUNICADOR EEX (Transmissão de Bip)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalRadioBip">
+    <div class="modal-content" style="max-width: 420px; text-align: center;">
+      <span style="font-size: 2.4rem; display: block; margin-bottom: 4px;">📻⚡</span>
+      <h3 style="font-family: var(--font-display, 'Darumadrop One', cursive); font-size: 1.4rem; color: var(--purple-dark); margin: 0 0 4px;">
+        RÁDIO COMUNICADOR EEX
+      </h3>
+      <p style="font-size: 0.85rem; color: #6b7280; font-weight: 600; margin: 0 0 14px;">
+        Transmita seu status operacional para toda a sua frota conectada!
+      </p>
+      <div class="radio-status-options-grid">
+        <button type="button" class="btn-comic radio-opt-btn" data-status="📦 Partindo pra entrega matinal!">
+          📦 Partindo pra entrega matinal!
+        </button>
+        <button type="button" class="btn-comic radio-opt-btn" data-status="☕ Parada técnica no posto de Nova Amerit!">
+          ☕ Parada técnica em Nova Amerit!
+        </button>
+        <button type="button" class="btn-comic radio-opt-btn" data-status="⚡ Rota concluída com sucesso total!">
+          ⚡ Rota concluída com sucesso total!
+        </button>
+        <button type="button" class="btn-comic radio-opt-btn" data-status="😭 Midnight assumiu o volante, socorro!">
+          😭 Midnight assumiu o volante, socorro!
+        </button>
+        <button type="button" class="btn-comic radio-opt-btn" data-status="🔥 Chamas acesas e rotina em dia!">
+          🔥 Chamas acesas e rotina em dia!
+        </button>
+      </div>
+      <button type="button" class="btn-comic btn-secondary" id="btnCancelRadio" style="width: 100%; margin-top: 12px;">
+        Desligar Rádio
+      </button>
     </div>
   </div>
 

@@ -4038,3 +4038,572 @@ footer {
   .search-form-comic { flex-direction: column; align-items: stretch; }
   .search-agent-card { flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   EEX-FRIENDS: PASSAPORTE DO PARCEIRO, ENCOMENDAS EXPRESS, SOS & RÁDIO
+   ========================================================================== */
+
+/* Linha de botões do Hero */
+.friends-hero-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-sos-toggle {
+  background: #ef4444;
+  color: #fff;
+  border-color: var(--black);
+}
+.btn-sos-toggle:hover {
+  background: #dc2626;
+  color: #fff;
+}
+.btn-sos-toggle.sos-active {
+  background: #b91c1c;
+  color: #fef08a;
+  animation: pulseSos 1s infinite alternate;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.8), 3px 3px 0 var(--black);
+}
+@keyframes pulseSos {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+.btn-radio-toggle {
+  background: #38bdf8;
+  color: var(--black);
+  border-color: var(--black);
+}
+.btn-radio-toggle:hover {
+  background: #0284c7;
+  color: #fff;
+}
+
+/* Card SOS no mural */
+.friend-card.friend-card-sos {
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 4px 4px 0 #ef4444;
+}
+.friend-sos-ribbon {
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1.5px solid var(--black);
+  letter-spacing: 0.04em;
+  animation: pulseSos 1.2s infinite alternate;
+}
+
+/* Rádio Pill no Card */
+.friend-radio-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1.5px solid #38bdf8;
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--purple-dark, #3a154d);
+  font-weight: 700;
+}
+
+/* Modal do Perfil do Parceiro */
+.friend-profile-modal-box {
+  max-width: 620px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.friend-modal-header {
+  position: relative;
+  margin-bottom: 16px;
+}
+.friend-modal-header .btn-close-modal {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 10;
+}
+
+/* Crachá no Modal */
+.friend-badge-inner {
+  background: var(--purple-dark, #3a154d);
+  border: 3px solid var(--black);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 5px 5px 0 var(--yellow-bright, #f9e000);
+  color: #fff;
+}
+.friend-badge-header {
+  border-bottom: 2px dashed rgba(255,255,255,0.25);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.badge-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--yellow-bright, #f9e000);
+  text-transform: uppercase;
+}
+.friend-badge-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.friend-badge-photo-wrap {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+}
+.friend-badge-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 2px 2px 0 var(--black);
+}
+.friend-badge-stamp {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 6px;
+  border: 1px solid var(--black);
+}
+.friend-badge-info {
+  flex: 1;
+  min-width: 0;
+}
+.friend-badge-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--yellow-bright, #f9e000);
+  margin: 0 0 2px 0;
+  line-height: 1.2;
+}
+.friend-badge-eex {
+  font-size: 0.82rem;
+  color: #e2c8f5;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.friend-badge-detail {
+  font-size: 0.78rem;
+  color: #d1d5db;
+  margin-bottom: 4px;
+}
+.friend-badge-streak {
+  font-size: 0.8rem;
+  color: #fef08a;
+}
+
+/* Abas internas do Perfil do Amigo */
+.friend-profile-nav {
+  display: flex;
+  gap: 8px;
+  background: var(--card-bg, #f8f0ff);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.btn-friend-nav {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--purple-dark, #3a154d);
+  transition: all 0.15s ease;
+}
+.btn-friend-nav.active {
+  background: var(--purple-dark, #3a154d);
+  color: var(--yellow-bright, #f9e000);
+  box-shadow: 2px 2px 0 var(--black);
+}
+
+.friend-tab-section { display: none; }
+.friend-tab-section.active { display: block; }
+
+/* Banner do Mascote no Perfil */
+.friend-modal-mascot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.friend-modal-mascot-card.mascot-celebrate {
+  background: #dcfce7;
+  border-color: #16a34a;
+  box-shadow: 3px 3px 0 #16a34a;
+}
+.friend-modal-mascot-card.mascot-celebrate h4 { color: #15803d; }
+.friend-modal-mascot-card.mascot-celebrate p { color: #166534; }
+
+.friend-modal-mascot-card.mascot-panic {
+  background: #fef2f2;
+  border-color: #dc2626;
+  box-shadow: 3px 3px 0 #dc2626;
+}
+.friend-modal-mascot-card.mascot-panic h4 { color: #b91c1c; }
+.friend-modal-mascot-card.mascot-panic p { color: #991b1b; }
+
+.friend-modal-mascot-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.friend-modal-mascot-card h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0 0 2px 0;
+}
+.friend-modal-mascot-card p {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Lista de Hábitos do Amigo */
+.friend-habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.friend-habit-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg, #f8f0ff);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.friend-habit-item.habit-done {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+.friend-habit-icon { font-size: 1.15rem; }
+.friend-habit-info { flex: 1; min-width: 0; }
+.friend-habit-title {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--purple-dark, #3a154d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.friend-habit-cat {
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+.friend-habit-status-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+}
+.friend-habit-item.habit-done .friend-habit-status-badge {
+  background: #22c55e;
+  color: #fff;
+}
+.friend-habit-item.habit-pending .friend-habit-status-badge {
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+}
+
+/* Galeria de Fotos / Momentos do Amigo */
+.friend-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.friend-photo-polaroid {
+  background: #fff;
+  border: 2.5px solid var(--black);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 3px 3px 0 var(--black);
+}
+.friend-polaroid-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1.5px solid var(--black);
+}
+.friend-polaroid-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.friend-polaroid-sticker {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.5));
+}
+.friend-polaroid-body {
+  padding-top: 6px;
+}
+.friend-polaroid-body strong {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--purple-dark, #3a154d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.friend-polaroid-body p {
+  font-size: 0.7rem;
+  color: #4b5563;
+  margin: 2px 0 4px;
+  line-height: 1.2;
+}
+.friend-polaroid-body small {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* Rodapé do Modal */
+.friend-modal-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 2px dashed rgba(0,0,0,0.15);
+}
+.btn-friend-action-package {
+  flex: 2;
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+}
+.btn-friend-action-poke {
+  flex: 1;
+}
+
+.empty-subtab-box {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+}
+.empty-subtab-box span { font-size: 2rem; display: block; margin-bottom: 6px; }
+.empty-subtab-box p { font-size: 0.85rem; font-weight: 600; margin: 0; }
+
+/* Grid de Selos Postais */
+.stamp-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.stamp-option-card input[type="radio"] { display: none; }
+.stamp-card-inner {
+  border: 2.5px solid var(--black);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+  background: var(--card-bg, #f8f0ff);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.stamp-option-card input[type="radio"]:checked + .stamp-card-inner {
+  background: var(--yellow-bright, #f9e000);
+  border-color: var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+  transform: translate(-2px, -2px);
+}
+.stamp-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
+.stamp-card-inner strong { display: block; font-size: 0.82rem; color: var(--purple-dark, #3a154d); }
+.stamp-card-inner small { font-size: 0.7rem; color: #6b7280; font-weight: 600; }
+
+/* Mensagens Rápidas Chips */
+.quick-messages-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.chip-msg {
+  background: var(--card-bg, #f8f0ff);
+  border: 1.5px solid var(--black);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--purple-dark, #3a154d);
+}
+.chip-msg:hover {
+  background: var(--purple-main, #6b2fa0);
+  color: #fff;
+}
+
+/* Modal de Unboxing */
+.package-unboxing-box {
+  position: relative;
+  overflow: hidden;
+}
+.package-unboxing-mascot {
+  margin-bottom: 6px;
+}
+.unboxing-brave-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  animation: eexBraveBounce 1.5s infinite ease-in-out;
+}
+.unboxing-stamp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.unboxing-box-icon {
+  font-size: 3.5rem;
+  margin: 4px 0;
+  animation: pulseSos 1s infinite alternate;
+}
+.unboxing-ribbon {
+  background: var(--purple-dark, #3a154d);
+  color: var(--yellow-bright, #f9e000);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+}
+.unboxing-message-card {
+  background: #fff;
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 4px 4px 0 var(--black);
+  position: relative;
+  text-align: left;
+  margin-top: 8px;
+}
+.unboxing-quote-mark {
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--purple-main, #6b2fa0);
+  font-family: serif;
+  margin-bottom: -10px;
+}
+#unboxingMessageText {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--purple-dark, #3a154d);
+  line-height: 1.4;
+  margin: 6px 0;
+}
+.unboxing-date {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Opções de Rádio Bip */
+.radio-status-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.radio-opt-btn {
+  text-align: left;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .friend-badge-inner {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .friend-profile-nav {
+  background: #2d0a44;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .btn-friend-nav {
+  color: #e2c8f5;
+}
+[data-theme="dark"] .friend-habit-item {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .friend-habit-item.habit-done {
+  background: #064e3b;
+  border-color: #22c55e;
+}
+[data-theme="dark"] .friend-habit-title {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .friend-photo-polaroid {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .friend-polaroid-body strong {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .stamp-card-inner {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .stamp-card-inner strong {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .unboxing-message-card {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] #unboxingMessageText {
+  color: #f5d0fe;
+}
