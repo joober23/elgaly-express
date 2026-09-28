@@ -1,78 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/eex_widget_bg"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:padding="12dp">
+    android:layout_height="match_parent">
 
-    <!-- Mascote: Agente Midnight (quando pendente) ou Agente Brave (quando concluído) -->
+    <!-- Fundo artístico dos Agentes da EEX -->
     <ImageView
-        android:id="@+id/widget_mascot_img"
-        android:layout_width="86dp"
-        android:layout_height="86dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginEnd="12dp"
-        android:src="@drawable/widget_agent_midnight"
-        android:contentDescription="Agente EEX"
-        android:scaleType="fitCenter" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_bg_pattern"
+        android:scaleType="centerCrop"
+        android:contentDescription="Fundo EEX" />
 
-    <!-- Textos e Status -->
+    <!-- Camada de contraste e borda neo-brutalista (FrameLayout é permitido por RemoteViews) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/eex_widget_card_overlay" />
+
+    <!-- Conteúdo em primeiro plano -->
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_vertical">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
 
-        <!-- Badge de Sequência / Streak -->
+        <!-- Mascote Dinâmico: Midnight ou Brave -->
+        <ImageView
+            android:id="@+id/widget_mascot_img"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/widget_agent_midnight"
+            android:scaleType="fitCenter"
+            android:contentDescription="Agente EEX" />
+
+        <!-- Coluna de Informações -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/widget_streak_badge"
+            <!-- Linha da Chama de Streak (fireon/fireoff) -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/eex_widget_badge_bg"
-                android:paddingLeft="8dp"
-                android:paddingTop="2dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="2dp"
-                android:text="🔥 0 DIAS"
-                android:textColor="#1a0826"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="2dp">
+
+                <ImageView
+                    android:id="@+id/widget_fire_icon"
+                    android:layout_width="22dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/widget_fire_off"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Status da Chama" />
+
+                <TextView
+                    android:id="@+id/widget_streak_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 DIAS"
+                    android:textColor="#ffeb3b"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black" />
+            </LinearLayout>
+
+            <!-- Título do Status -->
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ROTA PENDENTE!"
+                android:textColor="#ffffff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Subtítulo / Diálogo dos Agentes -->
+            <TextView
+                android:id="@+id/widget_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Midnight em pânico! Complete todos os hábitos hoje!"
+                android:textColor="#f5d0fe"
                 android:textSize="11sp"
-                android:textStyle="bold" />
+                android:maxLines="2"
+                android:ellipsize="end" />
+
         </LinearLayout>
-
-        <!-- Título do Status -->
-        <TextView
-            android:id="@+id/widget_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ROTA PENDENTE!"
-            android:textColor="#ffeb3b"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <!-- Frase de Humor / Chamado do Mascote -->
-        <TextView
-            android:id="@+id/widget_subtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="Midnight está em pânico! Complete a rotina de hoje!"
-            android:textColor="#f5d0fe"
-            android:textSize="11sp"
-            android:maxLines="2"
-            android:ellipsize="end" />
 
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

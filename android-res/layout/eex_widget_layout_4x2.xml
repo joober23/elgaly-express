@@ -12,8 +12,8 @@
         android:scaleType="centerCrop"
         android:contentDescription="Fundo EEX" />
 
-    <!-- Camada de contraste e borda neo-brutalista -->
-    <View
+    <!-- Camada de contraste e borda neo-brutalista (FrameLayout é permitido por RemoteViews) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/eex_widget_card_overlay" />
@@ -29,8 +29,8 @@
         <!-- Mascote Dinâmico: Midnight ou Brave -->
         <ImageView
             android:id="@+id/widget_mascot_img"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
             android:layout_marginEnd="12dp"
             android:src="@drawable/widget_agent_midnight"
             android:scaleType="fitCenter"
@@ -69,7 +69,7 @@
                     android:textColor="#ffeb3b"
                     android:textSize="17sp"
                     android:textStyle="bold"
-                    android:fontFamily="@font/darumadrop_one" />
+                    android:fontFamily="sans-serif-black" />
             </LinearLayout>
 
             <!-- Título do Status -->
@@ -81,7 +81,7 @@
                 android:textColor="#ffffff"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:fontFamily="@font/darumadrop_one"
+                android:fontFamily="sans-serif-black"
                 android:maxLines="1"
                 android:ellipsize="end" />
 

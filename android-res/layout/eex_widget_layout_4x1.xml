@@ -13,7 +13,7 @@
         android:contentDescription="Fundo EEX" />
 
     <!-- Camada de contraste e borda neo-brutalista -->
-    <View
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/eex_widget_card_overlay" />
@@ -56,7 +56,7 @@
             android:textColor="#ffeb3b"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:fontFamily="@font/darumadrop_one" />
+            android:fontFamily="sans-serif-black" />
 
         <!-- Título do Status na Faixa -->
         <TextView
@@ -68,15 +68,14 @@
             android:textColor="#ffffff"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:fontFamily="@font/darumadrop_one"
+            android:fontFamily="sans-serif-black"
             android:maxLines="1"
             android:ellipsize="end" />
 
-        <!-- TextView invisível para compatibilidade de ID -->
         <TextView
             android:id="@+id/widget_subtitle"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:visibility="gone" />
 
     </LinearLayout>
