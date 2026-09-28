@@ -970,7 +970,7 @@ const FriendsManager = {
               <span class="friend-badge-stamp">OFICIAL</span>
             </div>
             <div class="friend-badge-info">
-              <h2 class="friend-badge-name">${friend.name || 'Agente'}</h2>
+              <h2 class="friend-badge-name" style="color: #f9e000 !important; font-family: var(--font-display, 'Darumadrop One', cursive) !important; font-size: 1.6rem !important; text-shadow: 2px 2px 0 #000; margin: 0 0 2px 0;">${friend.name || 'Agente'}</h2>
               <div class="friend-badge-eex">@${friend.eexEmail || (friend.nickname + '.express.com')}</div>
               <div class="friend-badge-detail">📍 Setor: <strong>${friend.location || 'Nova Amerit - NA'}</strong></div>
               <div class="friend-badge-streak">
@@ -3475,65 +3475,299 @@ const AppUI = {
     const user = AuthManager.getCurrentUser();
     if (!user) return;
 
+    const wrap = document.getElementById('profilePageWrap');
+    if (!wrap) return;
+
     const tasks = TaskManager.getAllTasks();
     const habits = HabitManager.getAllHabits();
-
-    const profileCard = document.getElementById('profileBadgeCard');
-    if (!profileCard) return;
-
     const completedTasks = tasks.filter(t => t.completed).length;
+    const stats = HabitManager.getTodayStats();
+    const streak = stats.streak || 0;
+    const friendsCount = (FriendsManager.friends || []).length;
+    const memories = MemoriesManager.memories || [];
 
-    profileCard.innerHTML = `
-      <div class="retro-badge-header">
-        <span class="retro-badge-tag">ELGALY EXPRESS DISPATCH PASS</span>
-        <span class="retro-badge-version">EEX OS v2.000</span>
-      </div>
+    // Cálculo da Patente Dimensional
+    const careerScore = (completedTasks * 10) + (streak * 20) + (friendsCount * 15) + (memories.length * 5);
+    let rankTitle = 'Recruta da Rota Express';
+    let rankLevel = 1;
+    let rankColor = '#a855f7';
+    let rankNext = 50;
 
-      <div class="retro-badge-body">
-        <div class="retro-avatar-box">
-          <img src="${user.avatar || 'images/elgalylogo.png'}" alt="Avatar" class="retro-avatar-img" id="passAvatarDisplay">
-        </div>
-        <div class="retro-user-details">
-          <h3>${user.name}</h3>
-          <div class="eex-retro-email">${user.eexEmail}</div>
-          <p style="font-size: 0.9rem; color: #4b5563; margin-top: 5px;">
-            Setor de Operações: <strong>${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</strong>
-          </p>
-          <p style="font-size: 0.85rem; color: #6b7280;">
-            Tipo de Acesso: ${user.isGoogle ? '☁️ Sincronizado na Nuvem (Firebase / Google)' : '💾 Perfil Local EEX'}
-          </p>
-        </div>
-      </div>
+    if (careerScore >= 300) {
+      rankTitle = 'Comandante Supremo de Nova Amerit 👑';
+      rankLevel = 4;
+      rankColor = '#eab308';
+      rankNext = 500;
+    } else if (careerScore >= 150) {
+      rankTitle = 'Especialista de Despacho Dimensional ⚡';
+      rankLevel = 3;
+      rankColor = '#3b82f6';
+      rankNext = 300;
+    } else if (careerScore >= 50) {
+      rankTitle = 'Piloto de Rota Express 🚀';
+      rankLevel = 2;
+      rankColor = '#10b981';
+      rankNext = 150;
+    }
 
-      <div class="retro-badge-stats">
-        <div class="badge-stat">
-          <strong>${tasks.length}</strong>
-          <span>TOTAL DESPACHADO</span>
-        </div>
-        <div class="badge-stat">
-          <strong style="color: var(--green-dark);">${completedTasks}</strong>
-          <span>ENTREGUES</span>
-        </div>
-        <div class="badge-stat">
-          <strong>${habits.length}</strong>
-          <span>HÁBITOS ATIVOS</span>
-        </div>
-      </div>
+    const rankProgress = Math.min(100, Math.round((careerScore / rankNext) * 100));
 
-      <div class="retro-badge-actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        <button class="btn-comic btn-secondary" id="btnOpenEditProfile">
-          ✎ Editar Perfil & Foto
-        </button>
-        <button class="btn-comic btn-outline" onclick="AuthManager.logout()">
-          Sair da Conta (${user.eexEmail})
-        </button>
+    // Conquistas / Selos Colecionáveis
+    const achievements = [
+      {
+        icon: '🐾',
+        title: 'Primeira Missão',
+        desc: 'Completou seu primeiro hábito ou encomenda',
+        unlocked: completedTasks > 0 || streak > 0
+      },
+      {
+        icon: '🔥',
+        title: 'Chama Viva',
+        desc: 'Manteve 3 ou mais dias de rotina seguida',
+        unlocked: streak >= 3
+      },
+      {
+        icon: '⚡',
+        title: 'Super Sônico',
+        desc: 'Alcançou 7 dias de streak ininterrupto',
+        unlocked: streak >= 7
+      },
+      {
+        icon: '📦',
+        title: 'Mestre do Frete',
+        desc: 'Entregou 5 ou mais encomendas dimensionais',
+        unlocked: completedTasks >= 5
+      },
+      {
+        icon: '🤝',
+        title: 'Rede Coletiva',
+        desc: 'Conectou-se com pelo menos 1 parceiro EEX',
+        unlocked: friendsCount >= 1
+      },
+      {
+        icon: '📸',
+        title: 'Olho Postal',
+        desc: 'Registrou momentos da rotina com fotos e adesivos',
+        unlocked: memories.length >= 1
+      },
+      {
+        icon: '🚨',
+        title: 'Sinalizador SOS',
+        desc: 'Acionou o alerta de resgate da frota',
+        unlocked: FriendsManager.sosActive
+      },
+      {
+        icon: '📻',
+        title: 'Frequência Aberta',
+        desc: 'Transmitiu aviso de status no Rádio Comunicador',
+        unlocked: !!FriendsManager.radioStatus
+      }
+    ];
+
+    wrap.innerHTML = `
+      <div class="grand-profile-container">
+        
+        <!-- CORDÃO & CLIPE RETRÔ EEX -->
+        <div class="lanyard-ribbon-wrap">
+          <div class="lanyard-strap">
+            <span>ELGALY EXPRESS // AGENTE OFICIAL // 1998 - 2026 // PASSAPORTE DIMENSIONAL</span>
+          </div>
+          <div class="lanyard-clip"></div>
+        </div>
+
+        <!-- SUPER CRACHÁ MASTER (ANOS 2000) -->
+        <div class="grand-badge-card">
+          <div class="grand-badge-header">
+            <div class="grand-badge-brand">
+              <img src="images/elgalylogo.png" alt="Logo" class="badge-logo-mini">
+              <div>
+                <span class="badge-org-title">ELGALY EXPRESS // DEPARTAMENTO DE DESPACHO</span>
+                <span class="badge-org-sub">Credencial Operacional Oficial - Nova Amerit (NA)</span>
+              </div>
+            </div>
+            <div class="badge-clearance-stamp">OFICIAL</div>
+          </div>
+
+          <div class="grand-badge-body">
+            <div class="grand-badge-photo-column">
+              <div class="grand-badge-photo-box">
+                <img src="${user.avatar || 'images/elgalylogo.png'}" alt="Foto" id="grandPassAvatar" class="grand-badge-avatar">
+                <button type="button" class="btn-change-photo-badge" id="btnQuickEditPhoto" title="Trocar Foto">✎</button>
+                <div class="hologram-strip">EEX ★ EEX</div>
+              </div>
+              <div class="badge-barcode">
+                <div class="barcode-lines"></div>
+                <span class="barcode-text">ID: ${user.id ? user.id.slice(0, 10).toUpperCase() : 'EEX-AGENT'}</span>
+              </div>
+            </div>
+
+            <div class="grand-badge-info-column">
+              <div class="badge-rank-pill" style="border-color: ${rankColor}; color: ${rankColor};">
+                NÍVEL ${rankLevel} • ${rankTitle}
+              </div>
+
+              <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
+              <div class="grand-agent-nick-row">
+                <strong class="grand-agent-nick">@${user.eexEmail || (user.nickname + '.express.com')}</strong>
+                <button type="button" class="btn-comic btn-copy-mini" id="btnCopyProfileNick" title="Copiar ID">📋</button>
+              </div>
+
+              <div class="grand-agent-meta">
+                <div class="meta-row">📍 <strong>Setor:</strong> ${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</div>
+                <div class="meta-row">☁️ <strong>Status:</strong> Conectado via Nuvem Firebase / Google</div>
+                <div class="meta-row">📅 <strong>Membro desde:</strong> ${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('pt-BR') : '2026'}</div>
+              </div>
+
+              <!-- Barra de XP / Nível -->
+              <div class="badge-xp-bar-wrap">
+                <div class="xp-bar-labels">
+                  <span>Pontos de Frota: <strong>${careerScore} XP</strong></span>
+                  <span>Próxima Patente: <strong>${rankNext} XP</strong></span>
+                </div>
+                <div class="xp-progress-track">
+                  <div class="xp-progress-fill" style="width: ${rankProgress}%; background: ${rankColor};"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rodapé do Crachá com Ações -->
+          <div class="grand-badge-footer">
+            <button type="button" class="btn-comic" id="btnOpenEditProfileMain" style="background: var(--yellow-bright); color: var(--black);">
+              ✎ Editar Perfil & Foto
+            </button>
+            <button type="button" class="btn-comic btn-secondary" id="btnShareProfilePass">
+              📤 Compartilhar ID Express
+            </button>
+            <button type="button" class="btn-comic btn-outline" onclick="AuthManager.logout()">
+              🚪 Sair da Conta
+            </button>
+          </div>
+        </div>
+
+        <!-- QUADRO DE ESTATÍSTICAS DA CARREIRA -->
+        <div class="profile-stats-grid">
+          <div class="profile-stat-box">
+            <span class="stat-box-icon">📦</span>
+            <strong class="stat-box-num">${tasks.length}</strong>
+            <span class="stat-box-label">Encomendas Criadas</span>
+          </div>
+          <div class="profile-stat-box">
+            <span class="stat-box-icon">✅</span>
+            <strong class="stat-box-num" style="color: #16a34a;">${completedTasks}</strong>
+            <span class="stat-box-label">Entregas Feitas</span>
+          </div>
+          <div class="profile-stat-box">
+            <span class="stat-box-icon">🔥</span>
+            <strong class="stat-box-num" style="color: #f97316;">${streak}</strong>
+            <span class="stat-box-label">Dias de Fogo (Streak)</span>
+          </div>
+          <div class="profile-stat-box">
+            <span class="stat-box-icon">🤝</span>
+            <strong class="stat-box-num" style="color: var(--purple-main);">${friendsCount}</strong>
+            <span class="stat-box-label">Parceiros Conectados</span>
+          </div>
+        </div>
+
+        <!-- ARMÁRIO DE CONQUISTAS DA FROTA (INSÍGNIAS) -->
+        <div class="profile-achievements-section">
+          <div class="section-title-wrap">
+            <h3 class="profile-section-heading">🏆 Insígnias & Medalhas da Frota</h3>
+            <span class="achievements-counter">${achievements.filter(a => a.unlocked).length} de ${achievements.length} Desbloqueadas</span>
+          </div>
+          <div class="achievements-grid">
+            ${achievements.map(ach => `
+              <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
+                <div class="achievement-icon-wrap">
+                  <span class="achievement-icon">${ach.icon}</span>
+                  ${!ach.unlocked ? '<span class="lock-indicator">🔒</span>' : ''}
+                </div>
+                <div class="achievement-info">
+                  <strong>${ach.title}</strong>
+                  <p>${ach.desc}</p>
+                  <span class="achievement-badge-pill">${ach.unlocked ? '✨ DESBLOQUEADO' : 'BLOQUEADO'}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- MURAL PESSOAL DE MOMENTOS (FOTOS COM STICKERS) -->
+        <div class="profile-memories-section">
+          <div class="section-title-wrap">
+            <h3 class="profile-section-heading">📸 Meu Mural de Momentos Fotográficos</h3>
+            <span class="achievements-counter">${memories.length} Registros</span>
+          </div>
+
+          ${memories.length === 0 ? `
+            <div class="empty-subtab-box" style="background: var(--card-bg); border: 2.5px dashed var(--purple-main); border-radius: 16px; padding: 24px;">
+              <span style="font-size: 2.4rem;">📷</span>
+              <h4>Nenhuma Foto Registrada Ainda</h4>
+              <p>Ao cumprir seus hábitos pelo celular, tire fotos para carimbar adesivos e preencher sua galeria!</p>
+            </div>
+          ` : `
+            <div class="profile-memories-carousel">
+              ${memories.slice(0, 10).map(mem => `
+                <div class="friend-photo-polaroid">
+                  <div class="friend-polaroid-img-wrap">
+                    <img src="${mem.photo}" alt="${mem.caption}" class="friend-polaroid-img">
+                    <img src="images/${mem.sticker === 'midnight' ? 'midnight.png' : (mem.sticker === 'fire' ? 'fireon.png' : 'brave.png')}" alt="Sticker" class="friend-polaroid-sticker">
+                  </div>
+                  <div class="friend-polaroid-body">
+                    <strong>✨ ${mem.habitTitle || 'Rotina'}</strong>
+                    <p>"${mem.caption || ''}"</p>
+                    <small>📅 ${mem.date} às ${mem.time}</small>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+
       </div>
     `;
 
-    const btnEdit = document.getElementById('btnOpenEditProfile');
-    if (btnEdit) {
-      btnEdit.addEventListener('click', () => {
-        this.openEditProfileModal();
+    // Eventos do Perfil
+    const btnEdit = document.getElementById('btnOpenEditProfileMain');
+    const btnQuickPhoto = document.getElementById('btnQuickEditPhoto');
+    if (btnEdit) btnEdit.addEventListener('click', () => this.openEditProfileModal());
+    if (btnQuickPhoto) btnQuickPhoto.addEventListener('click', () => this.openEditProfileModal());
+
+    const btnCopy = document.getElementById('btnCopyProfileNick');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', async () => {
+        const text = user.eexEmail || `${user.nickname}.express.com`;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          }
+          AppUI.showToast(`📋 ID copiado: ${text}`);
+        } catch (e) {
+          AppUI.showToast(`ID: ${text}`);
+        }
+      });
+    }
+
+    const btnShare = document.getElementById('btnShareProfilePass');
+    if (btnShare) {
+      btnShare.addEventListener('click', async () => {
+        const text = user.eexEmail || `${user.nickname}.express.com`;
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: `Passaporte EEX de ${user.name}`,
+              text: `Conecte-se comigo no Elgaly Express! Meu ID é: ${text}`,
+              url: window.location.href
+            });
+          } catch (e) {}
+        } else {
+          try {
+            await navigator.clipboard.writeText(text);
+            AppUI.showToast(`📋 ID Express copiado para compartilhar: ${text}`);
+          } catch (e) {
+            AppUI.showToast(`Seu ID Express: ${text}`);
+          }
+        }
       });
     }
   },

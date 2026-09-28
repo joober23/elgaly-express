@@ -4607,3 +4607,523 @@ footer {
 [data-theme="dark"] #unboxingMessageText {
   color: #f5d0fe;
 }
+
+/* ==========================================================================
+   EEX-PROFILE: NOVO PASSAPORTE MONUMENTAL & DOSSIÊ DE CARREIRA EEX
+   ========================================================================== */
+
+/* FIX NOME DO AMIGO NO MODAL DE PERFIL */
+.friend-badge-inner h2.friend-badge-name,
+.friend-profile-modal-box h2.friend-badge-name,
+.friend-badge-name {
+  color: #f9e000 !important;
+  font-family: var(--font-display, 'Darumadrop One', cursive) !important;
+  font-size: 1.6rem !important;
+  letter-spacing: 0.02em;
+  text-shadow: 2px 2px 0 #000;
+  margin: 0 0 2px 0 !important;
+  display: block;
+}
+
+/* Container Geral do Perfil Próprio */
+.grand-profile-container {
+  max-width: 740px;
+  margin: 0 auto 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- CORDÃO & CLIPE RETRÔ --- */
+.lanyard-ribbon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: -16px;
+  position: relative;
+  z-index: 2;
+}
+.lanyard-strap {
+  background: var(--purple-dark, #3a154d);
+  color: var(--yellow-bright, #f9e000);
+  padding: 6px 20px;
+  border: 2.5px solid var(--black);
+  border-radius: 8px 8px 0 0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  box-shadow: 3px 0 0 var(--black), -3px 0 0 var(--black);
+  text-align: center;
+}
+.lanyard-clip {
+  width: 44px;
+  height: 22px;
+  background: linear-gradient(180deg, #9ca3af 0%, #d1d5db 50%, #6b7280 100%);
+  border: 2.5px solid var(--black);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--black);
+}
+
+/* --- SUPER CRACHÁ MASTER (ANOS 2000) --- */
+.grand-badge-card {
+  background: #fff;
+  border: 3.5px solid var(--black);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 6px 6px 0 var(--yellow-bright, #f9e000), 10px 10px 0 var(--black);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cabeçalho do Crachá */
+.grand-badge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px dashed rgba(0,0,0,0.18);
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.grand-badge-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge-logo-mini {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 0 var(--black));
+}
+.badge-org-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--purple-dark, #3a154d);
+  letter-spacing: 0.04em;
+}
+.badge-org-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 700;
+}
+.badge-clearance-stamp {
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 2px 2px 0 var(--black);
+  transform: rotate(3deg);
+}
+
+/* Corpo do Crachá (Foto + Informações) */
+.grand-badge-body {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.grand-badge-photo-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.grand-badge-photo-box {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
+  border: 3.5px solid var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  background: var(--card-bg, #f8f0ff);
+  overflow: hidden;
+}
+.grand-badge-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.btn-change-photo-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--black);
+  transition: transform 0.15s;
+}
+.btn-change-photo-badge:hover {
+  transform: scale(1.15);
+}
+.hologram-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 2px 0;
+  letter-spacing: 0.1em;
+  opacity: 0.9;
+}
+
+/* Código de Barras */
+.badge-barcode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+}
+.barcode-lines {
+  width: 100px;
+  height: 16px;
+  background: repeating-linear-gradient(90deg, #000 0px, #000 2px, transparent 2px, transparent 4px, #000 4px, #000 5px, transparent 5px, transparent 8px);
+}
+.barcode-text {
+  font-size: 0.65rem;
+  font-family: monospace;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+}
+
+/* Coluna de Dados */
+.grand-badge-info-column {
+  flex: 1;
+  min-width: 220px;
+}
+.badge-rank-pill {
+  display: inline-block;
+  border: 2px solid;
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  background: rgba(0,0,0,0.03);
+}
+.grand-agent-name {
+  font-family: var(--font-display, 'Darumadrop One', cursive);
+  font-size: 2rem;
+  color: var(--purple-dark, #3a154d);
+  margin: 0 0 4px 0;
+  line-height: 1.1;
+}
+.grand-agent-nick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.grand-agent-nick {
+  font-size: 0.92rem;
+  color: var(--purple-main, #6b2fa0);
+  font-family: monospace;
+  font-weight: 800;
+}
+.btn-copy-mini {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.grand-agent-meta {
+  background: var(--card-bg, #f8f0ff);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meta-row {
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 600;
+}
+.meta-row strong {
+  color: var(--purple-dark, #3a154d);
+}
+
+/* Barra de XP */
+.badge-xp-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.xp-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+.xp-progress-track {
+  height: 12px;
+  background: #e5e7eb;
+  border: 2px solid var(--black);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+.xp-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* Rodapé do Crachá */
+.grand-badge-footer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 2px dashed rgba(0,0,0,0.15);
+}
+
+/* --- QUADRO DE ESTATÍSTICAS --- */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.profile-stat-box {
+  background: var(--card-bg, #f8f0ff);
+  border: 3px solid var(--black);
+  border-radius: 18px;
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.15s ease;
+}
+.profile-stat-box:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--black);
+}
+.stat-box-icon {
+  font-size: 1.8rem;
+}
+.stat-box-num {
+  font-size: 1.8rem;
+  font-family: var(--font-display, 'Darumadrop One', cursive);
+  color: var(--purple-dark, #3a154d);
+  line-height: 1;
+}
+.stat-box-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* --- SEÇÃO DE CONQUISTAS / MEDALHAS --- */
+.profile-achievements-section,
+.profile-memories-section {
+  background: #fff;
+  border: 3px solid var(--black);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 5px 5px 0 var(--black);
+}
+
+.section-title-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 2px dashed rgba(0,0,0,0.12);
+  padding-bottom: 10px;
+}
+.profile-section-heading {
+  font-family: var(--font-display, 'Darumadrop One', cursive);
+  font-size: 1.35rem;
+  color: var(--purple-dark, #3a154d);
+  margin: 0;
+}
+.achievements-counter {
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: var(--yellow-bright, #f9e000);
+  color: var(--black);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--black);
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.achievement-card {
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+.achievement-card.unlocked {
+  background: var(--card-bg, #f8f0ff);
+  box-shadow: 3px 3px 0 var(--black);
+}
+.achievement-card.locked {
+  background: #f3f4f6;
+  opacity: 0.65;
+  filter: grayscale(0.8);
+}
+.achievement-icon-wrap {
+  position: relative;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+.lock-indicator {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 0.9rem;
+}
+.achievement-info {
+  flex: 1;
+  min-width: 0;
+}
+.achievement-info strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--purple-dark, #3a154d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.achievement-info p {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin: 2px 0 4px;
+  line-height: 1.2;
+}
+.achievement-badge-pill {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--black);
+}
+.achievement-card.unlocked .achievement-badge-pill {
+  background: #22c55e;
+  color: #fff;
+}
+.achievement-card.locked .achievement-badge-pill {
+  background: #9ca3af;
+  color: #fff;
+}
+
+/* Carrossel / Grid de Fotos Pessoais */
+.profile-memories-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+/* --- DARK MODE DO NOVO PERFIL --- */
+[data-theme="dark"] .grand-badge-card,
+[data-theme="dark"] .profile-achievements-section,
+[data-theme="dark"] .profile-memories-section {
+  background: #1e0a2e;
+  border-color: #9c59e0;
+  box-shadow: 5px 5px 0 #9c59e0, 8px 8px 0 var(--black);
+}
+[data-theme="dark"] .grand-agent-name,
+[data-theme="dark"] .profile-section-heading {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .badge-org-title {
+  color: #e2c8f5;
+}
+[data-theme="dark"] .grand-agent-meta {
+  background: #2d0a44;
+  border-color: #9c59e0;
+}
+[data-theme="dark"] .meta-row {
+  color: #e2c8f5;
+}
+[data-theme="dark"] .meta-row strong {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .profile-stat-box {
+  background: #2d0a44;
+  border-color: #9c59e0;
+  box-shadow: 4px 4px 0 #9c59e0;
+}
+[data-theme="dark"] .stat-box-num {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .achievement-card.unlocked {
+  background: #2d0a44;
+  border-color: #9c59e0;
+  box-shadow: 3px 3px 0 #9c59e0;
+}
+[data-theme="dark"] .achievement-info strong {
+  color: #f5d0fe;
+}
+[data-theme="dark"] .achievement-card.locked {
+  background: #180728;
+  border-color: #4c1d95;
+}
+[data-theme="dark"] .xp-progress-track {
+  background: #2d0a44;
+  border-color: #9c59e0;
+}
+
+/* Responsivo */
+@media (max-width: 520px) {
+  .grand-badge-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .grand-agent-nick-row {
+    justify-content: center;
+  }
+  .grand-badge-footer {
+    flex-direction: column;
+  }
+  .grand-badge-footer .btn-comic {
+    width: 100%;
+  }
+}
