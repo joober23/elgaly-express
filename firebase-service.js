@@ -474,24 +474,51 @@ const FirebaseService = {
   async searchPublicUsers(query) {
     if (!this.db) return [];
     try {
-      const q = (query || '').toLowerCase().trim().replace(/@.*$/, '').replace(/[^a-z0-9_.-]/g, '');
-      if (q.length < 2) return [];
+      let raw = (query || '').toLowerCase().trim();
+      // Remove @ inicial
+      raw = raw.replace(/^@+/, '');
+      // Remove .express.com se digitado ou colado
+      let cleanNick = raw.replace(/\.express\.com.*$/, '').replace(/@.*$/, '').trim();
+      cleanNick = cleanNick.replace(/[^a-z0-9_.-]/g, '');
+
+      if (cleanNick.length < 2) return [];
 
       const myUid = this.auth?.currentUser?.uid;
+      const resultsMap = new Map();
+
+      // 1. Busca por prefixo de nickname
       const snapshot = await this.db.collection('public_profiles')
-        .where('nickname', '>=', q)
-        .where('nickname', '<=', q + '\uf8ff')
+        .where('nickname', '>=', cleanNick)
+        .where('nickname', '<=', cleanNick + '\uf8ff')
         .limit(10)
         .get();
 
-      const results = [];
       snapshot.forEach(doc => {
         const u = doc.data();
         if (u.uid !== myUid) {
-          results.push(u);
+          resultsMap.set(u.uid, u);
         }
       });
-      return results;
+
+      // 2. Busca exata por eexEmail (caso o nickname seja diferente)
+      const expectedEex = `${cleanNick}.express.com`;
+      try {
+        const emailSnap = await this.db.collection('public_profiles')
+          .where('eexEmail', '==', expectedEex)
+          .limit(5)
+          .get();
+
+        emailSnap.forEach(doc => {
+          const u = doc.data();
+          if (u.uid !== myUid) {
+            resultsMap.set(u.uid, u);
+          }
+        });
+      } catch (errEmail) {
+        // Fallback silencioso
+      }
+
+      return Array.from(resultsMap.values());
     } catch (e) {
       console.warn('Erro ao pesquisar agentes:', e);
       return [];

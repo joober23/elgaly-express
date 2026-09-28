@@ -2220,7 +2220,13 @@ const AppUI = {
         btn.classList.add('active');
 
         document.querySelectorAll('.friends-subtab-pane').forEach(p => p.classList.remove('active'));
-        const targetPane = document.getElementById(`paneFriends${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`);
+        const paneMap = {
+          mural: 'paneFriendsMural',
+          buscar: 'paneFriendsBuscar',
+          pedidos: 'paneFriendsPedidos'
+        };
+        const targetId = paneMap[subtab] || `paneFriends${subtab.charAt(0).toUpperCase() + subtab.slice(1)}`;
+        const targetPane = document.getElementById(targetId);
         if (targetPane) targetPane.classList.add('active');
 
         if (subtab === 'mural') FriendsManager.renderMural();
@@ -2228,30 +2234,58 @@ const AppUI = {
       });
     });
 
-    // 23. EEX-Friends: Busca de Amigos
+    // 23. EEX-Friends: Colar ID Express e Busca de Amigos
     const formSearchFriends = document.getElementById('formSearchFriends');
     const inputSearchFriend = document.getElementById('inputSearchFriend');
+    const btnPasteFriendId = document.getElementById('btnPasteFriendId');
     const resultsContainer = document.getElementById('friendsSearchResults');
+
+    if (btnPasteFriendId && inputSearchFriend) {
+      btnPasteFriendId.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText && clipText.trim()) {
+              inputSearchFriend.value = clipText.trim();
+              inputSearchFriend.focus();
+              AppUI.showToast(`📋 ID colado: ${clipText.trim()}`);
+              return;
+            }
+          }
+          inputSearchFriend.focus();
+          AppUI.showToast('Cole o ID Express no campo com Ctrl+V');
+        } catch (e) {
+          inputSearchFriend.focus();
+          AppUI.showToast('Cole o ID Express no campo com Ctrl+V');
+        }
+      });
+    }
+
     if (formSearchFriends && inputSearchFriend && resultsContainer) {
       formSearchFriends.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const q = inputSearchFriend.value.trim();
-        if (q.length < 2) {
-          AppUI.showToast('Digite pelo menos 2 letras do apelido do agente.');
+        const raw = inputSearchFriend.value.trim();
+        const cleanQuery = raw.replace(/^@+/, '').replace(/\.express\.com.*$/, '').trim();
+
+        if (cleanQuery.length < 2) {
+          AppUI.showToast('Digite pelo menos 2 caracteres do ID Express ou apelido.');
           return;
         }
 
         resultsContainer.innerHTML = `
           <div style="text-align: center; padding: 24px; color: var(--purple-dark); font-weight: 700;">
-            🔍 Buscando parceiros na Rede EEX...
+            🔍 Buscando parceiros na Rede EEX para "${raw}"...
           </div>
         `;
 
-        const found = await FirebaseService.searchPublicUsers(q);
+        const found = await FirebaseService.searchPublicUsers(raw);
         if (found.length === 0) {
           resultsContainer.innerHTML = `
             <div style="text-align: center; padding: 24px; color: #6b7280; font-weight: 600;">
-              Nenhum agente encontrado com o apelido "${q}". Verifique a digitação ou peça o ID Express completo!
+              Nenhum parceiro encontrado com o ID "<strong>${raw}</strong>".<br>
+              <small style="display:block; margin-top:8px; color: var(--purple-dark);">
+                Dica: Verifique se o amigo já entrou na Rede EEX pelo menos uma vez para ativar o crachá público!
+              </small>
             </div>
           `;
           return;
@@ -2263,7 +2297,7 @@ const AppUI = {
             <div class="search-agent-card">
               <img src="${u.avatar || 'images/elgalylogo.png'}" alt="${u.name}" class="search-agent-avatar">
               <div class="search-agent-info">
-                <h4>${u.name}</h4>
+                <strong>${u.name}</strong>
                 <span>@${u.eexEmail || (u.nickname + '.express.com')}</span>
                 <small>📍 ${u.location || 'Nova Amerit - NA'}</small>
               </div>

@@ -534,22 +534,41 @@
             </div>
 
             <!-- PAINEL 2: BUSCAR AGENTES -->
-            <div class="friends-subtab-pane" id="paneFriendsSearch">
+            <div class="friends-subtab-pane" id="paneFriendsBuscar">
               <div class="friends-search-box">
+                <div class="friends-search-intro-card">
+                  <div class="friends-search-badge-icon">🏷️</div>
+                  <div>
+                    <h3 class="friends-search-heading">Adicionar Agente pelo ID Express</h3>
+                    <p class="friends-search-desc">
+                      Cole ou digite o <strong>ID Express</strong> do seu amigo (ex: <code>amigo.express.com</code> ou apenas <code>amigo</code>) para conectá-los na Rede EEX!
+                    </p>
+                  </div>
+                </div>
+
                 <form id="formSearchFriends" class="search-form-comic">
-                  <input type="text" id="inputSearchFriend" placeholder="Digite o apelido do agente (Ex: maria, juan...)" autocomplete="off">
-                  <button type="submit" class="btn-comic">🔍 Buscar</button>
+                  <div class="search-input-group">
+                    <span class="search-at-prefix">@</span>
+                    <input type="text" id="inputSearchFriend" placeholder="ex: amigo.express.com ou apelido" autocomplete="off" required>
+                    <button type="button" class="btn-comic btn-paste-id" id="btnPasteFriendId" title="Colar da Área de Transferência">
+                      📋 Colar
+                    </button>
+                  </div>
+                  <button type="submit" class="btn-comic btn-submit-search">
+                    🔍 Buscar Parceiro
+                  </button>
                 </form>
+
                 <div class="search-results-box" id="friendsSearchResults">
                   <p style="text-align: center; color: #6b7280; font-weight: 600; padding: 20px;">
-                    Digite o apelido de um parceiro para encontrá-lo na Rede EEX.
+                    Digite o ID Express de um amigo acima para encontrá-lo e enviar um convite de entregas coletivas!
                   </p>
                 </div>
               </div>
             </div>
 
             <!-- PAINEL 3: PEDIDOS PENDENTES -->
-            <div class="friends-subtab-pane" id="paneFriendsRequests">
+            <div class="friends-subtab-pane" id="paneFriendsPedidos">
               <div class="friends-requests-list" id="friendsRequestsList">
                 <!-- Preenchido dinamicamente pelo FriendsManager -->
               </div>
