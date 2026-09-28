@@ -1282,7 +1282,10 @@ const AppUI = {
       link.addEventListener('click', () => {
         closeDrawer();
         const tab = link.dataset.tab;
-        window.location.hash = tab;
+        if (tab) {
+          window.location.hash = tab;
+          this.switchTab(tab);
+        }
       });
     });
   },
@@ -1290,11 +1293,27 @@ const AppUI = {
   initNavigation() {
     const handleRoute = () => {
       const hash = window.location.hash.replace('#', '') || 'inicio';
-      const validTabs = ['inicio', 'rotina', 'encomendas', 'relatorios', 'perfil', 'configuracoes'];
+      const validTabs = ['inicio', 'rotina', 'encomendas', 'relatorios', 'amigos', 'perfil', 'configuracoes'];
       this.switchTab(validTabs.includes(hash) ? hash : 'inicio');
     };
 
     window.addEventListener('hashchange', handleRoute);
+
+    // Garante resposta de toque imediata no app mobile e desktop
+    document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const tab = link.dataset.tab;
+        if (tab) {
+          e.preventDefault();
+          if (window.location.hash !== `#${tab}`) {
+            window.location.hash = tab;
+          } else {
+            this.switchTab(tab);
+          }
+        }
+      });
+    });
+
     handleRoute();
   },
 
@@ -1315,6 +1334,9 @@ const AppUI = {
     if (tabName === 'rotina') this.renderDailyRoutine();
     if (tabName === 'encomendas') { this.renderTasks(); this.renderEvents(); }
     if (tabName === 'relatorios') { ReportEngine.renderReportPreview(); MemoriesManager.render(); }
+    if (tabName === 'amigos') {
+      this.showToast('📦✨ Entregas Coletivas! O EEX-Friends está chegando em breve!');
+    }
     if (tabName === 'perfil') this.renderProfileView();
     if (tabName === 'configuracoes') this.renderConfiguracoes();
   },
