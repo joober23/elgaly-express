@@ -1070,7 +1070,7 @@ const AppUI = {
   switchTab(tabName) {
     this.currentTab = tabName;
 
-    document.querySelectorAll('.nav-link, .drawer-nav-link').forEach(link => {
+    document.querySelectorAll('.nav-link, .drawer-nav-link, .bottom-nav-item').forEach(link => {
       link.classList.toggle('active', link.dataset.tab === tabName);
     });
 
@@ -1594,6 +1594,7 @@ const AppUI = {
     const appViewsContainer = document.getElementById('appViewsContainer');
     const desktopNav = document.querySelector('nav.desktop-nav');
     const btnMobileMenu = document.getElementById('btnMobileMenu');
+    const bottomNavBar = document.getElementById('bottomNavBar');
 
     if (!isLoggedIn) {
       // Bloqueia acesso ao app e exibe portal de login
@@ -1601,6 +1602,7 @@ const AppUI = {
       if (appViewsContainer) appViewsContainer.style.display = 'none';
       if (desktopNav) desktopNav.style.display = 'none';
       if (btnMobileMenu) btnMobileMenu.style.display = 'none';
+      if (bottomNavBar) bottomNavBar.style.display = 'none';
       this.renderSavedBadges();
       this.renderHeaderProfile();
       return;
@@ -1610,7 +1612,8 @@ const AppUI = {
     if (authGateway) authGateway.style.display = 'none';
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
-    if (btnMobileMenu && window.innerWidth <= 768) btnMobileMenu.style.display = 'inline-flex';
+    // Bottom nav aparece no mobile; hamburguer continua escondido (CSS já faz isso)
+    if (bottomNavBar) bottomNavBar.style.removeProperty('display');
 
     this.renderHeaderProfile();
     this.renderHomeOverview();

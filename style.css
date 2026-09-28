@@ -2369,14 +2369,17 @@ footer {
   --card-bg: #230d38;
   --card-bg-light: #341552;
   --purple-main: #c084fc;
-  --purple-dark: #f5d0fe;
+  --purple-dark: #e9d5ff;
   --magenta-bright: #ff3b94;
   --black: #08020d;
-  --white: #1a0a2a;
+  /* IMPORTANTE: --white no dark mode é usado como bg de cards/inputs.
+     Separamos o conceito de "fundo claro" de "texto legível" */
+  --white: #2a0f44;
+  --white-text: #f0e6ff;
   --yellow-bright: #fde047;
   --text-muted: #d8b4e2;
-  --border-thick: 4px solid var(--black);
-  --border-super: 6px solid var(--black);
+  --border-thick: 4px solid #3d1f5c;
+  --border-super: 6px solid #3d1f5c;
 }
 
 [data-theme="dark"] body {
@@ -2648,3 +2651,231 @@ footer {
   color: #f5d0fe;
 }
 
+/* ==========================================================================
+   LOGO NO DRAWER LATERAL MOBILE
+   ========================================================================== */
+.drawer-logo {
+  height: 48px;
+  max-width: 180px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+/* ==========================================================================
+   DARK MODE — CORREÇÕES DE LEGIBILIDADE GLOBAL
+   ========================================================================== */
+
+[data-theme="dark"] .task-meta,
+[data-theme="dark"] .task-desc,
+[data-theme="dark"] .habit-meta,
+[data-theme="dark"] .event-date-badge,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] small,
+[data-theme="dark"] .form-group small,
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .view-subtitle {
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .section-card h3,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+  color: #f5d0fe;
+}
+
+[data-theme="dark"] p:not(.footer-copy):not(.footer-address) {
+  color: #e9d5ff;
+}
+
+[data-theme="dark"] .btn-comic.btn-secondary {
+  background: #2a0f44;
+  color: #f5d0fe;
+  border-color: #c084fc;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #180728;
+  color: #f0e6ff;
+  border-color: #7c3aed;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #a78bfa;
+}
+
+[data-theme="dark"] label {
+  color: #e9d5ff;
+}
+
+[data-theme="dark"] .retro-badge-card,
+[data-theme="dark"] .retro-badge-body,
+[data-theme="dark"] .retro-badge-header {
+  color: #f5d0fe;
+}
+
+[data-theme="dark"] .retro-badge-subtitle,
+[data-theme="dark"] .badge-info-row {
+  color: #d8b4e2;
+}
+
+[data-theme="dark"] .drawer-footer {
+  background: #1c0930;
+  border-top-color: #3d1f5c;
+}
+
+[data-theme="dark"] .drawer-footer small {
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .home-summary-item {
+  color: #e9d5ff;
+}
+
+[data-theme="dark"] .quick-stat-label {
+  color: #c4b5fd;
+}
+
+[data-theme="dark"] .quick-stat-value {
+  color: #fde047;
+}
+
+[data-theme="dark"] [style*="color: var(--purple-dark)"],
+[data-theme="dark"] [style*="color:var(--purple-dark)"] {
+  color: #e9d5ff !important;
+}
+
+[data-theme="dark"] [style*="color: #4b5563"],
+[data-theme="dark"] [style*="color:#4b5563"] {
+  color: #c4b5fd !important;
+}
+
+/* ==========================================================================
+   BOTTOM NAV BAR — MOBILE ESTILO DUOLINGO
+   ========================================================================== */
+.bottom-nav-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    background: var(--purple-dark);
+    border-top: 3px solid var(--magenta-bright);
+    box-shadow: 0 -4px 20px rgba(230, 43, 126, 0.3);
+    padding: 8px 4px max(12px, env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    padding: 6px 4px;
+    text-decoration: none;
+    border-radius: 14px;
+    transition: background 0.15s, transform 0.1s;
+    min-width: 0;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .bottom-nav-item.active {
+    background: rgba(255, 59, 148, 0.22);
+    color: #ffffff;
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.9);
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon {
+    filter: drop-shadow(0 0 6px var(--magenta-bright));
+  }
+
+  .bottom-nav-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  /* Espaço extra para não esconder conteúdo atrás da bottom nav */
+  body {
+    padding-bottom: max(90px, calc(80px + env(safe-area-inset-bottom)));
+  }
+
+  /* Esconde o botão hambúrguer — usamos bottom nav agora */
+  .btn-mobile-menu {
+    display: none !important;
+  }
+
+  /* Header mais compacto */
+  header {
+    padding: 8px 14px;
+  }
+
+  header img.logo {
+    max-height: 36px;
+    max-width: 140px;
+  }
+
+  /* Cards com visual mais "app" */
+  .task-card,
+  .habit-card,
+  .event-card,
+  .quick-stat-card,
+  .home-summary-box,
+  .settings-card {
+    border-radius: 20px;
+    border-width: 2.5px;
+    box-shadow: 0 4px 16px rgba(58, 21, 77, 0.15);
+  }
+
+  /* Botões mais fáceis de tocar */
+  .btn-comic {
+    min-height: 48px;
+    font-size: 1rem;
+    border-radius: 16px;
+  }
+
+  /* Esconde footer no mobile (substituído pela bottom nav) */
+  footer {
+    display: none;
+  }
+}
+
+/* Dark mode + bottom nav */
+[data-theme="dark"] .bottom-nav-bar {
+  background: #1c0930;
+  border-top-color: #7c3aed;
+  box-shadow: 0 -4px 20px rgba(192, 132, 252, 0.2);
+}
+
+[data-theme="dark"] .bottom-nav-item {
+  color: rgba(245, 208, 254, 0.45);
+}
+
+[data-theme="dark"] .bottom-nav-item.active {
+  background: rgba(255, 59, 148, 0.22);
+  color: #ffffff;
+}
