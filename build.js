@@ -12,7 +12,9 @@ const filesToCopy = [
   'report.js',
   'sp-cities.js',
   'manifest.webmanifest',
-  'sw.js'
+  'sw.js',
+  'magaficseal.png',
+  'magaficseal.mp3'
 ];
 
 const dirsToCopy = ['images', 'vendor'];

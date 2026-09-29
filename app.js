@@ -3790,7 +3790,13 @@ const AppUI = {
     const eexEl = document.getElementById('cfgUserEex');
     const locInput = document.getElementById('cfgLocation');
 
-    if (nameEl) nameEl.textContent = user.name;
+    if (nameEl) {
+      if (this.isMagafusVIP(user)) {
+        nameEl.innerHTML = `${user.name} <img src="images/magaficseal.png" style="width:20px;height:20px;vertical-align:middle;margin-left:4px;filter:drop-shadow(1px 1px 0 rgba(0,0,0,0.5));" alt="💜" title="Selo Magáfico 💜">`;
+      } else {
+        nameEl.textContent = user.name;
+      }
+    }
     if (eexEl) eexEl.textContent = user.eexEmail;
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
@@ -3994,6 +4000,16 @@ const AppUI = {
     });
   },
 
+  isMagafusVIP(user) {
+    if (!user) return false;
+    const nick = (user.nickname || '').toLowerCase();
+    const eex = (user.eexEmail || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    return nick === 'pedrinho' || nick === 'kotundashed' ||
+           eex.includes('pedrinho') || eex.includes('kotundashed') ||
+           email.includes('pedrinho') || email.includes('kotundashed');
+  },
+
   calculateCareerStats() {
     const user = AuthManager.getCurrentUser();
     const tasks = TaskManager.getAllTasks ? TaskManager.getAllTasks() : (TaskManager.tasks || []);
@@ -4012,7 +4028,7 @@ const AppUI = {
 
     // 10 Tiers a cada 10 patentes até o Nível 100 (O Olho de Providente)
     const tiers = [
-      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-bronze', stripText: 'EEX ★ RECRUTA' },
+      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-bronze', stripText: '★ EEX • EEX • EEX ★' },
       { min: 10, max: 19,  title: 'Mensageiro de Asfalto Cósmico ⚡', color: '#06b6d4', tierName: 'Cobre Veloz', stripClass: 'holo-copper', stripText: '⚡ EEX SPEED ⚡' },
       { min: 20, max: 29,  title: 'Piloto de Salto Dimensional 🚀', color: '#3b82f6', tierName: 'Prata Prismática', stripClass: 'holo-silver', stripText: '🚀 EEX DIMENSIONAL 🚀' },
       { min: 30, max: 39,  title: 'Especialista de Carga Estelar 🌌', color: '#6366f1', tierName: 'Aço Meteórico', stripClass: 'holo-steel', stripText: '🌌 EEX STELLAR 🌌' },
@@ -4157,7 +4173,27 @@ const AppUI = {
                 NÍVEL ${career.level} • ${career.rankTitle}
               </div>
 
-              <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
+              <div class="agent-name-seal-row">
+                <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
+                ${this.isMagafusVIP(user) ? `
+                  <div class="magafic-seal-container">
+                    <button type="button" class="magafic-seal-btn" id="magaficSealBtn" title="Selo Magáfico 💜 (Clique para conversar!)" aria-label="Selo Magáfico">
+                      <img src="images/magaficseal.png" alt="Selo Magáfico" class="magafic-seal-img" id="magaficSealImg">
+                    </button>
+                    <!-- Balão de Diálogo do Coraçãozinho Magáfico -->
+                    <div class="magafic-speech-dialog" id="magaficSpeechDialog" style="display: none;">
+                      <div class="magafic-bubble-arrow"></div>
+                      <div class="magafic-bubble-content">
+                        <div class="magafic-bubble-header">
+                          <span class="magafic-badge-title">💜 CORAÇÃO MAGÁFICO:</span>
+                          <button type="button" class="magafic-bubble-close" id="btnCloseMagaficDialog">✕</button>
+                        </div>
+                        <p class="magafic-dialog-text" id="magaficDialogText">"Oi, Magafus! 💜"</p>
+                      </div>
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
               <div class="grand-agent-nick-row">
                 <strong class="grand-agent-nick">@${user.eexEmail || (user.nickname + '.express.com')}</strong>
                 <button type="button" class="btn-comic btn-copy-mini" id="btnCopyProfileNick" title="Copiar ID">📋</button>
@@ -4321,6 +4357,73 @@ const AppUI = {
           }
         }
       });
+    }
+
+    // Eventos do Selo Magáfico 💜
+    const sealBtn = document.getElementById('magaficSealBtn');
+    const sealImg = document.getElementById('magaficSealImg');
+    const speechDialog = document.getElementById('magaficSpeechDialog');
+    const dialogText = document.getElementById('magaficDialogText');
+    const btnCloseDialog = document.getElementById('btnCloseMagaficDialog');
+
+    if (sealBtn && speechDialog && dialogText) {
+      const magaficPhrases = [
+        "Oi, Magafus! 💜",
+        "Seu cabelo está cheiroso hoje, hehe! ✨",
+        "Não se esqueça! 💌",
+        "Você é a pilota mais especial de toda Nova Amerit! 🌸",
+        "Passando para deixar um abraço quentinho! 🥰",
+        "A Magafus ilumina qualquer rota dimensional! 💜✨",
+        "Sorria! O universo conspira ao seu favor hoje! 🌟",
+        "Entregando 100% de carinho em alta velocidade! 📦💜",
+        "O coração Magáfico bate mais forte por você! 💓",
+        "Você é simplesmente maravilhosa, nunca se esqueça disso! 💜"
+      ];
+
+      sealBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        // 1. Toca som do selo magaficseal.mp3
+        try {
+          const audio = new Audio('images/magaficseal.mp3');
+          audio.currentTime = 0;
+          audio.play().catch(err => console.log('Audio play blocked:', err));
+        } catch (err) {}
+
+        // 2. Animação de dança do coraçãozinho
+        if (sealImg) {
+          sealImg.classList.remove('magafic-dance');
+          void sealImg.offsetWidth;
+          sealImg.classList.add('magafic-dance');
+        }
+
+        // 3. Escolhe frase aleatória
+        const phrase = magaficPhrases[Math.floor(Math.random() * magaficPhrases.length)];
+        dialogText.textContent = `"${phrase}"`;
+
+        // 4. Exibe balão de diálogo animado
+        speechDialog.style.display = 'block';
+        speechDialog.classList.remove('dialog-pop');
+        void speechDialog.offsetWidth;
+        speechDialog.classList.add('dialog-pop');
+
+        // Toast de apoio
+        AppUI.showToast(`💜 Coração Magáfico: "${phrase}"`);
+
+        // Fecha automaticamente após 7 segundos
+        if (this._magaficTimeout) clearTimeout(this._magaficTimeout);
+        this._magaficTimeout = setTimeout(() => {
+          if (speechDialog) speechDialog.style.display = 'none';
+        }, 7000);
+      });
+
+      if (btnCloseDialog) {
+        btnCloseDialog.addEventListener('click', (e) => {
+          e.stopPropagation();
+          speechDialog.style.display = 'none';
+          if (this._magaficTimeout) clearTimeout(this._magaficTimeout);
+        });
+      }
     }
   },
 
