@@ -622,13 +622,68 @@
           </div>
 
           <div class="settings-grid">
-            <!-- Card 1: Aparência / Modo Escuro -->
-            <div class="settings-card">
-              <h3>🎨 Modo Escuro / Claro</h3>
-              <p>Escolha o tema que melhor combina com a sua rotina dimensional.</p>
-              <div class="theme-switch-row">
-                <span class="theme-switch-label" id="themeStatusLabel">Modo Claro</span>
-                <button type="button" class="btn-theme-toggle" id="btnThemeToggle">🌙 Alternar Tema</button>
+            <!-- Card 1: Temas da Frota Dimensional (3 Temas) -->
+            <div class="settings-card settings-theme-card">
+              <div class="settings-theme-header">
+                <span class="settings-theme-badge">ESTILO VISUAL</span>
+                <h3>🎨 Temas da Frota Dimensional</h3>
+                <p>Personalize todo o visual do sistema de despacho com a sua paleta favorita!</p>
+              </div>
+
+              <!-- Grade com os 3 Temas -->
+              <div class="theme-picker-grid">
+                
+                <!-- Tema 1: Rosa Express -->
+                <button type="button" class="theme-pick-card active" data-theme-id="rosa-express" id="btnThemeRosa">
+                  <div class="theme-swatch swatch-rosa">
+                    <span class="swatch-stripe s1"></span>
+                    <span class="swatch-stripe s2"></span>
+                    <span class="swatch-stripe s3"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">🌸 Rosa Express</strong>
+                    <span class="theme-tagline">Clássico & Chiclete</span>
+                  </div>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+                <!-- Tema 2: Roxo NuMetálico -->
+                <button type="button" class="theme-pick-card" data-theme-id="roxo-numetalico" id="btnThemeRoxo">
+                  <div class="theme-swatch swatch-roxo">
+                    <span class="swatch-stripe s1"></span>
+                    <span class="swatch-stripe s2"></span>
+                    <span class="swatch-stripe s3"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">🎸 Roxo NuMetálico</strong>
+                    <span class="theme-tagline">Noturno & Distorcido</span>
+                  </div>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+                <!-- Tema 3: Verde Magáfico -->
+                <button type="button" class="theme-pick-card" data-theme-id="verde-magafico" id="btnThemeVerde">
+                  <div class="theme-swatch swatch-verde">
+                    <span class="swatch-stripe s1"></span>
+                    <span class="swatch-stripe s2"></span>
+                    <span class="swatch-stripe s3"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">🌿 Verde Magáfico</strong>
+                    <span class="theme-tagline">Musgo & Magafus 💜</span>
+                  </div>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+              </div>
+
+              <!-- Caixinha de Mensagem Temática (Balão de Fala Comic) -->
+              <div class="theme-quote-box" id="themeQuoteBox">
+                <div class="theme-quote-mascot" id="themeQuoteMascot">🌸</div>
+                <div class="theme-quote-content">
+                  <span class="theme-quote-author" id="themeQuoteAuthor">Rosa Express:</span>
+                  <p class="theme-quote-text" id="themeQuoteText">"Esse tema ficou demais!"</p>
+                </div>
               </div>
             </div>
 

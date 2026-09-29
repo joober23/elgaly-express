@@ -1,7 +1,7 @@
 /* ==========================================================================
    ELGALY EXPRESS - SISTEMA DE ROTINA & DESPACHO DIMENSIONAL
-   Paleta de Cores e Estética Neo-Brutalista Oficial
-   Navbar Inteligente, Menu Lateral Mobile, Auth Gateway e Edição de Perfil
+   Paleta de Cores e EstÃ©tica Neo-Brutalista Oficial
+   Navbar Inteligente, Menu Lateral Mobile, Auth Gateway e EdiÃ§Ã£o de Perfil
    ========================================================================== */
 
 :root {
@@ -180,7 +180,7 @@ header img.logo:hover {
   background: var(--white);
 }
 
-/* Navegação Desktop (Abas) */
+/* NavegaÃ§Ã£o Desktop (Abas) */
 nav.desktop-nav {
   margin-top: 14px;
   display: flex;
@@ -345,7 +345,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   PORTÃO DE AUTENTICAÇÃO OBRIGATÓRIO (AUTH GATEWAY)
+   PORTÃƒO DE AUTENTICAÃ‡ÃƒO OBRIGATÃ“RIO (AUTH GATEWAY)
    ========================================================================== */
 .auth-gateway-container {
   max-width: 580px;
@@ -447,7 +447,7 @@ nav.desktop-nav a.active {
   font-weight: 700;
 }
 
-/* Chips de Usuários Salvos no Dispositivo */
+/* Chips de UsuÃ¡rios Salvos no Dispositivo */
 .saved-users-list {
   display: flex;
   flex-direction: column;
@@ -497,7 +497,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   CONTAINER & VISUALIZAÇÕES SPA (APP-VIEWS)
+   CONTAINER & VISUALIZAÃ‡Ã•ES SPA (APP-VIEWS)
    ========================================================================== */
 .container {
   max-width: 1100px;
@@ -533,7 +533,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   TELA INICIAL (INÍCIO / HERO)
+   TELA INICIAL (INÃCIO / HERO)
    ========================================================================== */
 .hero {
   background: var(--card-bg);
@@ -689,7 +689,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   TÍTULOS DE SEÇÃO
+   TÃTULOS DE SEÃ‡ÃƒO
    ========================================================================== */
 .section-header-block {
   text-align: center;
@@ -719,7 +719,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   ROTINA DIÁRIA (CHECK-IN DE HÁBITOS)
+   ROTINA DIÃRIA (CHECK-IN DE HÃBITOS)
    ========================================================================== */
 .daily-routine-box {
   background: var(--card-bg);
@@ -1159,7 +1159,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   CENTRAL DE RELATÓRIOS & PDF
+   CENTRAL DE RELATÃ“RIOS & PDF
    ========================================================================== */
 .report-panel {
   background: var(--card-bg);
@@ -1391,7 +1391,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   PERFIL DO ENTREGADOR (CRACHÁ RETRO ANOS 2000)
+   PERFIL DO ENTREGADOR (CRACHÃ RETRO ANOS 2000)
    ========================================================================== */
 .profile-section-wrap {
   display: flex;
@@ -1510,7 +1510,7 @@ nav.desktop-nav a.active {
 }
 
 /* ==========================================================================
-   MODAIS E FORMULÁRIOS
+   MODAIS E FORMULÃRIOS
    ========================================================================== */
 .modal-overlay {
   display: none;
@@ -1849,7 +1849,7 @@ footer {
 }
 
 /* ==========================================================================
-   REDE EEX — AUTH GATEWAY SIMPLIFICADO (Apenas Google)
+   REDE EEX â€” AUTH GATEWAY SIMPLIFICADO (Apenas Google)
    ========================================================================== */
 .auth-main-login {
   display: flex;
@@ -1867,7 +1867,7 @@ footer {
 }
 
 /* ==========================================================================
-   CRACHÁS SALVOS (Badges para re-login com PIN)
+   CRACHÃS SALVOS (Badges para re-login com PIN)
    ========================================================================== */
 .saved-badges-section {
   margin-top: 8px;
@@ -1997,7 +1997,7 @@ footer {
 }
 
 /* ==========================================================================
-   MODAIS DE ONBOARDING E PIN — z-index acima de tudo
+   MODAIS DE ONBOARDING E PIN â€” z-index acima de tudo
    ========================================================================== */
 #modalOnboarding {
   z-index: 9000;
@@ -2008,7 +2008,7 @@ footer {
 }
 
 /* ==========================================================================
-   MODAL DE ONBOARDING — ALTO CONTRASTE & LEGIBILIDADE MÁXIMA
+   MODAL DE ONBOARDING â€” ALTO CONTRASTE & LEGIBILIDADE MÃXIMA
    ========================================================================== */
 #modalOnboarding .modal-content,
 #modalOnboarding .modal-box {
@@ -2042,7 +2042,7 @@ footer {
 }
 
 /* ==========================================================================
-   SELETOR DE DIAS DA SEMANA (ROTINAS / HÁBITOS)
+   SELETOR DE DIAS DA SEMANA (ROTINAS / HÃBITOS)
    ========================================================================== */
 .weekday-picker {
   display: flex;
@@ -2132,7 +2132,7 @@ footer {
 }
 
 /* ==========================================================================
-   SISTEMA DE EVENTOS & LEMBRETES (PROVAS, COMPROMISSOS, REUNIÕES)
+   SISTEMA DE EVENTOS & LEMBRETES (PROVAS, COMPROMISSOS, REUNIÃ•ES)
    ========================================================================== */
 .events-section-header {
   display: flex;
@@ -2299,7 +2299,7 @@ footer {
 }
 
 /* ==========================================================================
-   TELA DE CONFIGURAÇÕES (view-configuracoes)
+   TELA DE CONFIGURAÃ‡Ã•ES (view-configuracoes)
    ========================================================================== */
 .settings-grid {
   display: grid;
@@ -2369,7 +2369,7 @@ footer {
 }
 
 /* ==========================================================================
-   MODO ESCURO (DARK MODE) — BRUTALISMO CYBERPUNK / COMIC
+   MODO ESCURO (DARK MODE) â€” BRUTALISMO CYBERPUNK / COMIC
    ========================================================================== */
 [data-theme="dark"] {
   --bg-color: #12071f;
@@ -2656,10 +2656,10 @@ footer {
 }
 
 /* ==========================================================================
-   CORREÇÃO GLOBAL DE LEGIBILIDADE NO MODO ESCURO
+   CORREÃ‡ÃƒO GLOBAL DE LEGIBILIDADE NO MODO ESCURO
    ========================================================================== */
 
-/* Título de seção (Passaporte, Rotina, etc.) que ficava escuro sobre escuro */
+/* TÃ­tulo de seÃ§Ã£o (Passaporte, Rotina, etc.) que ficava escuro sobre escuro */
 [data-theme="dark"] .section-title {
   color: var(--yellow-bright) !important;
   text-shadow: 4px 4px 0px var(--black) !important;
@@ -2713,7 +2713,7 @@ footer {
   color: #c4b5fd !important;
 }
 
-/* Botão Sair da Conta e botões outline */
+/* BotÃ£o Sair da Conta e botÃµes outline */
 [data-theme="dark"] .btn-comic.btn-outline {
   background: #2a0f44 !important;
   color: #f5d0fe !important;
@@ -2744,7 +2744,7 @@ footer {
 }
 
 /* ==========================================================================
-   BOTTOM NAV BAR — MOBILE (ESTÉTICA NEO-BRUTALISTA OFICIAL EEX)
+   BOTTOM NAV BAR â€” MOBILE (ESTÃ‰TICA NEO-BRUTALISTA OFICIAL EEX)
    ========================================================================== */
 .bottom-nav-bar {
   display: none;
@@ -2812,12 +2812,12 @@ footer {
     text-transform: uppercase;
   }
 
-  /* Compensa a altura da barra para não cobrir conteúdo */
+  /* Compensa a altura da barra para nÃ£o cobrir conteÃºdo */
   body {
     padding-bottom: max(96px, calc(86px + env(safe-area-inset-bottom)));
   }
 
-  /* Esconde o menu hambúrguer no mobile */
+  /* Esconde o menu hambÃºrguer no mobile */
   .btn-mobile-menu {
     display: none !important;
   }
@@ -2832,7 +2832,7 @@ footer {
     max-width: 140px;
   }
 
-  /* Esconde o rodapé no mobile */
+  /* Esconde o rodapÃ© no mobile */
   footer {
     display: none;
   }
@@ -3032,7 +3032,7 @@ footer {
 }
 
 /* ==========================================================================
-   REGISTRO DO MOMENTO BACANA (FOTO + ADESIVOS) & GALERIA DIÁRIA
+   REGISTRO DO MOMENTO BACANA (FOTO + ADESIVOS) & GALERIA DIÃRIA
    ========================================================================== */
 .moment-creator-box {
   display: flex;
@@ -3128,7 +3128,7 @@ footer {
   transform: translateY(-2px);
 }
 
-/* Galeria de Registros Diários em Relatórios */
+/* Galeria de Registros DiÃ¡rios em RelatÃ³rios */
 .daily-memories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3255,7 +3255,7 @@ footer {
 }
 
 /* ==========================================================================
-   TELA SPLASH OFICIAL EEX (ELGALY ARROW GIRATÓRIO)
+   TELA SPLASH OFICIAL EEX (ELGALY ARROW GIRATÃ“RIO)
    ========================================================================== */
 .eex-splash-screen {
   position: fixed;
@@ -3597,7 +3597,7 @@ footer {
 
 
 /* ==========================================================================
-   EEX-FRIENDS — SISTEMA SOCIAL COMPLETO (Neo-Brutalista)
+   EEX-FRIENDS â€” SISTEMA SOCIAL COMPLETO (Neo-Brutalista)
    ========================================================================== */
 
 .friends-app-container {
@@ -4040,10 +4040,10 @@ footer {
 }
 
 /* ==========================================================================
-   EEX-FRIENDS: PASSAPORTE DO PARCEIRO, ENCOMENDAS EXPRESS, SOS & RÁDIO
+   EEX-FRIENDS: PASSAPORTE DO PARCEIRO, ENCOMENDAS EXPRESS, SOS & RÃDIO
    ========================================================================== */
 
-/* Linha de botões do Hero */
+/* Linha de botÃµes do Hero */
 .friends-hero-btn-row {
   display: flex;
   gap: 8px;
@@ -4100,7 +4100,7 @@ footer {
   animation: pulseSos 1.2s infinite alternate;
 }
 
-/* Rádio Pill no Card */
+/* RÃ¡dio Pill no Card */
 .friend-radio-pill {
   display: flex;
   align-items: center;
@@ -4134,7 +4134,7 @@ footer {
   z-index: 10;
 }
 
-/* Crachá no Modal */
+/* CrachÃ¡ no Modal */
 .friend-badge-inner {
   background: var(--purple-dark, #3a154d);
   border: 3px solid var(--black);
@@ -4289,7 +4289,7 @@ footer {
   line-height: 1.3;
 }
 
-/* Lista de Hábitos do Amigo */
+/* Lista de HÃ¡bitos do Amigo */
 .friend-habits-list {
   display: flex;
   flex-direction: column;
@@ -4404,7 +4404,7 @@ footer {
   font-weight: 600;
 }
 
-/* Rodapé do Modal */
+/* RodapÃ© do Modal */
 .friend-modal-footer {
   display: flex;
   gap: 10px;
@@ -4455,7 +4455,7 @@ footer {
 .stamp-card-inner strong { display: block; font-size: 0.82rem; color: var(--purple-dark, #3a154d); }
 .stamp-card-inner small { font-size: 0.7rem; color: #6b7280; font-weight: 600; }
 
-/* Mensagens Rápidas Chips */
+/* Mensagens RÃ¡pidas Chips */
 .quick-messages-chips {
   display: flex;
   gap: 6px;
@@ -4551,7 +4551,7 @@ footer {
   text-align: right;
 }
 
-/* Opções de Rádio Bip */
+/* OpÃ§Ãµes de RÃ¡dio Bip */
 .radio-status-options-grid {
   display: flex;
   flex-direction: column;
@@ -4609,7 +4609,7 @@ footer {
 }
 
 /* ==========================================================================
-   EEX-PROFILE: NOVO PASSAPORTE MONUMENTAL & DOSSIÊ DE CARREIRA EEX
+   EEX-PROFILE: NOVO PASSAPORTE MONUMENTAL & DOSSIÃŠ DE CARREIRA EEX
    ========================================================================== */
 
 /* FIX NOME DO AMIGO NO MODAL DE PERFIL */
@@ -4625,7 +4625,7 @@ footer {
   display: block;
 }
 
-/* Container Geral do Perfil Próprio */
+/* Container Geral do Perfil PrÃ³prio */
 .grand-profile-container {
   max-width: 740px;
   margin: 0 auto 40px;
@@ -4634,7 +4634,7 @@ footer {
   gap: 24px;
 }
 
-/* --- CORDÃO & CLIPE RETRÔ --- */
+/* --- CORDÃƒO & CLIPE RETRÃ” --- */
 .lanyard-ribbon-wrap {
   display: flex;
   flex-direction: column;
@@ -4664,7 +4664,7 @@ footer {
   box-shadow: 2px 2px 0 var(--black);
 }
 
-/* --- SUPER CRACHÁ MASTER (ANOS 2000) --- */
+/* --- SUPER CRACHÃ MASTER (ANOS 2000) --- */
 .grand-badge-card {
   background: #fff;
   border: 3.5px solid var(--black);
@@ -4675,7 +4675,7 @@ footer {
   overflow: hidden;
 }
 
-/* Cabeçalho do Crachá */
+/* CabeÃ§alho do CrachÃ¡ */
 .grand-badge-header {
   display: flex;
   justify-content: space-between;
@@ -4723,7 +4723,7 @@ footer {
   transform: rotate(3deg);
 }
 
-/* Corpo do Crachá (Foto + Informações) */
+/* Corpo do CrachÃ¡ (Foto + InformaÃ§Ãµes) */
 .grand-badge-body {
   display: flex;
   gap: 24px;
@@ -4791,7 +4791,7 @@ footer {
   opacity: 0.9;
 }
 
-/* Código de Barras */
+/* CÃ³digo de Barras */
 .badge-barcode {
   display: flex;
   flex-direction: column;
@@ -4898,7 +4898,7 @@ footer {
   transition: width 0.4s ease;
 }
 
-/* Rodapé do Crachá */
+/* RodapÃ© do CrachÃ¡ */
 .grand-badge-footer {
   display: flex;
   gap: 10px;
@@ -4907,7 +4907,7 @@ footer {
   border-top: 2px dashed rgba(0,0,0,0.15);
 }
 
-/* --- QUADRO DE ESTATÍSTICAS --- */
+/* --- QUADRO DE ESTATÃSTICAS --- */
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -4947,7 +4947,7 @@ footer {
   letter-spacing: 0.04em;
 }
 
-/* --- SEÇÃO DE CONQUISTAS / MEDALHAS --- */
+/* --- SEÃ‡ÃƒO DE CONQUISTAS / MEDALHAS --- */
 .profile-achievements-section,
 .profile-memories-section {
   background: #fff;
@@ -5129,7 +5129,7 @@ footer {
 }
 
 /* ==========================================================================
-   BOTÃO DE NOTIFICAÇÕES DA PROVIDENTE (C.E.O. NEWS)
+   BOTÃƒO DE NOTIFICAÃ‡Ã•ES DA PROVIDENTE (C.E.O. NEWS)
    ========================================================================== */
 .btn-providente-news {
   position: relative;
@@ -5166,7 +5166,7 @@ footer {
 }
 
 /* ==========================================================================
-   NAVEGAÇÃO DESKTOP INTUITIVA & ESTRUTURADA
+   NAVEGAÃ‡ÃƒO DESKTOP INTUITIVA & ESTRUTURADA
    ========================================================================== */
 nav.desktop-nav {
   margin-top: 14px;
@@ -5207,7 +5207,7 @@ nav.desktop-nav {
   border-left-color: #6b21a8;
 }
 
-/* Botões das Abas de Navegação (Identidade Oficial Elgaly Express) */
+/* BotÃµes das Abas de NavegaÃ§Ã£o (Identidade Oficial Elgaly Express) */
 nav.desktop-nav a.nav-link {
   color: var(--white);
   text-decoration: none;
@@ -5270,7 +5270,7 @@ nav.desktop-nav a.nav-link.active {
   text-shadow: none;
 }
 
-/* Botões de Ação (+ Encomenda e + Evento) */
+/* BotÃµes de AÃ§Ã£o (+ Encomenda e + Evento) */
 .desktop-nav .nav-btn {
   font-size: 0.95rem;
   padding: 8px 14px;
@@ -5305,7 +5305,7 @@ nav.desktop-nav a.nav-link.active {
 }
 
 /* ==========================================================================
-   FAIXAS HOLOGRÁFICAS EVOLUTIVAS DA PATENTE (1 A 100 NÍVEIS)
+   FAIXAS HOLOGRÃFICAS EVOLUTIVAS DA PATENTE (1 A 100 NÃVEIS)
    ========================================================================== */
 .hologram-strip {
   width: 100%;
@@ -5331,14 +5331,14 @@ nav.desktop-nav a.nav-link.active {
   color: #451a03;
 }
 
-/* Tier 2 (10-19): Cobre Veloz Cósmico */
+/* Tier 2 (10-19): Cobre Veloz CÃ³smico */
 .holo-copper {
   background: linear-gradient(90deg, #b45309, #f97316, #06b6d4, #b45309);
   color: #fff;
   text-shadow: 1px 1px 0 #000;
 }
 
-/* Tier 3 (20-29): Prata Prismática Dimensional */
+/* Tier 3 (20-29): Prata PrismÃ¡tica Dimensional */
 .holo-silver {
   background: linear-gradient(90deg, #e2e8f0, #38bdf8, #f472b6, #e2e8f0);
   background-size: 200% auto;
@@ -5346,7 +5346,7 @@ nav.desktop-nav a.nav-link.active {
   color: #0f172a;
 }
 
-/* Tier 4 (30-39): Aço Meteórico Estelar */
+/* Tier 4 (30-39): AÃ§o MeteÃ³rico Estelar */
 .holo-steel {
   background: linear-gradient(90deg, #475569, #818cf8, #c084fc, #475569);
   background-size: 200% auto;
@@ -5403,7 +5403,7 @@ nav.desktop-nav a.nav-link.active {
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.7), 1px 1px 0 #000;
 }
 
-/* Tier 10 (90-99): Diamante Astral Grão-Mestre */
+/* Tier 10 (90-99): Diamante Astral GrÃ£o-Mestre */
 .holo-diamond {
   background: linear-gradient(90deg, #a855f7, #38bdf8, #f43f5e, #facc15, #a855f7);
   background-size: 300% auto;
@@ -5414,7 +5414,7 @@ nav.desktop-nav a.nav-link.active {
   box-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 2px 2px 0 #000;
 }
 
-/* Tier 11 (NÍVEL 100): O OLHO DE PROVIDENTE (CELESTIAL DIVINO SUPREMO) */
+/* Tier 11 (NÃVEL 100): O OLHO DE PROVIDENTE (CELESTIAL DIVINO SUPREMO) */
 .holo-providente {
   background: linear-gradient(90deg, #ffd700, #fff7ed, #f59e0b, #fef08a, #ffd700);
   background-size: 200% auto;
@@ -5444,7 +5444,7 @@ nav.desktop-nav a.nav-link.active {
 }
 
 /* ==========================================================================
-   MODAL DA GAZETA DA PROVIDÊNCIA (JORNAL RETRÔ & CARTA DA C.E.O.)
+   MODAL DA GAZETA DA PROVIDÃŠNCIA (JORNAL RETRÃ” & CARTA DA C.E.O.)
    ========================================================================== */
 .gazette-modal-box {
   max-width: 760px !important;
@@ -5789,7 +5789,7 @@ nav.desktop-nav a.nav-link.active {
 [data-theme="dark"] .card-sad .gazette-card-title { color: #cbd5e1; }
 [data-theme="dark"] .card-sad .gazette-card-text { color: #f1f5f9; }
 
-/* Card 3: Angry Provident (Correção de Bugs) */
+/* Card 3: Angry Provident (CorreÃ§Ã£o de Bugs) */
 .card-angry {
   background: #fff1f2;
   border-color: #e11d48;
@@ -5893,3 +5893,369 @@ nav.desktop-nav a.nav-link.active {
   25% { transform: rotate(-3deg); }
   75% { transform: rotate(3deg); }
 }
+
+/* ==========================================================================
+   SISTEMA DE 3 TEMAS DA FROTA: ROSA EXPRESS, ROXO NUMETÁLICO E VERDE MAGÁFICO
+   ========================================================================== */
+
+/* 1. ROSA EXPRESS (Padrão) */
+:root,
+[data-theme="rosa-express"] {
+  --bg-color: #f7a8ca;
+  --card-bg: #ffe4f0;
+  --card-bg-light: #ffffff;
+  --purple-main: #6b2d8c;
+  --purple-dark: #3a154d;
+  --magenta-bright: #e62b7e;
+  --black: #1a0826;
+  --white: #ffffff;
+  --yellow-bright: #ffeb3b;
+  --text-muted: #6b7280;
+}
+
+/* 2. ROXO NUMETÁLICO */
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) {
+  --bg-color: #12071f;
+  --card-bg: #230d38;
+  --card-bg-light: #341552;
+  --purple-main: #c084fc;
+  --purple-dark: #f5d0fe;
+  --magenta-bright: #ff3b94;
+  --black: #08020d;
+  --white: #1a0a2a;
+  --yellow-bright: #fde047;
+  --text-muted: #d8b4e2;
+}
+
+/* 3. VERDE MAGÁFICO — VERDE MUSGO RETRÔ & MAGAFUS 💜 */
+[data-theme="verde-magafico"] {
+  --bg-color: #3b5832;
+  --card-bg: #eaf3e1;
+  --card-bg-light: #f5faef;
+  --purple-main: #8a2be2;
+  --purple-dark: #1b2f15;
+  --magenta-bright: #4d8534;
+  --black: #11220e;
+  --white: #ffffff;
+  --yellow-bright: #facc15;
+  --text-muted: #4e6b45;
+}
+
+[data-theme="verde-magafico"] body {
+  background-color: var(--bg-color);
+  background-image: radial-gradient(#2c4524 18%, transparent 19%), radial-gradient(#2c4524 18%, transparent 19%);
+  color: var(--purple-dark);
+}
+
+[data-theme="verde-magafico"] header {
+  background: #2a4223;
+  border-bottom: 4px solid var(--black);
+}
+
+[data-theme="verde-magafico"] .mobile-drawer {
+  background: #23381d;
+  color: #eaf3e1;
+}
+
+[data-theme="verde-magafico"] .drawer-nav-link {
+  background: #eaf3e1;
+  color: #1b2f15;
+  border-color: var(--black);
+}
+
+[data-theme="verde-magafico"] .drawer-nav-link.active {
+  background: #facc15;
+  color: #11220e;
+}
+
+[data-theme="verde-magafico"] nav.desktop-nav {
+  background: #eaf3e2;
+  border-color: #11220e;
+  box-shadow: 4px 4px 0px #11220e;
+}
+
+[data-theme="verde-magafico"] nav.desktop-nav a.nav-link {
+  background: #4d8534;
+  color: #ffffff;
+  border-color: #11220e;
+  box-shadow: 2.5px 2.5px 0px #11220e;
+}
+
+[data-theme="verde-magafico"] nav.desktop-nav a.nav-link:hover {
+  background: #60a342;
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px #11220e;
+}
+
+[data-theme="verde-magafico"] nav.desktop-nav a.nav-link.active {
+  background: #facc15;
+  color: #11220e;
+  border-color: #11220e;
+  box-shadow: 3.5px 3.5px 0px #11220e;
+}
+
+[data-theme="verde-magafico"] .desktop-nav .action-new-event {
+  background: #9333ea !important;
+  color: #ffffff !important;
+  border-color: #11220e;
+}
+
+[data-theme="verde-magafico"] .hero {
+  background: #eaf3e2;
+  border-color: var(--black);
+  box-shadow: 6px 6px 0px var(--black);
+}
+
+[data-theme="verde-magafico"] .quick-stat-card {
+  background: #f5faef;
+  border-color: var(--black);
+}
+
+[data-theme="verde-magafico"] .btn-comic {
+  border-color: var(--black);
+}
+
+/* ==========================================================================
+   CARDS DE SELEÇÃO DE TEMA (TELA DE CONFIGURAÇÕES)
+   ========================================================================== */
+.settings-theme-card {
+  grid-column: 1 / -1;
+  background: var(--card-bg);
+  border: 3.5px solid var(--black);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 6px 6px 0px var(--black);
+}
+
+.settings-theme-header {
+  margin-bottom: 16px;
+}
+
+.settings-theme-badge {
+  display: inline-block;
+  background: var(--yellow-bright);
+  color: var(--black);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  margin-bottom: 6px;
+}
+
+.settings-theme-header h3 {
+  font-family: var(--font-display, 'Darumadrop One', cursive);
+  font-size: 1.6rem;
+  margin: 0;
+  color: var(--purple-dark);
+}
+
+.settings-theme-header p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+  font-weight: 600;
+}
+
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.theme-pick-card {
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 18px;
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  box-shadow: 4px 4px 0px var(--black);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.theme-pick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 6px 6px 0px var(--black);
+}
+
+.theme-pick-card.active {
+  border-color: var(--black);
+  box-shadow: 6px 6px 0px var(--black);
+  background: #ffffff;
+  outline: 3px solid var(--yellow-bright);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-pick-card {
+  background: #250a3d;
+  color: #ffffff;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-pick-card.active {
+  background: #360f54;
+}
+
+/* Swatches de Cor (Amostra de Tintas) */
+.theme-swatch {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 2px solid var(--black);
+  display: flex;
+  overflow: hidden;
+  box-shadow: 2px 2px 0px var(--black);
+}
+
+.theme-swatch .swatch-stripe {
+  flex: 1;
+  height: 100%;
+}
+
+/* Swatch Rosa Express */
+.swatch-rosa .s1 { background: #f7a8ca; }
+.swatch-rosa .s2 { background: #e62b7e; }
+.swatch-rosa .s3 { background: #ffeb3b; }
+
+/* Swatch Roxo NuMetálico */
+.swatch-roxo .s1 { background: #12071f; }
+.swatch-roxo .s2 { background: #9333ea; }
+.swatch-roxo .s3 { background: #ff3b94; }
+
+/* Swatch Verde Magáfico */
+.swatch-verde .s1 { background: #3b5832; }
+.swatch-verde .s2 { background: #4d8534; }
+.swatch-verde .s3 { background: #8a2be2; }
+
+.theme-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-name {
+  font-family: var(--font-display, 'Darumadrop One', cursive);
+  font-size: 1.25rem;
+  color: var(--black);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-name {
+  color: #ffffff;
+}
+
+.theme-tagline {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-tagline {
+  color: #c084fc;
+}
+
+.theme-check-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  letter-spacing: 0.5px;
+  display: none;
+}
+
+.theme-pick-card.active .theme-check-pill {
+  display: inline-block;
+}
+
+/* ==========================================================================
+   CAIXINHA DE MENSAGEM TEMÁTICA (BALÃO DE DIÁLOGO NEO-BRUTALISTA)
+   ========================================================================== */
+.theme-quote-box {
+  background: var(--card-bg-light, #ffffff);
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 4px 4px 0px var(--black);
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-quote-box {
+  background: #1a082c;
+  color: #ffffff;
+}
+
+[data-theme="verde-magafico"] .theme-quote-box {
+  background: #f4faee;
+  border-color: #11220e;
+}
+
+.theme-quote-mascot {
+  width: 48px;
+  height: 48px;
+  background: var(--yellow-bright);
+  border: 2.5px solid var(--black);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 2px 2px 0px var(--black);
+  flex-shrink: 0;
+}
+
+.theme-quote-content {
+  flex: 1;
+}
+
+.theme-quote-author {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--purple-main);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.theme-quote-text {
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 0;
+  color: var(--black);
+  font-family: var(--font-body);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .theme-quote-text {
+  color: #f3e8ff;
+}
+
+[data-theme="verde-magafico"] .theme-quote-text {
+  color: #1b2f15;
+}
+
+.quote-pop {
+  animation: quotePopAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes quotePopAnim {
+  0% { transform: scale(0.96) translateY(2px); }
+  50% { transform: scale(1.02) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+

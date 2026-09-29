@@ -1235,15 +1235,37 @@ const FriendsManager = {
 // ==========================================================================
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
-  latestVersion: 'v2.5',
+  latestVersion: 'v2.6',
 
   editions: [
+    {
+      version: 'v2.6',
+      date: 'Setembro / 2026',
+      headline: 'A TRINDADE CROMÁTICA: ROSA EXPRESS, ROXO NUMETÁLICO E VERDE MAGÁFICO!',
+      subheadline: 'Decreto Presidencial de Personalização Visual // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'Três Temas Oficiais & Homenagem à Magafus! 💜',
+        text: 'A C.E.O. Providente inaugurou a nova Central de Estilo da Frota! Agora você escolhe entre o clássico Rosa Express, o pesado Roxo NuMetálico e a grande estreia do Verde Magáfico — um verde musgo nostálgico e estiloso com recados carinhosos para a lendária Magafus! 💜🌿',
+        tags: ['3 Novos Temas', 'Verde Magáfico 🌿', 'Roxo NuMetálico 🎸', 'A Magafus ama essa cor! 💜']
+      },
+      sad: {
+        title: 'O antigo interruptor claro/escuro foi mandado pro descarte!',
+        text: 'Aquele botãozinho monocromático de "modo claro/escuro" foi aposentado. Agora você tem identidades visuais completas com recadinhos especiais para cada tema!',
+        tags: ['Adeus Monocromático', 'Mais Estilo']
+      },
+      angry: {
+        title: 'Providente inspecionou todos os contrastes e bordas!',
+        text: 'A C.E.O. Providente desceu com a régua e o esquadro: botões, abas da barra de navegação, crachás e caixas de texto foram calibrados para que o verde musgo mantenha o estilo neo-brutalista 100% legível e nítido!',
+        tags: ['Contraste Impecável', 'Neo-Brutalismo Puro']
+      }
+    },
     {
       version: 'v2.5',
       date: 'Setembro / 2026',
       headline: 'A ERA CELESTIAL: 100 PATENTES, O OLHO DE PROVIDENTE & SINCRO TOTAL!',
       subheadline: 'Edição Extraordinária da Diretoria // Autorizado por Providente C.E.O.',
-      badge: 'EDIÇÃO ATUAL',
+      badge: 'HISTÓRICO',
       happy: {
         title: 'O Céu é o Limite! Patente 100 e Faixas Holográficas!',
         text: 'Nossa frota agora conta com 100 Patentes Oficiais! A cada 10 níveis você desbloqueia um título glorioso, culminando no cobiçado "Nível 100 - O Olho de Providente"! E tem mais: a faixa holográfica do seu crachá agora evolui visualmente a cada patente conquistada, brilhando com prismas e luz divina!',
@@ -1505,34 +1527,109 @@ const ProvidenteNewsManager = {
 };
 
 // ==========================================================================
-// GERENCIADOR DE TEMAS (ThemeManager) — Modo Claro & Modo Escuro
+// GERENCIADOR DE TEMAS DA FROTA (ThemeManager)
+// 1. Rosa Express (Clássico Chiclete)
+// 2. Roxo NuMetálico (Noturno & Pesado anos 2000)
+// 3. Verde Magáfico (Musgo Vintage especial com recados da Magafus 💜)
 // ==========================================================================
 const ThemeManager = {
-  current: 'light',
+  current: 'rosa-express',
+
+  themes: {
+    'rosa-express': {
+      id: 'rosa-express',
+      name: 'Rosa Express',
+      icon: '🌸',
+      quotes: [
+        'Esse tema ficou demais! 🌸',
+        'O clássico despacho postal de Nova Amerit em tons de chiclete cósmico!',
+        'Velocidade, fofura e rotinas cumpridas sem piedade! 📦✨'
+      ]
+    },
+    'roxo-numetalico': {
+      id: 'roxo-numetalico',
+      name: 'Roxo NuMetálico',
+      icon: '🎸',
+      quotes: [
+        'Pesado, sombrio e distorcido! 🎸⚡ Sintonizado na frequência dos anos 2000!',
+        'Para quem pilota rotas noturnas ouvindo guitarras pesadas! 🤘🌙',
+        'A noite de Nova Amerit é implacável, e a sua rotina também! ⚡'
+      ]
+    },
+    'verde-magafico': {
+      id: 'verde-magafico',
+      name: 'Verde Magáfico',
+      icon: '🌿',
+      quotes: [
+        'A Magafus ama essa cor! 💜',
+        'Direto do refúgio botânico dimensional de Nova Arcanis! A Magafus aprova! 💜🌿',
+        'Verde musgo de respeito! A Magafus mandou avisar que seu bom gosto é nota 10! 💜'
+      ]
+    }
+  },
 
   init() {
-    const saved = localStorage.getItem('elgaly_theme') || 
-      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    this.setTheme(saved);
+    let saved = localStorage.getItem('elgaly_theme') || 'rosa-express';
+    // Migração de valores legados
+    if (saved === 'light') saved = 'rosa-express';
+    if (saved === 'dark') saved = 'roxo-numetalico';
+    if (!this.themes[saved]) saved = 'rosa-express';
+
+    this.setTheme(saved, false);
   },
 
-  toggle() {
-    this.setTheme(this.current === 'dark' ? 'light' : 'dark');
+  cycle() {
+    const order = ['rosa-express', 'roxo-numetalico', 'verde-magafico'];
+    const nextIdx = (order.indexOf(this.current) + 1) % order.length;
+    this.setTheme(order[nextIdx], true);
   },
 
-  setTheme(theme) {
-    this.current = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('elgaly_theme', theme);
+  setTheme(themeId, showToastNotification = false) {
+    if (!this.themes[themeId]) themeId = 'rosa-express';
+    this.current = themeId;
+    const themeObj = this.themes[themeId];
 
-    const btn = document.getElementById('btnThemeToggle');
-    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
+    document.documentElement.setAttribute('data-theme', themeId);
+    localStorage.setItem('elgaly_theme', themeId);
 
-    const statusLabel = document.getElementById('themeStatusLabel');
-    if (statusLabel) statusLabel.textContent = theme === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
-
+    // Atualiza botão do Header
     const iconBtn = document.getElementById('btnHeaderTheme');
-    if (iconBtn) iconBtn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+    if (iconBtn) {
+      iconBtn.innerHTML = themeObj.icon;
+      iconBtn.title = `Tema: ${themeObj.name} (Clique para alternar)`;
+    }
+
+    // Atualiza os cartões seletores na tela de configurações
+    document.querySelectorAll('.theme-pick-card').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themeId === themeId);
+    });
+
+    // Atualiza a caixinha de mensagem com frases do tema
+    this.updateQuoteBox(themeId);
+
+    if (showToastNotification && typeof AppUI !== 'undefined' && AppUI.showToast) {
+      const quote = themeObj.quotes[0];
+      AppUI.showToast(`${themeObj.icon} ${themeObj.name}: "${quote}"`);
+    }
+  },
+
+  updateQuoteBox(themeId) {
+    const box = document.getElementById('themeQuoteBox');
+    const mascot = document.getElementById('themeQuoteMascot');
+    const author = document.getElementById('themeQuoteAuthor');
+    const text = document.getElementById('themeQuoteText');
+    if (!box || !mascot || !text) return;
+
+    const theme = this.themes[themeId] || this.themes['rosa-express'];
+    const quote = theme.quotes[0];
+
+    mascot.textContent = theme.icon;
+    if (author) author.textContent = `${theme.name}:`;
+    text.textContent = `"${quote}"`;
+
+    box.classList.remove('quote-pop');
+    void box.offsetWidth;
+    box.classList.add('quote-pop');
   }
 };
 
@@ -2627,15 +2724,23 @@ const AppUI = {
       });
     }
 
-    // 13. Configurações: Alternar Tema (Modo Escuro / Claro)
-    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    // 13. Configurações: Seleção dos 3 Temas & Alternar no Header
     const btnHeaderTheme = document.getElementById('btnHeaderTheme');
-    if (btnThemeToggle) {
-      btnThemeToggle.addEventListener('click', () => ThemeManager.toggle());
-    }
     if (btnHeaderTheme) {
-      btnHeaderTheme.addEventListener('click', () => ThemeManager.toggle());
+      btnHeaderTheme.addEventListener('click', () => ThemeManager.cycle());
     }
+
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener('click', () => ThemeManager.cycle());
+    }
+
+    document.querySelectorAll('.theme-pick-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const themeId = card.dataset.themeId;
+        if (themeId) ThemeManager.setTheme(themeId, true);
+      });
+    });
 
     // 14. Configurações: Atualizar PIN
     const formChangePin = document.getElementById('formChangePin');
@@ -3662,10 +3767,7 @@ const AppUI = {
     if (eexEl) eexEl.textContent = user.eexEmail;
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
-    const statusLabel = document.getElementById('themeStatusLabel');
-    if (statusLabel) statusLabel.textContent = ThemeManager.current === 'dark' ? '🌙 Modo Escuro Ativo' : '☀️ Modo Claro Ativo';
-    const btnTheme = document.getElementById('btnThemeToggle');
-    if (btnTheme) btnTheme.innerHTML = ThemeManager.current === 'dark' ? '☀️ Alternar para Modo Claro' : '🌙 Alternar para Modo Escuro';
+    ThemeManager.setTheme(ThemeManager.current, false);
   },
 
   renderTasks() {
