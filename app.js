@@ -1235,15 +1235,37 @@ const FriendsManager = {
 // ==========================================================================
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
-  latestVersion: 'v2.6',
+  latestVersion: 'v2.7',
 
   editions: [
+    {
+      version: 'v2.7',
+      date: 'Setembro / 2026',
+      headline: 'CALIBRAÇÃO NOTURNA PERFEITA & SINCRONIZAÇÃO TOTAL PC & CELULAR!',
+      subheadline: 'Decreto de Nitidez e Telemetria em Nuvem // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'Sincronização de Temas em Tempo Real entre PC e Celular! 📱☁️💻',
+        text: 'Mudou para o Verde Magáfico ou Roxo NuMetálico no computador? O seu celular recebe na hora a nova paleta sem recarregar nada! Sua preferência de tema agora fica salva diretamente na sua conta da nuvem e te segue por toda a galáxia!',
+        tags: ['Sincronia PC/Celular', 'Tema na Nuvem', 'Multi-dispositivo']
+      },
+      sad: {
+        title: 'Textos escondidos e cores escuras sobrepostas foram banidos!',
+        text: 'Aquele título apagado e letrinhas escuras dentro de cartões escuros foram limpos de uma vez por todas! O fundo escuro agora respeita a visão noturna dos nossos agentes e a barra de navegação recebeu o destaque merecido!',
+        tags: ['Fim dos Textos Ocultos', 'Visão Noturna Calibrada']
+      },
+      angry: {
+        title: 'Providente ajustou o contraste da Navbar e dos Cartões!',
+        text: 'A C.E.O. Providente exigiu com punho de ferro: a Navbar agora tem seu próprio tom lilás claro luminoso sobre o fundo espacial escuro, a caixa de conta do agente tem alto relevo legível e os inputs respondem com textos brancos e nítidos!',
+        tags: ['Navbar Iluminada', 'Bugfixes Noturnos', 'Perfeição Visual']
+      }
+    },
     {
       version: 'v2.6',
       date: 'Setembro / 2026',
       headline: 'A TRINDADE CROMÁTICA: ROSA EXPRESS, ROXO NUMETÁLICO E VERDE MAGÁFICO!',
       subheadline: 'Decreto Presidencial de Personalização Visual // Autorizado por Providente C.E.O.',
-      badge: 'EDIÇÃO ATUAL',
+      badge: 'HISTÓRICO',
       happy: {
         title: 'Três Temas Oficiais & Homenagem à Magafus! 💜',
         text: 'A C.E.O. Providente inaugurou a nova Central de Estilo da Frota! Agora você escolhe entre o clássico Rosa Express, o pesado Roxo NuMetálico e a grande estreia do Verde Magáfico — um verde musgo nostálgico e estiloso com recados carinhosos para a lendária Magafus! 💜🌿',
@@ -1584,7 +1606,7 @@ const ThemeManager = {
     this.setTheme(order[nextIdx], true);
   },
 
-  setTheme(themeId, showToastNotification = false) {
+  setTheme(themeId, showToastNotification = false, syncCloud = true) {
     if (!this.themes[themeId]) themeId = 'rosa-express';
     this.current = themeId;
     const themeObj = this.themes[themeId];
@@ -1610,6 +1632,11 @@ const ThemeManager = {
     if (showToastNotification && typeof AppUI !== 'undefined' && AppUI.showToast) {
       const quote = themeObj.quotes[0];
       AppUI.showToast(`${themeObj.icon} ${themeObj.name}: "${quote}"`);
+    }
+
+    // Sincronização em tempo real do tema entre PC e Celular via Firestore
+    if (syncCloud && typeof FirebaseService !== 'undefined' && FirebaseService.saveProfileTheme) {
+      FirebaseService.saveProfileTheme(themeId);
     }
   },
 

@@ -109,6 +109,9 @@ const FirebaseService = {
           if (profileDoc.exists) {
             const cloudProfile = profileDoc.data();
             userData = { ...userData, ...cloudProfile };
+            if (cloudProfile.preferredTheme && typeof ThemeManager !== 'undefined') {
+              ThemeManager.setTheme(cloudProfile.preferredTheme, false, false);
+            }
           }
         } catch (e) {
           console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');
@@ -388,6 +391,20 @@ const FirebaseService = {
       }, err => {
         console.warn('Erro ao escutar encomendas recebidas:', err);
       });
+
+    // 10. Escuta preferências de perfil em tempo real (ex: tema sincronizado entre PC e Celular)
+    this.unsubscribeProfile = userDoc.collection('system').doc('profile').onSnapshot(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        if (data && data.preferredTheme && typeof ThemeManager !== 'undefined') {
+          if (ThemeManager.current !== data.preferredTheme) {
+            ThemeManager.setTheme(data.preferredTheme, false, false);
+          }
+        }
+      }
+    }, err => {
+      console.warn('Erro ao escutar perfil do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
@@ -400,11 +417,22 @@ const FirebaseService = {
     if (this.unsubscribeRequests) { this.unsubscribeRequests(); this.unsubscribeRequests = null; }
     if (this.unsubscribePokes) { this.unsubscribePokes(); this.unsubscribePokes = null; }
     if (this.unsubscribePackages) { this.unsubscribePackages(); this.unsubscribePackages = null; }
+    if (this.unsubscribeProfile) { this.unsubscribeProfile(); this.unsubscribeProfile = null; }
   },
 
   // ========================================================
   // OPERAÇÕES DE ESCRITA NO FIRESTORE
   // ========================================================
+
+  async saveProfileTheme(themeId) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    const uid = this.auth.currentUser.uid;
+    try {
+      await this.db.collection('users').doc(uid).collection('system').doc('profile').set({ preferredTheme: themeId }, { merge: true });
+    } catch (e) {
+      console.warn('Erro ao salvar preferência de tema na nuvem:', e);
+    }
+  },
 
   async saveProfileToCloud(profile) {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
