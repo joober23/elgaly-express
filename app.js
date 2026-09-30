@@ -9,6 +9,7 @@
 // ==========================================================================
 const AuthManager = {
   currentUser: null,
+  isEexPassVerified: false,
 
   init() {
     const savedCurrent = localStorage.getItem('elgaly_express_current_user');
@@ -17,9 +18,12 @@ const AuthManager = {
         const parsed = JSON.parse(savedCurrent);
         if (parsed && parsed.id && parsed.id !== 'guest') {
           this.currentUser = parsed;
+          const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + parsed.id);
+          this.isEexPassVerified = (sessionVerified === 'true');
         }
       } catch (e) {
         this.currentUser = null;
+        this.isEexPassVerified = false;
       }
     }
   },
@@ -89,6 +93,11 @@ const AuthManager = {
   },
 
   async logout() {
+    if (this.currentUser) {
+      sessionStorage.removeItem('elgaly_eex_pass_verified_' + this.currentUser.id);
+    }
+    this.isEexPassVerified = false;
+
     if (typeof FirebaseService !== 'undefined' && this.currentUser && this.currentUser.isGoogle) {
       await FirebaseService.logout();
     }
@@ -172,6 +181,35 @@ const AuthManager = {
 
   verifyPin(pin, badge) {
     return this.hashPin(pin) === badge.pinHash;
+  },
+
+  verifyEexPass(pin, user) {
+    if (!user) return false;
+    const hash = this.hashPin(pin);
+    // 1. Verifica contra o pinHash salvo no perfil do usuário
+    if (user.pinHash && user.pinHash === hash) return true;
+    // 2. Fallback: verifica contra badges legados
+    const badges = this.getSavedBadges();
+    const badge = badges.find(b => b.uid === user.id);
+    if (badge && badge.pinHash === hash) {
+      // Migra para o perfil
+      user.pinHash = hash;
+      this.saveCurrent();
+      if (typeof FirebaseService !== 'undefined') {
+        FirebaseService.saveProfileToCloud({ pinHash: hash });
+      }
+      return true;
+    }
+    // 3. Fallback para usuários antigos que não tinham PIN cadastrado ainda
+    if (!user.pinHash && badges.length === 0) {
+      user.pinHash = hash;
+      this.saveCurrent();
+      if (typeof FirebaseService !== 'undefined') {
+        FirebaseService.saveProfileToCloud({ pinHash: hash });
+      }
+      return true;
+    }
+    return false;
   }
 };
 
@@ -2432,7 +2470,7 @@ const AppUI = {
           return;
         }
         if (!/^[0-9]{6}$/.test(pin)) {
-          this.showToast('❌ O PIN deve ter exatamente 6 dígitos numéricos!');
+          this.showToast('❌ O EEX-PASS deve ter exatamente 6 dígitos numéricos!');
           return;
         }
 
@@ -2442,14 +2480,20 @@ const AppUI = {
         const eexEmail = AuthManager.formatEexNickname(rawNick);
         const nickname = eexEmail.replace('.express.com', '');
         const avatar = this.onboardingAvatarBase64 || user.avatar || 'images/elgalylogo.png';
+        const pinHash = AuthManager.hashPin(pin);
 
         user.eexEmail = eexEmail;
         user.nickname = nickname;
         user.location = location || 'Nova Amerit - NA (Nova Arcanis)';
         user.avatar = avatar;
+        user.pinHash = pinHash;
         user.onboardingDone = true;
         AuthManager.currentUser = user;
         AuthManager.saveCurrent();
+
+        // Sessão autenticada e validada
+        sessionStorage.setItem('elgaly_eex_pass_verified_' + user.id, 'true');
+        AuthManager.isEexPassVerified = true;
 
         if (typeof FirebaseService !== 'undefined') {
           await FirebaseService.saveProfileToCloud({
@@ -2458,12 +2502,10 @@ const AppUI = {
             nickname: nickname,
             location: user.location,
             avatar: avatar,
+            pinHash: pinHash,
             onboardingDone: true
           });
         }
-
-        // Salva o crachá com PIN para re-login rápido
-        AuthManager.saveBadge(user, pin);
 
         const modal = document.getElementById('modalOnboarding');
         if (modal) modal.classList.remove('active');
@@ -2483,7 +2525,7 @@ const AppUI = {
       });
     }
 
-    // 4. Modal de PIN (crachá salvo)
+    // 4. Modal de Verificação de Segurança (EEX-PASS obrigatório pós-Google login)
     const formPinLogin = document.getElementById('formPinLogin');
     const btnCancelPinLogin = document.getElementById('btnCancelPinLogin');
     if (formPinLogin) {
@@ -2491,21 +2533,34 @@ const AppUI = {
         e.preventDefault();
         const pin = (document.getElementById('pinInput').value || '').trim();
         const errEl = document.getElementById('pinError');
-        const badge = this._pendingBadgeLogin;
+        const user = AuthManager.getCurrentUser();
         if (errEl) errEl.textContent = '';
-        if (!badge) return;
+        if (!user) return;
 
-        if (AuthManager.verifyPin(pin, badge)) {
+        if (AuthManager.verifyEexPass(pin, user)) {
+          // EEX-PASS correto!
+          sessionStorage.setItem('elgaly_eex_pass_verified_' + user.id, 'true');
+          AuthManager.isEexPassVerified = true;
           document.getElementById('modalPinLogin').classList.remove('active');
           document.getElementById('pinInput').value = '';
-          this._pendingBadgeLogin = null;
-          // O Firebase tentará reutilizar a sessão ativa; se expirou, mostrará tela Google
-          if (typeof FirebaseService !== 'undefined') {
-            FirebaseService.loginWithGoogle();
+
+          TaskManager.init();
+          HabitManager.init();
+          EventManager.init();
+
+          if (typeof FirebaseService !== 'undefined' && user.uid) {
+            FirebaseService.startRealtimeSync(user.uid);
           }
+
+          this.renderAll();
+          this.showToast(`🔓 EEX-PASS confirmado! Acesso liberado, ${user.name}! 🚀`);
         } else {
-          if (errEl) errEl.textContent = '❌ PIN incorreto. Tente novamente.';
-          document.getElementById('pinInput').value = '';
+          if (errEl) errEl.textContent = '❌ EEX-PASS incorreto. Tente novamente.';
+          const pinInp = document.getElementById('pinInput');
+          if (pinInp) {
+            pinInp.value = '';
+            pinInp.focus();
+          }
         }
       });
     }
@@ -2515,7 +2570,7 @@ const AppUI = {
         document.getElementById('pinInput').value = '';
         const errEl = document.getElementById('pinError');
         if (errEl) errEl.textContent = '';
-        this._pendingBadgeLogin = null;
+        AuthManager.logout();
       });
     }
 
@@ -2772,17 +2827,24 @@ const AppUI = {
     // 14. Configurações: Atualizar PIN
     const formChangePin = document.getElementById('formChangePin');
     if (formChangePin) {
-      formChangePin.addEventListener('submit', (e) => {
+      formChangePin.addEventListener('submit', async (e) => {
         e.preventDefault();
         const newPin = (document.getElementById('cfgNewPin').value || '').trim();
         if (!/^[0-9]{6}$/.test(newPin)) {
-          this.showToast('❌ O PIN deve ter 6 dígitos numéricos!');
+          this.showToast('❌ O EEX-PASS deve ter 6 dígitos numéricos!');
           return;
         }
         const user = AuthManager.getCurrentUser();
         if (user) {
-          AuthManager.saveBadge(user, newPin);
-          this.showToast('🔐 PIN do crachá atualizado com sucesso!');
+          const hash = AuthManager.hashPin(newPin);
+          user.pinHash = hash;
+          AuthManager.currentUser = user;
+          AuthManager.saveCurrent();
+          sessionStorage.setItem('elgaly_eex_pass_verified_' + user.id, 'true');
+          if (typeof FirebaseService !== 'undefined') {
+            await FirebaseService.saveProfileToCloud({ pinHash: hash });
+          }
+          this.showToast('🔐 EEX-PASS atualizado com sucesso!');
           document.getElementById('cfgNewPin').value = '';
         }
       });
@@ -3312,30 +3374,34 @@ const AppUI = {
   },
 
   /**
-   * Renderiza tudo e gerencia o Portão Obrigatório de Autenticação
+   * Renderiza tudo e gerencia o Portão Obrigatório de Autenticação + EEX-PASS
    */
   renderAll() {
     const isLoggedIn = AuthManager.isLoggedIn();
+    const isVerified = AuthManager.isEexPassVerified;
     const authGateway = document.getElementById('authGateway');
     const appViewsContainer = document.getElementById('appViewsContainer');
     const desktopNav = document.querySelector('nav.desktop-nav');
     const btnMobileMenu = document.getElementById('btnMobileMenu');
     const bottomNavBar = document.getElementById('bottomNavBar');
 
-    if (!isLoggedIn) {
-      // Bloqueia acesso ao app e exibe portal de login
-      if (authGateway) authGateway.style.display = 'block';
+    if (!isLoggedIn || !isVerified) {
+      // Bloqueia acesso ao app e exibe portal de login se não estiver logado
+      if (!isLoggedIn) {
+        if (authGateway) authGateway.style.display = 'block';
+      } else {
+        if (authGateway) authGateway.style.display = 'none';
+      }
       if (appViewsContainer) appViewsContainer.style.display = 'none';
       if (desktopNav) desktopNav.style.display = 'none';
       if (btnMobileMenu) btnMobileMenu.style.display = 'none';
       if (bottomNavBar) bottomNavBar.style.display = 'none';
-      this.renderSavedBadges();
       this.renderHeaderProfile();
       this.hideSplash();
       return;
     }
 
-    // Usuário logado: libera a navegação e views
+    // Usuário logado e verificado com EEX-PASS: libera a navegação e views
     if (authGateway) authGateway.style.display = 'none';
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
@@ -3354,46 +3420,31 @@ const AppUI = {
   },
 
   /**
-   * Renderiza crachás salvos no dispositivo para acesso rápido com PIN
+   * Exibe o modal de solicitação do EEX-PASS após o login com Google
    */
-  renderSavedBadges() {
-    const list = document.getElementById('savedBadgesList');
-    const section = document.getElementById('savedBadgesSection');
-    if (!list) return;
+  showEexPassPrompt(user) {
+    const modal = document.getElementById('modalPinLogin');
+    if (!modal) return;
+    const avatarEl = document.getElementById('pinLoginAvatarImg');
+    const nameEl = document.getElementById('pinLoginName');
+    const eexEl = document.getElementById('pinLoginEex');
+    const pinInput = document.getElementById('pinInput');
+    const errEl = document.getElementById('pinError');
 
-    const badges = AuthManager.getSavedBadges();
-    if (badges.length === 0) {
-      if (section) section.style.display = 'none';
-      return;
+    if (avatarEl) avatarEl.src = user.avatar || 'images/elgalylogo.png';
+    if (nameEl) nameEl.textContent = user.name || 'Agente';
+    if (eexEl) eexEl.textContent = `@${user.eexEmail || (user.nickname + '.express.com')}`;
+    if (pinInput) {
+      pinInput.value = '';
+      setTimeout(() => pinInput.focus(), 250);
     }
-    if (section) section.style.display = 'block';
+    if (errEl) errEl.textContent = '';
 
-    list.innerHTML = badges.map(badge => `
-      <div class="badge-chip" data-uid="${badge.uid}">
-        <img class="badge-chip-avatar" src="${badge.avatar || 'images/elgalylogo.png'}" alt="" onerror="this.src='images/elgalylogo.png'">
-        <div class="badge-chip-info">
-          <div class="badge-chip-name">${badge.name}</div>
-          <div class="badge-chip-eex">${badge.eexEmail}</div>
-        </div>
-        <span class="badge-chip-pin-icon">🔑</span>
-      </div>
-    `).join('');
+    modal.classList.add('active');
+  },
 
-    list.querySelectorAll('.badge-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const uid = chip.dataset.uid;
-        const badge = AuthManager.getSavedBadges().find(b => b.uid === uid);
-        if (!badge) return;
-        document.getElementById('pinLoginAvatarImg').src = badge.avatar || 'images/elgalylogo.png';
-        document.getElementById('pinLoginName').textContent = badge.name;
-        document.getElementById('pinLoginEex').textContent = badge.eexEmail;
-        document.getElementById('pinInput').value = '';
-        const errEl = document.getElementById('pinError');
-        if (errEl) errEl.textContent = '';
-        this._pendingBadgeLogin = badge;
-        document.getElementById('modalPinLogin').classList.add('active');
-      });
-    });
+  renderSavedBadges() {
+    // Crachás na tela de login desativados por política de segurança EEX-PASS
   },
 
   renderHeaderProfile() {

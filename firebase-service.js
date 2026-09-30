@@ -133,14 +133,30 @@ const FirebaseService = {
           return; // Não inicializa o app ainda
         }
 
-        // Onboarding já feito — inicializa o app normalmente
-        this.startRealtimeSync(firebaseUser.uid);
-        AppUI.renderAll();
-        AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.eexEmail}!`);
+        // Onboarding já feito — verifica se o EEX-PASS já foi validado nesta sessão
+        const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + userData.uid) === 'true';
+        if (sessionVerified) {
+          AuthManager.isEexPassVerified = true;
+          this.startRealtimeSync(firebaseUser.uid);
+          AppUI.renderAll();
+          AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.name}!`);
+        } else {
+          // Exige validação do EEX-PASS antes de liberar o despacho
+          AuthManager.isEexPassVerified = false;
+          const gw = document.getElementById('authGateway');
+          if (gw) gw.style.display = 'none';
+          const appViews = document.getElementById('appViewsContainer');
+          if (appViews) appViews.style.display = 'none';
+          if (typeof AppUI !== 'undefined' && AppUI.showEexPassPrompt) {
+            AppUI.showEexPassPrompt(userData);
+          }
+        }
       } else {
         // Usuário deslogado do Firebase
         this.stopRealtimeSync();
-        if (AuthManager.currentUser && AuthManager.currentUser.isGoogle) {
+        if (AuthManager.currentUser) {
+          sessionStorage.removeItem('elgaly_eex_pass_verified_' + AuthManager.currentUser.id);
+          AuthManager.isEexPassVerified = false;
           AuthManager.currentUser = null;
           AuthManager.saveCurrent();
           AppUI.renderAll();

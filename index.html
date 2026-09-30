@@ -158,12 +158,6 @@
           Entrar com Conta Google
         </button>
         <div class="auth-hint">Sincronização automática entre dispositivos via Firebase.</div>
-
-        <!-- Crachás Salvos -->
-        <div class="saved-badges-section" id="savedBadgesSection" style="display:none;">
-          <div class="saved-badges-title">🏷️ Ou escolha um crachá salvo neste aparelho:</div>
-          <div class="saved-badges-list" id="savedBadgesList"></div>
-        </div>
       </div>
     </div>
 
@@ -708,17 +702,17 @@
               </div>
             </div>
 
-            <!-- Card 2: Segurança do Crachá (PIN de 6 dígitos) -->
+            <!-- Card 2: Segurança do Crachá (EEX-PASS de 6 dígitos) -->
             <div class="settings-card">
-              <h3>🔐 Senha Numérica do Crachá (PIN)</h3>
-              <p>Atualize seu PIN de 6 dígitos para login rápido pelos crachás salvos neste dispositivo.</p>
+              <h3>🔐 EEX-PASS (Chave de Segurança)</h3>
+              <p>Atualize seu EEX-PASS de 6 dígitos exigido para liberar o acesso ao entrar com sua Conta Google.</p>
               <form class="comic-form" id="formChangePin">
                 <div class="form-group">
-                  <label for="cfgNewPin">Novo PIN de 6 Dígitos:</label>
-                  <input type="password" id="cfgNewPin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" required>
+                  <label for="cfgNewPin">Novo EEX-PASS de 6 Dígitos:</label>
+                  <input type="password" id="cfgNewPin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" required autocomplete="new-password">
                 </div>
                 <button type="submit" class="btn-comic" style="width: 100%; margin-top: 8px;">
-                  🔑 Atualizar PIN
+                  🔑 Atualizar EEX-PASS
                 </button>
               </form>
             </div>
@@ -1169,9 +1163,9 @@
         </div>
 
         <div class="form-group">
-          <label for="onbPin">🔑 PIN Secreto (6 dígitos para crachá rápido):</label>
+          <label for="onbPin">🔐 Criar EEX-PASS (Chave Numérica de 6 dígitos):</label>
           <input type="password" id="onbPin" required placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="new-password">
-          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Use este PIN para entrar rapidamente pelo crachá salvo.</small>
+          <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Esta será sua chave de acesso (EEX-PASS) exigida a cada login para proteger suas rotinas.</small>
         </div>
 
         <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">
@@ -1181,21 +1175,27 @@
     </div>
   </div>
 
-  <!-- MODAL DE PIN PARA CRACHÁ SALVO -->
+  <!-- MODAL DE VERIFICAÇÃO DE SEGURANÇA: EEX-PASS -->
   <div class="modal-overlay" id="modalPinLogin">
     <div class="modal-content" style="max-width:380px;text-align:center;">
-      <div style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);">
-        <img id="pinLoginAvatarImg" src="images/elgalylogo.png" style="width:100%;height:100%;object-fit:cover;" alt="">
+      <div style="width:76px;height:76px;border-radius:50%;object-fit:cover;margin:0 auto 12px;background:var(--card-bg);overflow:hidden;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);">
+        <img id="pinLoginAvatarImg" src="images/elgalylogo.png" style="width:100%;height:100%;object-fit:cover;" alt="Avatar">
       </div>
-      <h3 id="pinLoginName" style="margin:0 0 4px;">Agente</h3>
-      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 16px;font-weight:700;"></p>
+      <h3 id="pinLoginName" style="margin:0 0 2px;">Agente</h3>
+      <p id="pinLoginEex" style="font-size:0.85rem;color:var(--purple-main);margin:0 0 12px;font-weight:700;"></p>
+
+      <div style="background:var(--card-bg);border:2px dashed var(--black);border-radius:12px;padding:8px 12px;margin-bottom:14px;">
+        <span style="font-weight:900;font-size:0.82rem;color:var(--purple-dark);letter-spacing:0.5px;">🔐 EEX-PASS REQUERIDO</span>
+        <p style="font-size:0.75rem;color:var(--text-muted,#4b5563);margin:2px 0 0 0;font-weight:600;">Digite sua chave de 6 dígitos cadastrada para liberar o sistema.</p>
+      </div>
+
       <form id="formPinLogin">
         <input type="password" id="pinInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
-          style="text-align:center;font-size:1.5rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required>
+          style="text-align:center;font-size:1.6rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required autocomplete="current-password">
         <span id="pinError" style="display:block;color:#e62b7e;font-size:0.8rem;margin-top:6px;min-height:18px;font-weight:700;"></span>
-        <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">🔓 Entrar</button>
+        <button type="submit" class="btn-comic" style="width:100%;margin-top:8px;">🔓 Confirmar EEX-PASS</button>
       </form>
-      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">Cancelar</button>
+      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">🚪 Cancelar / Trocar Conta</button>
     </div>
   </div>
 
