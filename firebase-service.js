@@ -756,6 +756,48 @@ const FirebaseService = {
     } catch (e) {
       console.warn('Erro ao marcar encomenda como aberta:', e);
     }
+  },
+
+  // ========================================================
+  // SUPORTE AUTOMATIZADO: RECUPERAÇÃO DE EEX-PASS POR E-MAIL
+  // ========================================================
+  async saveRecoveryCode(uid, code, expiresAt) {
+    if (!this.db) return false;
+    try {
+      await this.db.collection('users').doc(uid).collection('system').doc('recovery').set({
+        code: String(code),
+        expiresAt: expiresAt,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        used: false
+      });
+      return true;
+    } catch (e) {
+      console.error('Erro ao salvar código de recuperação no Firestore:', e);
+      return false;
+    }
+  },
+
+  async getRecoveryCode(uid) {
+    if (!this.db) return null;
+    try {
+      const doc = await this.db.collection('users').doc(uid).collection('system').doc('recovery').get();
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      console.error('Erro ao buscar código de recuperação no Firestore:', e);
+      return null;
+    }
+  },
+
+  async clearRecoveryCode(uid) {
+    if (!this.db) return;
+    try {
+      await this.db.collection('users').doc(uid).collection('system').doc('recovery').delete();
+    } catch (e) {
+      console.warn('Erro ao limpar código de recuperação:', e);
+    }
   }
 };
 

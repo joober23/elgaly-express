@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   
   <!-- Folha de Estilos Modular -->
   <link rel="stylesheet" href="style.css">
@@ -491,8 +492,8 @@
            ========================================================================== -->
       <div class="app-view" id="view-amigos">
         <section class="site-section">
-          <!-- CONTEÚDO DO SISTEMA DE AMIGOS (oculto por agora) -->
-          <div class="friends-app-container" style="display:none" id="friendsAppContainerReal">
+          <!-- CONTEÚDO DO SISTEMA DE AMIGOS (EEX-FRIENDS ATIVO) -->
+          <div class="friends-app-container" id="friendsAppContainerReal">
             
             <!-- Hero Card: Entregas Coletivas + Seu ID Express -->
             <div class="friends-hero-card">
@@ -593,8 +594,8 @@
 
           </div>
 
-          <!-- EM BREVE: Tela decorativa enquanto o sistema de amigos está em preparação -->
-          <div class="friends-coming-soon" id="friendsComingSoon">
+          <!-- EM BREVE: Ocultado pois EEX-Friends foi liberado -->
+          <div class="friends-coming-soon" id="friendsComingSoon" style="display: none;">
             <div class="coming-soon-inner">
               <div class="coming-soon-mascots">
                 <img src="images/brave.png" alt="Agente Brave" class="cs-mascot bounce-anim">
@@ -1194,8 +1195,81 @@
           style="text-align:center;font-size:1.6rem;letter-spacing:0.4em;width:100%;border:2.5px solid var(--purple-main);border-radius:12px;padding:10px;font-family:var(--font-main);" required autocomplete="current-password">
         <span id="pinError" style="display:block;color:#e62b7e;font-size:0.8rem;margin-top:6px;min-height:18px;font-weight:700;"></span>
         <button type="submit" class="btn-comic" style="width:100%;margin-top:8px;">🔓 Confirmar EEX-PASS</button>
+        <div style="margin-top: 10px;">
+          <button type="button" class="btn-link-forgot-pass" id="btnForgotEexPass" style="background:none;border:none;color:var(--purple-dark);font-size:0.82rem;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px 8px;font-family:var(--font-main);">
+            Esqueceu seu EEX-PASS? Redefinir por e-mail
+          </button>
+        </div>
       </form>
-      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:8px;">🚪 Cancelar / Trocar Conta</button>
+      <button id="btnCancelPinLogin" class="btn-comic btn-secondary" style="width:100%;margin-top:10px;">🚪 Cancelar / Trocar Conta</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE RECUPERAÇÃO DE EEX-PASS POR E-MAIL (Suporte Automatizado) -->
+  <div class="modal-overlay" id="modalRecoveryEexPass">
+    <div class="modal-content" style="max-width:400px;text-align:center;">
+      <div style="width:68px;height:68px;border-radius:50%;margin:0 auto 10px;background:var(--card-bg);display:flex;align-items:center;justify-content:center;font-size:2rem;border:3px solid var(--black);box-shadow:3px 3px 0 var(--black);">
+        📬
+      </div>
+      <h3 style="margin:0 0 4px;">Recuperar EEX-PASS</h3>
+      <p style="font-size:0.84rem;color:var(--purple-dark);margin:0 0 14px;font-weight:600;">
+        Enviaremos um código temporário de 6 dígitos para o e-mail Google da sua conta.
+      </p>
+
+      <!-- Etapa 1: Enviar código -->
+      <div id="recoveryStep1">
+        <div style="background:var(--card-bg);border:2px dashed var(--black);border-radius:12px;padding:12px;margin-bottom:14px;text-align:left;">
+          <span style="font-size:0.75rem;font-weight:800;color:var(--purple-dark);text-transform:uppercase;">E-mail de Destino:</span>
+          <div id="recoveryUserEmail" style="font-size:0.95rem;font-weight:900;color:var(--magenta-bright);word-break:break-all;margin-top:2px;">
+            carregando...
+          </div>
+        </div>
+
+        <button type="button" class="btn-comic" id="btnSendRecoveryCode" style="width:100%;background:var(--yellow-bright);color:var(--black);">
+          ✉️ Enviar Código de Recuperação
+        </button>
+      </div>
+
+      <!-- Etapa 2: Validar código e definir novo EEX-PASS -->
+      <div id="recoveryStep2" style="display:none;text-align:left;">
+        <div style="background:#eef7ee;border:2px solid #2e7d32;border-radius:10px;padding:8px 10px;margin-bottom:12px;font-size:0.8rem;color:#1b5e20;font-weight:700;text-align:center;">
+          ✅ Código enviado! Válido por 10 minutos.
+        </div>
+
+        <form id="formConfirmRecovery">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label for="recoveryCodeInput" style="font-size:0.82rem;font-weight:800;display:block;margin-bottom:4px;">🔢 Código de 6 dígitos recebido:</label>
+            <input type="text" id="recoveryCodeInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+              style="text-align:center;font-size:1.4rem;letter-spacing:0.3em;width:100%;border:2px solid var(--black);border-radius:10px;padding:8px;font-family:var(--font-main);" required autocomplete="one-time-code">
+          </div>
+
+          <div class="form-group" style="margin-bottom:10px;">
+            <label for="newEexPassInput" style="font-size:0.82rem;font-weight:800;display:block;margin-bottom:4px;">🔐 Novo EEX-PASS (6 dígitos numéricos):</label>
+            <input type="password" id="newEexPassInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+              style="text-align:center;font-size:1.4rem;letter-spacing:0.3em;width:100%;border:2px solid var(--black);border-radius:10px;padding:8px;font-family:var(--font-main);" required autocomplete="new-password">
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label for="confirmNewEexPassInput" style="font-size:0.82rem;font-weight:800;display:block;margin-bottom:4px;">🔁 Confirmar Novo EEX-PASS:</label>
+            <input type="password" id="confirmNewEexPassInput" placeholder="••••••" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+              style="text-align:center;font-size:1.4rem;letter-spacing:0.3em;width:100%;border:2px solid var(--black);border-radius:10px;padding:8px;font-family:var(--font-main);" required autocomplete="new-password">
+          </div>
+
+          <span id="recoveryError" style="display:block;color:#e62b7e;font-size:0.8rem;margin-bottom:10px;min-height:18px;font-weight:700;text-align:center;"></span>
+
+          <button type="submit" class="btn-comic" style="width:100%;">
+            💾 Salvar Novo EEX-PASS & Entrar
+          </button>
+        </form>
+
+        <button type="button" class="btn-comic btn-secondary" id="btnResendRecoveryCode" style="width:100%;margin-top:8px;font-size:0.82rem;">
+          🔄 Reenviar Código
+        </button>
+      </div>
+
+      <button type="button" class="btn-comic btn-secondary" id="btnCloseRecoveryModal" style="width:100%;margin-top:10px;">
+        ✕ Voltar para o EEX-PASS
+      </button>
     </div>
   </div>
 

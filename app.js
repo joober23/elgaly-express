@@ -214,6 +214,250 @@ const AuthManager = {
 };
 
 // ==========================================================================
+// GERENCIADOR DE RECUPERAÇÃO DE EEX-PASS (Suporte Automatizado por E-mail)
+// ==========================================================================
+const RecoveryManager = {
+  _pendingRecovery: null,
+
+  init() {
+    if (typeof emailjs !== 'undefined') {
+      const config = this.getEmailJsConfig();
+      if (config && config.publicKey) {
+        try {
+          emailjs.init({ publicKey: config.publicKey });
+        } catch (e) {
+          console.warn('Erro ao inicializar EmailJS:', e);
+        }
+      }
+    }
+  },
+
+  getEmailJsConfig() {
+    try {
+      const raw = localStorage.getItem('elgaly_emailjs_config');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return null;
+  },
+
+  maskEmail(email) {
+    if (!email || !email.includes('@')) return 'agente@express.com';
+    const [user, domain] = email.split('@');
+    if (user.length <= 2) return `${user[0]}***@${domain}`;
+    return `${user.slice(0, 3)}***${user.slice(-1)}@${domain}`;
+  },
+
+  openModal() {
+    const user = AuthManager.getCurrentUser();
+    if (!user) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('⚠️ Identificação de agente não encontrada.');
+      }
+      return;
+    }
+
+    const emailDisplay = document.getElementById('recoveryUserEmail');
+    if (emailDisplay) {
+      emailDisplay.textContent = this.maskEmail(user.email || '');
+    }
+
+    const step1 = document.getElementById('recoveryStep1');
+    const step2 = document.getElementById('recoveryStep2');
+    const errEl = document.getElementById('recoveryError');
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+
+    const codeInp = document.getElementById('recoveryCodeInput');
+    const newPassInp = document.getElementById('newEexPassInput');
+    const confPassInp = document.getElementById('confirmNewEexPassInput');
+    if (codeInp) codeInp.value = '';
+    if (newPassInp) newPassInp.value = '';
+    if (confPassInp) confPassInp.value = '';
+
+    const modalPin = document.getElementById('modalPinLogin');
+    if (modalPin) modalPin.classList.remove('active');
+
+    const modalRec = document.getElementById('modalRecoveryEexPass');
+    if (modalRec) modalRec.classList.add('active');
+  },
+
+  closeModal() {
+    const modalRec = document.getElementById('modalRecoveryEexPass');
+    if (modalRec) modalRec.classList.remove('active');
+
+    if (AuthManager.isLoggedIn() && !AuthManager.isEexPassVerified) {
+      const modalPin = document.getElementById('modalPinLogin');
+      if (modalPin) modalPin.classList.add('active');
+    }
+  },
+
+  async sendRecoveryCode() {
+    const user = AuthManager.getCurrentUser();
+    if (!user || !user.email) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('⚠️ Nenhum e-mail Google vinculado a esta conta.');
+      }
+      return;
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+
+    this._pendingRecovery = {
+      uid: user.id,
+      code: code,
+      expiresAt: expiresAt
+    };
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveRecoveryCode) {
+      await FirebaseService.saveRecoveryCode(user.id, code, expiresAt);
+    }
+
+    const emailConfig = this.getEmailJsConfig();
+    let sentViaEmail = false;
+
+    if (typeof emailjs !== 'undefined' && emailConfig && emailConfig.serviceId && emailConfig.templateId) {
+      try {
+        await emailjs.send(emailConfig.serviceId, emailConfig.templateId, {
+          to_email: user.email,
+          to_name: user.name || 'Agente Express',
+          recovery_code: code,
+          expires_in: '10 minutos'
+        });
+        sentViaEmail = true;
+      } catch (err) {
+        console.warn('Envio via EmailJS falhou:', err);
+      }
+    }
+
+    const step1 = document.getElementById('recoveryStep1');
+    const step2 = document.getElementById('recoveryStep2');
+    const errEl = document.getElementById('recoveryError');
+    if (step1) step1.style.display = 'none';
+    if (step2) step2.style.display = 'block';
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+
+    const codeInp = document.getElementById('recoveryCodeInput');
+    if (codeInp) {
+      codeInp.value = '';
+      setTimeout(() => codeInp.focus(), 250);
+    }
+
+    if (sentViaEmail) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast(`✉️ Código enviado para ${this.maskEmail(user.email)}!`);
+      }
+    } else {
+      console.log('🔐 [REDE EEX - RECUPERAÇÃO] Código temporário:', code);
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast(`📨 Código registrado na nuvem! (Código de teste: ${code})`);
+      }
+    }
+  },
+
+  async confirmRecovery(code, newPass, confirmPass) {
+    const errEl = document.getElementById('recoveryError');
+    const showError = (msg) => {
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+    };
+
+    if (errEl) {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+    }
+
+    if (!/^[0-9]{6}$/.test(code)) {
+      showError('❌ O código de recuperação deve ter exatamente 6 dígitos numéricos.');
+      return false;
+    }
+
+    if (!/^[0-9]{6}$/.test(newPass)) {
+      showError('❌ O novo EEX-PASS deve ter exatamente 6 dígitos numéricos.');
+      return false;
+    }
+
+    if (newPass !== confirmPass) {
+      showError('❌ A confirmação do novo EEX-PASS não confere.');
+      return false;
+    }
+
+    const user = AuthManager.getCurrentUser();
+    if (!user) {
+      showError('❌ Sessão expirada. Faça login novamente.');
+      return false;
+    }
+
+    let validCodeData = null;
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.getRecoveryCode) {
+      validCodeData = await FirebaseService.getRecoveryCode(user.id);
+    }
+    if (!validCodeData && this._pendingRecovery && this._pendingRecovery.uid === user.id) {
+      validCodeData = this._pendingRecovery;
+    }
+
+    if (!validCodeData) {
+      showError('❌ Nenhum código de recuperação ativo. Solicite um novo código.');
+      return false;
+    }
+
+    if (Date.now() > (validCodeData.expiresAt || 0)) {
+      showError('⚠️ Este código expirou (limite de 10 minutos). Solicite um novo.');
+      return false;
+    }
+
+    if (String(validCodeData.code).trim() !== String(code).trim()) {
+      showError('❌ Código de verificação incorreto.');
+      return false;
+    }
+
+    const newHash = AuthManager.hashPin(newPass);
+    user.pinHash = newHash;
+    AuthManager.saveCurrent();
+    AuthManager.saveBadge(user, newPass);
+
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveProfileToCloud({ pinHash: newHash });
+      await FirebaseService.clearRecoveryCode(user.id);
+    }
+
+    this._pendingRecovery = null;
+
+    sessionStorage.setItem('elgaly_eex_pass_verified_' + user.id, 'true');
+    AuthManager.isEexPassVerified = true;
+
+    const modalRec = document.getElementById('modalRecoveryEexPass');
+    if (modalRec) modalRec.classList.remove('active');
+    const modalPin = document.getElementById('modalPinLogin');
+    if (modalPin) modalPin.classList.remove('active');
+
+    TaskManager.init();
+    HabitManager.init();
+    EventManager.init();
+    if (typeof FriendsManager !== 'undefined') {
+      FriendsManager.init();
+    }
+    if (typeof MemoriesManager !== 'undefined') {
+      MemoriesManager.init();
+    }
+
+    if (typeof FirebaseService !== 'undefined' && user.uid) {
+      FirebaseService.startRealtimeSync(user.uid);
+    }
+
+    if (typeof AppUI !== 'undefined') {
+      AppUI.renderAll();
+      AppUI.showToast(`🎉 EEX-PASS redefinido com sucesso! Bem-vindo(a), ${user.name}! 🚀`);
+    }
+
+    return true;
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE TAREFAS / ENCOMENDAS (TaskManager)
 // ==========================================================================
 const TaskManager = {
@@ -2250,6 +2494,7 @@ const AppUI = {
   init() {
     ThemeManager.init();
     AuthManager.init();
+    RecoveryManager.init();
     TaskManager.init();
     HabitManager.init();
     EventManager.init();
@@ -2547,6 +2792,12 @@ const AppUI = {
           TaskManager.init();
           HabitManager.init();
           EventManager.init();
+          if (typeof FriendsManager !== 'undefined') {
+            FriendsManager.init();
+          }
+          if (typeof MemoriesManager !== 'undefined') {
+            MemoriesManager.init();
+          }
 
           if (typeof FirebaseService !== 'undefined' && user.uid) {
             FirebaseService.startRealtimeSync(user.uid);
@@ -2571,6 +2822,74 @@ const AppUI = {
         const errEl = document.getElementById('pinError');
         if (errEl) errEl.textContent = '';
         AuthManager.logout();
+      });
+    }
+
+    // 4.1. Suporte Automatizado: Recuperação de EEX-PASS por E-mail
+    const btnForgotEexPass = document.getElementById('btnForgotEexPass');
+    if (btnForgotEexPass) {
+      btnForgotEexPass.addEventListener('click', () => {
+        RecoveryManager.openModal();
+      });
+    }
+
+    const btnSendRecoveryCode = document.getElementById('btnSendRecoveryCode');
+    if (btnSendRecoveryCode) {
+      btnSendRecoveryCode.addEventListener('click', async () => {
+        btnSendRecoveryCode.disabled = true;
+        btnSendRecoveryCode.textContent = '⏳ Enviando código...';
+        try {
+          await RecoveryManager.sendRecoveryCode();
+        } finally {
+          btnSendRecoveryCode.disabled = false;
+          btnSendRecoveryCode.textContent = '✉️ Enviar Código de Recuperação';
+        }
+      });
+    }
+
+    const btnResendRecoveryCode = document.getElementById('btnResendRecoveryCode');
+    if (btnResendRecoveryCode) {
+      btnResendRecoveryCode.addEventListener('click', async () => {
+        btnResendRecoveryCode.disabled = true;
+        btnResendRecoveryCode.textContent = '⏳ Reenviando...';
+        try {
+          await RecoveryManager.sendRecoveryCode();
+        } finally {
+          btnResendRecoveryCode.disabled = false;
+          btnResendRecoveryCode.textContent = '🔄 Reenviar Código';
+        }
+      });
+    }
+
+    const formConfirmRecovery = document.getElementById('formConfirmRecovery');
+    if (formConfirmRecovery) {
+      formConfirmRecovery.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = (document.getElementById('recoveryCodeInput').value || '').trim();
+        const newPass = (document.getElementById('newEexPassInput').value || '').trim();
+        const confirmPass = (document.getElementById('confirmNewEexPassInput').value || '').trim();
+
+        const submitBtn = formConfirmRecovery.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = '⏳ Verificando & Salvando...';
+        }
+
+        try {
+          await RecoveryManager.confirmRecovery(code, newPass, confirmPass);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '💾 Salvar Novo EEX-PASS & Entrar';
+          }
+        }
+      });
+    }
+
+    const btnCloseRecoveryModal = document.getElementById('btnCloseRecoveryModal');
+    if (btnCloseRecoveryModal) {
+      btnCloseRecoveryModal.addEventListener('click', () => {
+        RecoveryManager.closeModal();
       });
     }
 
