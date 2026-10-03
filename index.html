@@ -317,6 +317,7 @@
                 <button class="filter-btn active" data-filter="todas">🌟 Todas</button>
                 <button class="filter-btn" data-filter="faculdade">🎓 Faculdade</button>
                 <button class="filter-btn" data-filter="pessoal">👤 Pessoal</button>
+                <button class="filter-btn filter-btn-trabalho" data-filter="trabalho" id="filterBtnTrabalho" style="display:none;">💼 Trabalho</button>
                 <button class="filter-btn" data-filter="pendentes">⏳ Pendentes</button>
                 <button class="filter-btn" data-filter="concluidas">✅ Concluídas</button>
               </div>
@@ -517,11 +518,11 @@
                   <span class="share-label">🏷️ SEU ID EXPRESS PARA AMIGOS:</span>
                   <strong class="share-code" id="myEexIdDisplay">carregando...</strong>
                 </div>
-                <div class="friends-hero-btn-row">
+                <div class="friends-hero-btn-row" style="justify-content: center; width: 100%;">
                   <button type="button" class="btn-comic" id="btnCopyMyEexId" style="background: var(--yellow-bright); color: var(--black);">
                     📋 Copiar ID Express
                   </button>
-                  <button type="button" class="btn-comic btn-sos-toggle" id="btnToggleSos">
+                  <button type="button" class="btn-comic btn-sos-toggle" id="btnToggleSos" style="display: none;">
                     🚨 SOS Resgate
                   </button>
                   <button type="button" class="btn-comic btn-radio-toggle" id="btnRadioBip">
@@ -761,7 +762,57 @@
                 <div id="pwaStatusText" style="font-size: 0.8rem; color: #6b7280; font-weight: 700; text-align: center;">
                   Notificações automáticas sincronizadas e ativas.
                 </div>
+            <!-- Card 6: Modo Profissão / Trabalho -->
+            <div class="settings-card">
+              <h3>💼 Modo Profissão / Trabalho</h3>
+              <p>Ative categorias, filtros e prazos profissionais no seu dia a dia (tarefas, rotinas e eventos).</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--card-bg);border:2px solid var(--purple-main);border-radius:12px;margin-top:10px;">
+                <div>
+                  <strong style="font-size:0.9rem;display:block;color:var(--purple-dark);">Status Profissional:</strong>
+                  <span id="cfgWorkModeStatus" style="font-size:0.8rem;font-weight:800;color:#6b7280;">Desativado</span>
+                </div>
+                <button type="button" class="btn-comic btn-sm" id="btnToggleSettingsWorkMode">
+                  Ativar
+                </button>
               </div>
+            </div>
+
+            <!-- Card 7: Saudação do Coração Magáfico (VIP) -->
+            <div class="settings-card" id="cardSettingsMagaficGreeting" style="display: none;">
+              <h3>💜 Saudação do Coração Magáfico</h3>
+              <p>Exibe o Coraçãozinho Magáfico com som e mensagem de carinho toda vez que você entrar no sistema.</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--card-bg);border:2px solid var(--purple-main);border-radius:12px;margin-top:10px;">
+                <div>
+                  <strong style="font-size:0.9rem;display:block;color:var(--purple-dark);">Saudação ao Entrar:</strong>
+                  <span id="cfgMagaficGreetingStatus" style="font-size:0.8rem;font-weight:800;color:#16a34a;">Ativada</span>
+                </div>
+                <button type="button" class="btn-comic btn-sm btn-secondary" id="btnToggleMagaficGreeting">
+                  Desativar
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 8: Suporte & Chaves de Envio de E-mail (EmailJS) -->
+            <div class="settings-card">
+              <h3>📬 Envio de E-mail (Suporte EmailJS)</h3>
+              <p>Configure ou atualize suas credenciais gratuitas do EmailJS para envio real do código de recuperação do EEX-PASS.</p>
+              <form class="comic-form" id="formEmailJsConfig" style="margin-top: 8px;">
+                <div class="form-group" style="margin-bottom: 6px;">
+                  <label for="cfgEmailJsService" style="font-size: 0.78rem;">Service ID:</label>
+                  <input type="text" id="cfgEmailJsService" placeholder="ex: service_xxxx" style="padding: 6px; font-size: 0.85rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 6px;">
+                  <label for="cfgEmailJsTemplate" style="font-size: 0.78rem;">Template ID:</label>
+                  <input type="text" id="cfgEmailJsTemplate" placeholder="ex: template_xxxx" style="padding: 6px; font-size: 0.85rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                  <label for="cfgEmailJsPublic" style="font-size: 0.78rem;">Public Key:</label>
+                  <input type="text" id="cfgEmailJsPublic" placeholder="ex: xxxxxxxxxxxxx" style="padding: 6px; font-size: 0.85rem;">
+                </div>
+                <button type="submit" class="btn-comic btn-secondary" style="width: 100%; font-size: 0.85rem;">
+                  💾 Salvar Chaves EmailJS
+                </button>
+              </form>
             </div>
           </div>
         </section>
@@ -835,6 +886,7 @@
             <select id="taskCategory" required>
               <option value="faculdade">🎓 Faculdade (Acadêmico)</option>
               <option value="pessoal">🌟 Pessoal (Projetos / Vida)</option>
+              <option value="trabalho" class="opt-work-mode" style="display:none;">💼 Trabalho (Profissional)</option>
             </select>
           </div>
 
@@ -888,6 +940,7 @@
           <select id="habitCategory" required>
             <option value="faculdade">🎓 Faculdade</option>
             <option value="pessoal" selected>🌟 Pessoal</option>
+            <option value="trabalho" class="opt-work-mode" style="display:none;">💼 Trabalho</option>
           </select>
         </div>
 
@@ -1169,6 +1222,16 @@
           <small style="color:var(--purple-dark);font-size:0.8rem;font-weight:600;">Esta será sua chave de acesso (EEX-PASS) exigida a cada login para proteger suas rotinas.</small>
         </div>
 
+        <div class="form-group-work-toggle" style="background:var(--card-bg);border:2px dashed var(--black);border-radius:12px;padding:12px;margin:10px 0;text-align:left;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-weight:800;font-size:0.9rem;">
+            <input type="checkbox" id="onbWorkMode" style="width:20px;height:20px;accent-color:var(--purple-main);cursor:pointer;">
+            <span>💼 Ativar Modo Profissão / Trabalho</span>
+          </label>
+          <small style="display:block;margin-top:4px;color:var(--purple-dark);font-size:0.75rem;font-weight:600;padding-left:30px;">
+            Habilita categorias, filtros e prazos profissionais para o seu dia a dia.
+          </small>
+        </div>
+
         <button type="submit" class="btn-comic" style="width:100%;margin-top:12px;">
           🚀 Ativar Crachá EEX
         </button>
@@ -1270,6 +1333,42 @@
       <button type="button" class="btn-comic btn-secondary" id="btnCloseRecoveryModal" style="width:100%;margin-top:10px;">
         ✕ Voltar para o EEX-PASS
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL POPUP DA C.E.O. (MODO PROFISSÃO / TRABALHO) -->
+  <div class="modal-overlay" id="modalCeoWorkPrompt">
+    <div class="modal-content" style="max-width:440px;text-align:center;position:relative;">
+      <div style="width:84px;height:84px;margin:0 auto 12px;background:var(--yellow-bright);border:3px solid var(--black);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 var(--black);">
+        <img src="images/elgalylogo.png" alt="C.E.O." style="width:62px;height:62px;object-fit:contain;">
+      </div>
+      <span class="badge-tag" style="background:var(--purple-dark);color:var(--white);padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:900;letter-spacing:0.5px;display:inline-block;margin-bottom:8px;">
+        📢 COMUNICADO DA C.E.O. EEX
+      </span>
+      <h2 style="font-size:1.5rem;margin:0 0 8px;line-height:1.2;">Você trabalha atualmente? 💼</h2>
+      <p style="font-size:0.9rem;color:var(--purple-dark);margin:0 0 16px;line-height:1.4;font-weight:600;">
+        Notamos que suas rotinas dimensionais podem ir além da faculdade e vida pessoal! Deseja ativar o <strong>Modo Profissão</strong> para gerenciar suas tarefas, rotinas diárias e prazos de trabalho?
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button type="button" class="btn-comic" id="btnCeoEnableWork" style="background:var(--yellow-bright);color:var(--black);width:100%;font-size:1rem;">
+          💼 Sim, ativar Modo Profissão!
+        </button>
+        <button type="button" class="btn-comic btn-secondary" id="btnCeoDismissWork" style="width:100%;font-size:0.85rem;">
+          Agora não, sou apenas estudante / pessoal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAUDAÇÃO ESPECIAL DO CORAÇÃO MAGÁFICO AO ENTRAR (MAGAFUS & JOÃO VIP) -->
+  <div class="magafic-welcome-overlay" id="magaficLoginGreeting">
+    <div class="magafic-welcome-box">
+      <img src="images/magaficseal.png" alt="Coração Magáfico" class="magafic-welcome-seal magafic-dance" id="magaficGreetingImg">
+      <div class="magafic-welcome-content">
+        <div class="magafic-welcome-title">💜 Coração Magáfico</div>
+        <p class="magafic-welcome-msg" id="magaficGreetingText">Oi, Magafus! Que bom te ver por aqui hoje! 💜✨</p>
+      </div>
+      <button type="button" class="magafic-welcome-close" id="btnCloseMagaficGreeting" aria-label="Fechar">✕</button>
     </div>
   </div>
 

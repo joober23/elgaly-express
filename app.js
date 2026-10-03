@@ -502,7 +502,7 @@ const TaskManager = {
   },
 
   async addTask(taskData) {
-    const prefix = taskData.category === 'faculdade' ? 'FAC' : 'ELG';
+    const prefix = taskData.category === 'faculdade' ? 'FAC' : (taskData.category === 'trabalho' ? 'JOB' : 'ELG');
     const randomNum = Math.floor(100 + Math.random() * 900);
     const newTask = {
       id: 'task-' + Date.now(),
@@ -1326,7 +1326,14 @@ const FriendsManager = {
               <span class="friend-badge-stamp">OFICIAL</span>
             </div>
             <div class="friend-badge-info">
-              <h2 class="friend-badge-name" style="color: #f9e000 !important; font-family: var(--font-display, 'Darumadrop One', cursive) !important; font-size: 1.6rem !important; text-shadow: 2px 2px 0 #000; margin: 0 0 2px 0;">${friend.name || 'Agente'}</h2>
+              <div class="agent-name-seal-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <h2 class="friend-badge-name" style="color: #f9e000 !important; font-family: var(--font-display, 'Darumadrop One', cursive) !important; font-size: 1.6rem !important; text-shadow: 2px 2px 0 #000; margin: 0 0 2px 0;">${friend.name || 'Agente'}</h2>
+                ${AuthManager.isMagafusVIP(friend) ? `
+                  <button type="button" class="magafic-seal-btn" id="friendBadgeSealBtn" title="Selo Magáfico Oficial 💜" style="margin:0;">
+                    <img src="images/magaficseal.png" alt="Selo Magáfico" class="magafic-seal-img" id="friendBadgeSealImg">
+                  </button>
+                ` : ''}
+              </div>
               <div class="friend-badge-eex">@${friend.eexEmail || (friend.nickname + '.express.com')}</div>
               <div class="friend-badge-detail">📍 Setor: <strong>${friend.location || 'Nova Amerit - NA'}</strong></div>
               <div class="friend-badge-streak">
@@ -1336,6 +1343,25 @@ const FriendsManager = {
           </div>
         </div>
       `;
+
+      // Evento do Selo Magáfico no crachá de terceiros: toca som + dança, sem exibir as frases privadas
+      const friendSealBtn = document.getElementById('friendBadgeSealBtn');
+      const friendSealImg = document.getElementById('friendBadgeSealImg');
+      if (friendSealBtn) {
+        friendSealBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          try {
+            const audio = new Audio('images/magaficseal.mp3');
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+          } catch (err) {}
+          if (friendSealImg) {
+            friendSealImg.classList.remove('magafic-dance');
+            void friendSealImg.offsetWidth;
+            friendSealImg.classList.add('magafic-dance');
+          }
+        });
+      }
     }
 
     // 2. Banner de Status do Mascote
@@ -2731,8 +2757,11 @@ const AppUI = {
         user.nickname = nickname;
         user.location = location || 'Nova Amerit - NA (Nova Arcanis)';
         user.avatar = avatar;
+        const workMode = !!document.getElementById('onbWorkMode')?.checked;
         user.pinHash = pinHash;
         user.onboardingDone = true;
+        user.workMode = workMode;
+        user.workModePrompted = true;
         AuthManager.currentUser = user;
         AuthManager.saveCurrent();
 
@@ -2748,7 +2777,9 @@ const AppUI = {
             location: user.location,
             avatar: avatar,
             pinHash: pinHash,
-            onboardingDone: true
+            onboardingDone: true,
+            workMode: workMode,
+            workModePrompted: true
           });
         }
 
@@ -3456,13 +3487,16 @@ const AppUI = {
           const isAlreadyFriend = FriendsManager.friends.some(f => f.uid === u.uid);
           return `
             <div class="search-agent-card">
-              <img src="${u.avatar || 'images/elgalylogo.png'}" alt="${u.name}" class="search-agent-avatar">
-              <div class="search-agent-info">
+              <img src="${u.avatar || 'images/elgalylogo.png'}" alt="${u.name}" class="search-agent-avatar btn-open-search-passport" data-uid="${u.uid}" style="cursor:pointer;" title="Clique para ver o Passaporte">
+              <div class="search-agent-info btn-open-search-passport" data-uid="${u.uid}" style="cursor:pointer;">
                 <strong>${u.name}</strong>
                 <span>@${u.eexEmail || (u.nickname + '.express.com')}</span>
                 <small>📍 ${u.location || 'Nova Amerit - NA'}</small>
               </div>
-              <div class="search-agent-action">
+              <div class="search-agent-action" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <button type="button" class="btn-comic btn-view-search-passport btn-open-search-passport" data-uid="${u.uid}">
+                  🪪 Ver Passaporte
+                </button>
                 ${isAlreadyFriend 
                   ? '<span class="already-partner-badge">🤝 Já é Parceiro</span>'
                   : `<button type="button" class="btn-comic btn-send-request" data-uid="${u.uid}" data-nick="${u.nickname}" data-name="${u.name}">
@@ -3473,6 +3507,14 @@ const AppUI = {
             </div>
           `;
         }).join('');
+
+        resultsContainer.querySelectorAll('.btn-open-search-passport').forEach(el => {
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const uid = el.dataset.uid;
+            if (uid) FriendsManager.openFriendProfile(uid);
+          });
+        });
 
         resultsContainer.querySelectorAll('.btn-send-request').forEach(btn => {
           btn.addEventListener('click', async () => {
@@ -3680,6 +3722,95 @@ const AppUI = {
         AppUI.showToast('🌟 Comunicado da C.E.O. Providente assimilado com louvor!');
       });
     }
+
+    // 30. Popup da C.E.O. - Modo Profissão / Trabalho
+    const btnCeoEnableWork = document.getElementById('btnCeoEnableWork');
+    if (btnCeoEnableWork) {
+      btnCeoEnableWork.addEventListener('click', async () => {
+        const user = AuthManager.getCurrentUser();
+        if (user) {
+          user.workMode = true;
+          user.workModePrompted = true;
+          AuthManager.saveCurrent();
+          if (typeof FirebaseService !== 'undefined') {
+            await FirebaseService.saveProfileToCloud({ workMode: true, workModePrompted: true });
+          }
+          AppUI.updateWorkModeUI(true);
+          AppUI.renderTasks();
+          AppUI.renderDailyRoutine();
+        }
+        document.getElementById('modalCeoWorkPrompt')?.classList.remove('active');
+        AppUI.showToast('💼 Modo Profissão ativado com louvor pela C.E.O.! 📦');
+      });
+    }
+
+    const btnCeoDismissWork = document.getElementById('btnCeoDismissWork');
+    if (btnCeoDismissWork) {
+      btnCeoDismissWork.addEventListener('click', async () => {
+        const user = AuthManager.getCurrentUser();
+        if (user) {
+          user.workMode = false;
+          user.workModePrompted = true;
+          AuthManager.saveCurrent();
+          if (typeof FirebaseService !== 'undefined') {
+            await FirebaseService.saveProfileToCloud({ workMode: false, workModePrompted: true });
+          }
+          AppUI.updateWorkModeUI(false);
+        }
+        document.getElementById('modalCeoWorkPrompt')?.classList.remove('active');
+      });
+    }
+
+    // 31. Configurações: Toggle Modo Profissão
+    const btnToggleSettingsWorkMode = document.getElementById('btnToggleSettingsWorkMode');
+    if (btnToggleSettingsWorkMode) {
+      btnToggleSettingsWorkMode.addEventListener('click', async () => {
+        const user = AuthManager.getCurrentUser();
+        if (!user) return;
+        user.workMode = !user.workMode;
+        user.workModePrompted = true;
+        AuthManager.saveCurrent();
+        if (typeof FirebaseService !== 'undefined') {
+          await FirebaseService.saveProfileToCloud({ workMode: user.workMode, workModePrompted: true });
+        }
+        AppUI.updateWorkModeUI(user.workMode);
+        AppUI.renderTasks();
+        AppUI.renderDailyRoutine();
+        AppUI.showToast(user.workMode ? '💼 Modo Profissão ativado!' : '💼 Modo Profissão desativado.');
+      });
+    }
+
+    // 32. Configurações: Toggle Saudação Magafus (VIP)
+    const btnToggleMagaficGreeting = document.getElementById('btnToggleMagaficGreeting');
+    if (btnToggleMagaficGreeting) {
+      btnToggleMagaficGreeting.addEventListener('click', () => {
+        const isDisabled = localStorage.getItem('eex_magafus_greeting_disabled') === 'true';
+        if (isDisabled) {
+          localStorage.removeItem('eex_magafus_greeting_disabled');
+          AppUI.showToast('💜 Saudação do Coração Magáfico ao entrar ativada!');
+        } else {
+          localStorage.setItem('eex_magafus_greeting_disabled', 'true');
+          AppUI.showToast('💜 Saudação ao entrar desativada.');
+        }
+        AppUI.renderConfiguracoes();
+      });
+    }
+
+    // 33. Configurações: Salvar Chaves do EmailJS
+    const formEmailJsConfig = document.getElementById('formEmailJsConfig');
+    if (formEmailJsConfig) {
+      formEmailJsConfig.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const serviceId = (document.getElementById('cfgEmailJsService').value || '').trim();
+        const templateId = (document.getElementById('cfgEmailJsTemplate').value || '').trim();
+        const publicKey = (document.getElementById('cfgEmailJsPublic').value || '').trim();
+        localStorage.setItem('elgaly_emailjs_config', JSON.stringify({ serviceId, templateId, publicKey }));
+        if (typeof emailjs !== 'undefined' && publicKey) {
+          try { emailjs.init({ publicKey }); } catch (err) {}
+        }
+        AppUI.showToast('✅ Credenciais do EmailJS salvas com sucesso!');
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -3735,6 +3866,14 @@ const AppUI = {
     this.renderConfiguracoes();
     ReportEngine.renderReportPreview();
     NotificationManager.scheduleAll();
+
+    const user = AuthManager.getCurrentUser();
+    if (user) {
+      this.updateWorkModeUI(!!user.workMode);
+      this.checkCeoWorkPrompt(user);
+      this.triggerMagafusLoginGreeting(user);
+    }
+
     this.hideSplash();
   },
 
@@ -3845,7 +3984,7 @@ const AppUI = {
           item.innerHTML = `
             <div class="urgent-item-header">
               <span class="task-tracking-code">${task.code}</span>
-              <span class="task-badge ${task.category}">${task.category === 'faculdade' ? 'Faculdade' : 'Pessoal'}</span>
+              <span class="task-badge ${task.category}">${task.category === 'faculdade' ? 'Faculdade' : (task.category === 'trabalho' ? '💼 Trabalho' : 'Pessoal')}</span>
             </div>
             <h4>${task.title}</h4>
             <p style="font-size: 0.85rem; font-weight: 700; color: ${isOverdue ? 'var(--red-alert)' : 'var(--purple-dark)'};">
@@ -3911,7 +4050,7 @@ const AppUI = {
         <div class="habit-info">
           <div class="habit-title">${habit.title}</div>
           <div class="habit-meta">
-            <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? 'Faculdade' : 'Pessoal'}</span>
+            <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? 'Faculdade' : (habit.category === 'trabalho' ? '💼 Trabalho' : 'Pessoal')}</span>
             <span class="habit-days-badge">${formatDaysBadge(habit.days)}</span>
             ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
           </div>
@@ -4171,6 +4310,62 @@ const AppUI = {
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
     ThemeManager.setTheme(ThemeManager.current, false);
+
+    // Status do Modo Profissão
+    const workStatus = document.getElementById('cfgWorkModeStatus');
+    const btnToggleWork = document.getElementById('btnToggleSettingsWorkMode');
+    if (workStatus && btnToggleWork) {
+      if (user.workMode) {
+        workStatus.textContent = 'Ativado';
+        workStatus.style.color = '#16a34a';
+        btnToggleWork.textContent = 'Desativar';
+        btnToggleWork.classList.add('btn-secondary');
+      } else {
+        workStatus.textContent = 'Desativado';
+        workStatus.style.color = '#6b7280';
+        btnToggleWork.textContent = 'Ativar';
+        btnToggleWork.classList.remove('btn-secondary');
+      }
+    }
+
+    // Saudação do Coração Magáfico (visível para VIPs)
+    const cardGreeting = document.getElementById('cardSettingsMagaficGreeting');
+    if (cardGreeting) {
+      if (this.isMagafusVIP(user)) {
+        cardGreeting.style.display = 'block';
+        const greetingStatus = document.getElementById('cfgMagaficGreetingStatus');
+        const btnToggleGreeting = document.getElementById('btnToggleMagaficGreeting');
+        const isDisabled = localStorage.getItem('eex_magafus_greeting_disabled') === 'true';
+        if (greetingStatus && btnToggleGreeting) {
+          if (isDisabled) {
+            greetingStatus.textContent = 'Desativada';
+            greetingStatus.style.color = '#6b7280';
+            btnToggleGreeting.textContent = 'Ativar';
+            btnToggleGreeting.classList.remove('btn-secondary');
+          } else {
+            greetingStatus.textContent = 'Ativada';
+            greetingStatus.style.color = '#16a34a';
+            btnToggleGreeting.textContent = 'Desativar';
+            btnToggleGreeting.classList.add('btn-secondary');
+          }
+        }
+      } else {
+        cardGreeting.style.display = 'none';
+      }
+    }
+
+    // EmailJS config pré-carregada
+    if (typeof RecoveryManager !== 'undefined') {
+      const emailConfig = RecoveryManager.getEmailJsConfig();
+      if (emailConfig) {
+        const sInp = document.getElementById('cfgEmailJsService');
+        const tInp = document.getElementById('cfgEmailJsTemplate');
+        const pInp = document.getElementById('cfgEmailJsPublic');
+        if (sInp && emailConfig.serviceId) sInp.value = emailConfig.serviceId;
+        if (tInp && emailConfig.templateId) tInp.value = emailConfig.templateId;
+        if (pInp && emailConfig.publicKey) pInp.value = emailConfig.publicKey;
+      }
+    }
   },
 
   renderTasks() {
@@ -4183,6 +4378,8 @@ const AppUI = {
       tasks = tasks.filter(t => t.category === 'faculdade');
     } else if (this.currentFilter === 'pessoal') {
       tasks = tasks.filter(t => t.category === 'pessoal');
+    } else if (this.currentFilter === 'trabalho') {
+      tasks = tasks.filter(t => t.category === 'trabalho');
     } else if (this.currentFilter === 'pendentes') {
       tasks = tasks.filter(t => !t.completed);
     } else if (this.currentFilter === 'concluidas') {
@@ -4326,7 +4523,7 @@ const AppUI = {
         <div class="task-card-header">
           <span class="task-tracking-code">${task.code || 'ELG-000'}</span>
           <div class="task-badges">
-            <span class="task-badge ${task.category}">${task.category === 'faculdade' ? 'Faculdade' : 'Pessoal'}</span>
+            <span class="task-badge ${task.category}">${task.category === 'faculdade' ? 'Faculdade' : (task.category === 'trabalho' ? '💼 Trabalho' : 'Pessoal')}</span>
             <span class="task-badge priority-${task.priority}">${priorityLabels[task.priority] || task.priority}</span>
           </div>
         </div>
@@ -4777,9 +4974,6 @@ const AppUI = {
         void speechDialog.offsetWidth;
         speechDialog.classList.add('dialog-pop');
 
-        // Toast de apoio
-        AppUI.showToast(`💜 Coração Magáfico: "${phrase}"`);
-
         // Fecha automaticamente após 7 segundos
         if (this._magaficTimeout) clearTimeout(this._magaficTimeout);
         this._magaficTimeout = setTimeout(() => {
@@ -4846,6 +5040,108 @@ const AppUI = {
     }
 
     modal.classList.add('active');
+  },
+
+  triggerMagafusLoginGreeting(user) {
+    if (!user || !this.isMagafusVIP(user)) return;
+    if (this._magafusGreetingDone) return;
+    this._magafusGreetingDone = true;
+
+    // Se for kotundashed e desativou nas configurações:
+    const isKotun = (user.nickname === 'kotundashed' || (user.eexEmail && user.eexEmail.includes('kotundashed')));
+    if (isKotun && localStorage.getItem('eex_magafus_greeting_disabled') === 'true') {
+      return;
+    }
+
+    const overlay = document.getElementById('magaficLoginGreeting');
+    const msgEl = document.getElementById('magaficGreetingText');
+    const imgEl = document.getElementById('magaficGreetingImg');
+    if (!overlay) return;
+
+    if (msgEl) {
+      if (isKotun) {
+        msgEl.textContent = 'Oi, João! Que bom te ver por aqui hoje! 💜✨';
+      } else {
+        msgEl.textContent = 'Oi, Magafus! Que bom te ver por aqui hoje! 💜✨';
+      }
+    }
+
+    // Toca som do selo
+    try {
+      const audio = new Audio('images/magaficseal.mp3');
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch (err) {}
+
+    // Animação de dança
+    if (imgEl) {
+      imgEl.classList.remove('magafic-dance');
+      void imgEl.offsetWidth;
+      imgEl.classList.add('magafic-dance');
+    }
+
+    // Mostra overlay
+    overlay.classList.add('active');
+
+    // Desaparece após 5.5 segundos automaticamente
+    if (this._greetingTimer) clearTimeout(this._greetingTimer);
+    this._greetingTimer = setTimeout(() => {
+      overlay.classList.remove('active');
+    }, 5500);
+
+    const btnClose = document.getElementById('btnCloseMagaficGreeting');
+    if (btnClose) {
+      btnClose.onclick = () => {
+        overlay.classList.remove('active');
+        if (this._greetingTimer) clearTimeout(this._greetingTimer);
+      };
+    }
+  },
+
+  updateWorkModeUI(isActive) {
+    const isWorkActive = !!isActive;
+    // 1. Atualiza selects de tarefas e hábitos
+    document.querySelectorAll('.opt-work-mode').forEach(opt => {
+      opt.style.display = isWorkActive ? '' : 'none';
+    });
+
+    // 2. Botão de filtro de tarefas
+    const filterBtn = document.getElementById('filterBtnTrabalho');
+    if (filterBtn) {
+      filterBtn.style.display = isWorkActive ? 'inline-flex' : 'none';
+      if (!isWorkActive && this.currentFilter === 'trabalho') {
+        this.currentFilter = 'todas';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="todas"]')?.classList.add('active');
+        this.renderTasks();
+      }
+    }
+
+    // 3. Status nas Configurações
+    const statusEl = document.getElementById('cfgWorkModeStatus');
+    const toggleBtn = document.getElementById('btnToggleSettingsWorkMode');
+    if (statusEl && toggleBtn) {
+      if (isWorkActive) {
+        statusEl.textContent = 'Ativado';
+        statusEl.style.color = '#16a34a';
+        toggleBtn.textContent = 'Desativar';
+        toggleBtn.classList.add('btn-secondary');
+      } else {
+        statusEl.textContent = 'Desativado';
+        statusEl.style.color = '#6b7280';
+        toggleBtn.textContent = 'Ativar';
+        toggleBtn.classList.remove('btn-secondary');
+      }
+    }
+  },
+
+  checkCeoWorkPrompt(user) {
+    if (!user || !user.onboardingDone) return;
+    if (user.workModePrompted === true) return;
+    const modal = document.getElementById('modalCeoWorkPrompt');
+    if (modal) {
+      modal.classList.add('active');
+    }
   },
 
   showToast(message) {
