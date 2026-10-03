@@ -6708,5 +6708,75 @@ nav.desktop-nav a.nav-link.active {
   padding: 6px 10px !important;
 }
 
+/* ==========================================================================
+   MICROWIDGET — OVERRIDES PARA TEMAS ESCUROS & VERDE MAGÁFICO
+   ========================================================================== */
+
+/* Verde Magáfico: widget pendente */
+[data-theme="verde-magafico"] .eex-mascot-widget.widget-mood-pending {
+  background: #2a4223;
+  box-shadow: 8px 8px 0px #4d8534;
+  border-color: #11220e;
+}
+
+/* Verde Magáfico: widget concluído */
+[data-theme="verde-magafico"] .eex-mascot-widget.widget-mood-done {
+  background: #1b3317;
+  box-shadow: 8px 8px 0px #facc15;
+  border-color: #11220e;
+}
+
+/* Verde Magáfico: textos do widget */
+[data-theme="verde-magafico"] .mascot-widget-title,
+[data-theme="verde-magafico"] .widget-mood-pending .mascot-widget-title {
+  color: #facc15 !important;
+  text-shadow: 1px 1px 0 #11220e;
+}
+
+[data-theme="verde-magafico"] .widget-mood-done .mascot-widget-title {
+  color: #a3e635 !important;
+  text-shadow: 1px 1px 0 #11220e;
+}
+
+[data-theme="verde-magafico"] .mascot-widget-desc {
+  color: #d4ebb0 !important;
+}
+
+[data-theme="verde-magafico"] .mascot-widget-counter {
+  color: #bbf7d0 !important;
+}
+
+[data-theme="verde-magafico"] .mascot-widget-agent-tag {
+  background: #4d8534;
+  color: #ffffff;
+  border-color: #11220e;
+}
+
+[data-theme="verde-magafico"] .mascot-widget-badge {
+  background: #1b3317;
+  color: #facc15;
+  border-color: #4d8534;
+}
+
+/* Roxo NuMetálico: widget */
+[data-theme="roxo-numetalico"] .mascot-widget-title,
+[data-theme="roxo-numetalico"] .widget-mood-pending .mascot-widget-title {
+  color: #f9e000 !important;
+}
+
+[data-theme="roxo-numetalico"] .mascot-widget-agent-tag {
+  background: #3a154d;
+  color: #e9d5ff;
+  border-color: #7c3aed;
+}
+
+/* Garantia: todos os textos de widget ficam legíveis em temas escuros */
+:is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="verde-magafico"]) .mascot-widget-body {
+  color: inherit;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="verde-magafico"]) .eex-mascot-widget a.btn-comic {
+  border-color: var(--black, #11220e);
+}
 
 
