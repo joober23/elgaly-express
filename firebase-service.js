@@ -26,7 +26,8 @@ const FirebaseService = {
   // VAPID Key publica do Firebase Console:
   // Firebase Console → Projeto → Cloud Messaging → Web Push certificates → Gerar par de chaves
   // Cole a chave publica aqui:
-  VAPID_KEY: 'COLE_SUA_VAPID_KEY_AQUI',
+  VAPID_KEY: 'BKzC1OgoCC1Vths73Ne40SVrWRTjGlOZVi0E-fSWYL1mndbITK-QdSM0mXkxkAmJRmBh8lC_BHuAfIYPLP9mahY',
+
 
   init() {
     if (typeof firebase === 'undefined') {
