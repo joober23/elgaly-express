@@ -65,8 +65,9 @@ jobs:
 
       - name: Setup release keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/elgaly-release.keystore
+          printf '%s' "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/elgaly-release.keystore
           echo "✅ Keystore decodificada em android/app/elgaly-release.keystore"
+          echo "📦 Tamanho: $(wc -c < android/app/elgaly-release.keystore) bytes"
 
       - name: Setup consistent debug keystore
         run: |
