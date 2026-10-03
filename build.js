@@ -14,7 +14,8 @@ const filesToCopy = [
   'manifest.webmanifest',
   'sw.js',
   'magaficseal.png',
-  'magaficseal.mp3'
+  'magaficseal.mp3',
+  'shellcoin.png'
 ];
 
 const dirsToCopy = ['images', 'vendor'];

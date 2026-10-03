@@ -6779,4 +6779,61 @@ nav.desktop-nav a.nav-link.active {
   border-color: var(--black, #11220e);
 }
 
+/* ==========================================================================
+   SALDO DE CONCHAS EEX (SHELL COINS)
+   ========================================================================== */
+.header-shells-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--yellow-bright, #facc15);
+  color: var(--black, #11220e);
+  border: 2.5px solid var(--black, #11220e);
+  border-radius: 14px;
+  padding: 5px 12px;
+  font-family: var(--font-display, 'Darumadrop One', cursive), var(--font-main);
+  font-size: 1.25rem;
+  font-weight: 900;
+  box-shadow: 2.5px 2.5px 0px var(--black, #11220e);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1;
+}
+
+.header-shells-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 3.5px 3.5px 0px var(--black, #11220e);
+}
+
+.header-shells-pill:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0px var(--black, #11220e);
+}
+
+.shell-coin-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
+}
+
+.shell-coin-count {
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
+
+@keyframes shellBumpAnim {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35) rotate(-10deg); }
+  65% { transform: scale(1.18) rotate(8deg); }
+  100% { transform: scale(1); }
+}
+
+.header-shells-pill.shell-bump {
+  animation: shellBumpAnim 0.45s ease-out;
+}
+
 

@@ -17,6 +17,15 @@ const AuthManager = {
       try {
         const parsed = JSON.parse(savedCurrent);
         if (parsed && parsed.id && parsed.id !== 'guest') {
+          // Sanitização preventiva de avatar gigante (evita erro de 1MB no Firestore)
+          if (parsed.avatar && typeof parsed.avatar === 'string' && parsed.avatar.length > 70000) {
+            if (parsed.googlePhotoURL && typeof parsed.googlePhotoURL === 'string' && parsed.googlePhotoURL.startsWith('http')) {
+              parsed.avatar = parsed.googlePhotoURL;
+            } else {
+              parsed.avatar = 'images/elgalylogo.png';
+            }
+            localStorage.setItem('elgaly_express_current_user', JSON.stringify(parsed));
+          }
           this.currentUser = parsed;
           const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + parsed.id);
           this.isEexPassVerified = (sessionVerified === 'true');
@@ -210,9 +219,138 @@ const AuthManager = {
       return true;
     }
     return false;
+  },
+
+  // Retorna URL segura para uso no Firestore (nunca base64, que ultrapassa 1MB)
+  // Usa a foto do Google (googlePhotoURL) ou o caminho padrão
+  safeAvatarUrl(user) {
+    if (!user) return 'images/elgalylogo.png';
+    // Preferência 1: URL do Google (pequena, começa com https://)
+    if (user.googlePhotoURL && user.googlePhotoURL.startsWith('http')) {
+      return user.googlePhotoURL;
+    }
+    // Preferência 2: avatar salvo, MAS apenas se for URL (não base64)
+    if (user.avatar && user.avatar.startsWith('http')) {
+      return user.avatar;
+    }
+    // Fallback: ícone padrão (nunca manda base64 pro Firestore)
+    return 'images/elgalylogo.png';
+  },
+
+  isMagafusVIP(user) {
+    if (!user) return false;
+    const nick = (user.nickname || '').toLowerCase().trim();
+    const eex = (user.eexEmail || '').toLowerCase().trim();
+    const email = (user.email || '').toLowerCase().trim();
+    return nick === 'pedrinho' || nick === 'kotundashed' ||
+           eex.includes('pedrinho') || eex.includes('kotundashed') ||
+           email.includes('pedrinho') || email.includes('kotundashed');
   }
 };
 
+// ==========================================================================
+// UTILITÁRIO DE COMPRESSÃO DE IMAGENS (Evita exceder limite de 1MB do Firestore)
+// ==========================================================================
+function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75) {
+  return new Promise((resolve) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressed);
+      };
+      img.onerror = () => {
+        if (e.target.result && e.target.result.length < 150000) resolve(e.target.result);
+        else resolve(null);
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+// ==========================================================================
+// GERENCIADOR DE CONCHAS EEX (ShellsManager — Moeda de Recompensa EEX)
+// ==========================================================================
+const ShellsManager = {
+  getStorageKey() {
+    const user = AuthManager.getCurrentUser();
+    return user ? `elgaly_shells_${user.id}` : 'elgaly_shells_default';
+  },
+
+  getBalance() {
+    const user = AuthManager.getCurrentUser();
+    if (user && typeof user.shells === 'number') {
+      return user.shells;
+    }
+    const val = parseInt(localStorage.getItem(this.getStorageKey()) || '0', 10);
+    return isNaN(val) ? 0 : val;
+  },
+
+  async addShells(amount, reason = '') {
+    if (!amount || amount <= 0) return 0;
+    const current = this.getBalance();
+    const updated = current + amount;
+    localStorage.setItem(this.getStorageKey(), updated.toString());
+
+    const user = AuthManager.getCurrentUser();
+    if (user) {
+      user.shells = updated;
+      AuthManager.currentUser = user;
+      AuthManager.saveCurrent();
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.uid) {
+        try {
+          await FirebaseService.saveProfileToCloud({ shells: updated });
+        } catch (e) {
+          console.warn('Erro ao salvar conchas na nuvem:', e);
+        }
+      }
+    }
+
+    this.render();
+    this.animateEarn(amount, reason);
+    return updated;
+  },
+
+  render() {
+    const countEl = document.getElementById('headerShellsCount');
+    if (countEl) {
+      countEl.textContent = this.getBalance().toLocaleString('pt-BR');
+    }
+  },
+
+  animateEarn(amount, reason) {
+    const pill = document.getElementById('headerShellsPill');
+    if (pill) {
+      pill.classList.remove('shell-bump');
+      void pill.offsetWidth;
+      pill.classList.add('shell-bump');
+    }
+    AppUI.showToast(`🐚 +${amount} Conchas! ${reason}`.trim());
+  }
+};
 
 // ==========================================================================
 // GERENCIADOR DE TAREFAS / ENCOMENDAS (TaskManager)
@@ -331,6 +469,11 @@ const TaskManager = {
           AuthManager.addXp(25, 'Encomenda entregue com sucesso! 📦');
         }
       }
+
+      if (typeof ShellsManager !== 'undefined') {
+        const conchas = Math.floor(Math.random() * 11) + 15; // 15 a 25 conchas
+        ShellsManager.addShells(conchas, 'Encomenda entregue!');
+      }
     }
 
     return task;
@@ -427,6 +570,10 @@ const HabitManager = {
       this.history[todayKey].push(id);
       if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
         AuthManager.addXp(15, 'Hábito da rotina cumprido! ☀️');
+      }
+      if (typeof ShellsManager !== 'undefined') {
+        const conchas = Math.floor(Math.random() * 11) + 10; // 10 a 20 conchas
+        ShellsManager.addShells(conchas, 'Rotina cumprida!');
       }
     } else {
       this.history[todayKey].splice(idx, 1);
@@ -1050,24 +1197,36 @@ const FriendsManager = {
   // ==========================================================
   // PASSAPORTE DO PARCEIRO (VER ROTINA E FOTOS DO AMIGO)
   // ==========================================================
-  async openFriendProfile(uid) {
-    let friend = this.friends.find(f => f.uid === uid);
-    if (!friend && typeof FirebaseService !== 'undefined' && FirebaseService.db) {
-      try {
-        const doc = await FirebaseService.db.collection('public_profiles').doc(uid).get();
-        if (doc.exists) friend = { uid: doc.id, ...doc.data() };
-      } catch (e) {
-        console.warn('Erro ao carregar perfil do parceiro:', e);
+  async openFriendProfile(uid, fallbackData = null) {
+    try {
+      let friend = this.friends.find(f => f.uid === uid);
+      if (!friend && fallbackData && (fallbackData.uid === uid || !uid)) {
+        friend = { ...fallbackData };
       }
-    }
-    if (!friend) {
-      AppUI.showToast('Não foi possível carregar o perfil do agente.');
-      return;
-    }
+      if (!friend && typeof FirebaseService !== 'undefined' && FirebaseService.db && uid) {
+        try {
+          const doc = await FirebaseService.db.collection('public_profiles').doc(uid).get();
+          if (doc.exists) {
+            friend = { uid: doc.id, ...doc.data() };
+          }
+        } catch (e) {
+          console.warn('Erro ao carregar perfil do parceiro:', e);
+        }
+      }
+      if (!friend && fallbackData) {
+        friend = { ...fallbackData };
+      }
+      if (!friend) {
+        AppUI.showToast('Não foi possível carregar o perfil do agente.');
+        return;
+      }
 
-    this.activeFriendForProfile = friend;
-    const modal = document.getElementById('modalFriendProfile');
-    if (!modal) return;
+      this.activeFriendForProfile = friend;
+      const modal = document.getElementById('modalFriendProfile');
+      if (!modal) {
+        console.error('modalFriendProfile não encontrado no DOM!');
+        return;
+      }
 
     // 1. Crachá retrô anos 2000
     const badgeContainer = document.getElementById('friendModalBadge');
@@ -1203,6 +1362,10 @@ const FriendsManager = {
     if (defSec) defSec.classList.add('active');
 
     modal.classList.add('active');
+    } catch (err) {
+      console.error('Erro ao abrir passaporte do parceiro:', err);
+      AppUI.showToast('Erro ao abrir passaporte. Tente novamente.');
+    }
   },
 
   // ==========================================================
@@ -1833,6 +1996,10 @@ const EventManager = {
       if (typeof FirebaseService !== 'undefined') {
         await FirebaseService.saveEventToCloud(evt);
       }
+      if (evt.completed && typeof ShellsManager !== 'undefined') {
+        const conchas = Math.floor(Math.random() * 6) + 10; // 10 a 15 conchas
+        ShellsManager.addShells(conchas, 'Evento cumprido!');
+      }
     }
   }
 };
@@ -2307,6 +2474,7 @@ const AppUI = {
     ProvidenteNewsManager.init();
     PWAManager.init();
     NotificationManager.init();
+    if (typeof ShellsManager !== 'undefined') ShellsManager.render();
 
     this.bindEvents();
     this.initNavigation();
@@ -2446,15 +2614,14 @@ const AppUI = {
     const editAvatarInput = document.getElementById('editAvatarInput');
     const editAvatarPreview = document.getElementById('editAvatarPreview');
     if (editAvatarInput) {
-      editAvatarInput.addEventListener('change', (e) => {
+      editAvatarInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            this.editAvatarBase64 = event.target.result;
+          const compressed = await compressImageFile(file, 220, 220, 0.75);
+          if (compressed) {
+            this.editAvatarBase64 = compressed;
             if (editAvatarPreview) editAvatarPreview.src = this.editAvatarBase64;
-          };
-          reader.readAsDataURL(file);
+          }
         }
       });
     }
@@ -2491,15 +2658,14 @@ const AppUI = {
       const onbAvatarInput = document.getElementById('onbAvatarInput');
       const onbAvatarPreview = document.getElementById('onbAvatarPreview');
       if (onbAvatarInput) {
-        onbAvatarInput.addEventListener('change', (e) => {
+        onbAvatarInput.addEventListener('change', async (e) => {
           const file = e.target.files[0];
           if (file) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              this.onboardingAvatarBase64 = ev.target.result;
+            const compressed = await compressImageFile(file, 220, 220, 0.75);
+            if (compressed) {
+              this.onboardingAvatarBase64 = compressed;
               if (onbAvatarPreview) onbAvatarPreview.src = this.onboardingAvatarBase64;
-            };
-            reader.readAsDataURL(file);
+            }
           }
         });
       }
@@ -3015,18 +3181,17 @@ const AppUI = {
     }
 
     if (momentFileInput) {
-      momentFileInput.addEventListener('change', (e) => {
+      momentFileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            this._momentPhotoBase64 = ev.target.result;
+          const compressed = await compressImageFile(file, 640, 640, 0.75);
+          if (compressed) {
+            this._momentPhotoBase64 = compressed;
             const preview = document.getElementById('momentPhotoPreview');
             const placeholder = document.getElementById('momentPlaceholder');
             if (preview) { preview.src = this._momentPhotoBase64; preview.style.display = 'block'; }
             if (placeholder) placeholder.style.display = 'none';
-          };
-          reader.readAsDataURL(file);
+          }
         }
       });
     }
@@ -3222,7 +3387,8 @@ const AppUI = {
           el.addEventListener('click', (e) => {
             e.stopPropagation();
             const uid = el.dataset.uid;
-            if (uid) FriendsManager.openFriendProfile(uid);
+            const targetUser = found.find(u => u.uid === uid);
+            if (uid) FriendsManager.openFriendProfile(uid, targetUser);
           });
         });
 
@@ -3505,6 +3671,15 @@ const AppUI = {
         AppUI.renderConfiguracoes();
       });
     }
+
+    // 32. Saldo de Conchas EEX (Clique no Pill)
+    const headerShellsPill = document.getElementById('headerShellsPill');
+    if (headerShellsPill) {
+      headerShellsPill.addEventListener('click', () => {
+        const count = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
+        AppUI.showToast(`🐚 Saldo: ${count.toLocaleString('pt-BR')} Conchas! Complete rotinas e tarefas para encher seus bolsos! 🌊✨`);
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -3560,6 +3735,7 @@ const AppUI = {
     this.renderConfiguracoes();
     ReportEngine.renderReportPreview();
     NotificationManager.scheduleAll();
+    if (typeof ShellsManager !== 'undefined') ShellsManager.render();
 
     const user = AuthManager.getCurrentUser();
     if (user) {

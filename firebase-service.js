@@ -514,6 +514,16 @@ const FirebaseService = {
   // EEX-FRIENDS (REDE DE AMIGOS & ENTREGAS COLETIVAS)
   // ========================================================
 
+  getSafeAvatar(avatar, user) {
+    if (typeof avatar === 'string' && avatar.length > 70000) {
+      if (user && user.googlePhotoURL && typeof user.googlePhotoURL === 'string' && user.googlePhotoURL.startsWith('http')) {
+        return user.googlePhotoURL;
+      }
+      return 'images/elgalylogo.png';
+    }
+    return avatar || 'images/elgalylogo.png';
+  },
+
   async updatePublicProfile(data) {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
@@ -523,7 +533,7 @@ const FirebaseService = {
         name: data.name || 'Agente Express',
         nickname: (data.nickname || '').toLowerCase().trim(),
         eexEmail: data.eexEmail || 'agente.express.com',
-        avatar: data.avatar || 'images/elgalylogo.png',
+        avatar: this.getSafeAvatar(data.avatar, data),
         location: data.location || 'Nova Amerit - NA',
         streak: data.streak || 0,
         allDoneToday: !!data.allDoneToday,
@@ -616,7 +626,7 @@ const FirebaseService = {
         fromUid: myUid,
         fromNick: currentUser.nickname || 'agente',
         fromName: currentUser.name || 'Agente Express',
-        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        fromAvatar: this.getSafeAvatar(currentUser.avatar, currentUser),
         fromEexEmail: currentUser.eexEmail || 'agente.express.com',
         toUid: targetUser.uid,
         toNick: targetUser.nickname || '',
@@ -645,7 +655,7 @@ const FirebaseService = {
         uid: request.fromUid,
         nickname: request.fromNick,
         name: request.fromName,
-        avatar: request.fromAvatar,
+        avatar: this.getSafeAvatar(request.fromAvatar),
         eexEmail: request.fromEexEmail || `${request.fromNick}.express.com`,
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -656,7 +666,7 @@ const FirebaseService = {
         uid: myUid,
         nickname: myUser.nickname || 'agente',
         name: myUser.name || 'Agente Express',
-        avatar: myUser.avatar || 'images/elgalylogo.png',
+        avatar: this.getSafeAvatar(myUser.avatar, myUser),
         eexEmail: myUser.eexEmail || 'agente.express.com',
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -707,7 +717,7 @@ const FirebaseService = {
         fromUid: this.auth.currentUser.uid,
         fromName: currentUser.name || 'Agente Parceiro',
         fromNick: currentUser.nickname || 'agente',
-        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        fromAvatar: this.getSafeAvatar(currentUser.avatar, currentUser),
         pokeType: pokeType,
         timestamp: Date.now(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -729,7 +739,7 @@ const FirebaseService = {
         fromUid: this.auth.currentUser.uid,
         fromName: currentUser.name || 'Agente Express',
         fromNick: currentUser.nickname || 'agente',
-        fromAvatar: currentUser.avatar || 'images/elgalylogo.png',
+        fromAvatar: this.getSafeAvatar(currentUser.avatar, currentUser),
         fromEexEmail: currentUser.eexEmail || 'agente.express.com',
         stamp: packageData.stamp || 'selo-brave',
         boxType: packageData.boxType || 'caixa-reforcada',
