@@ -3084,6 +3084,7 @@ const AppUI = {
         // Inicia sync em tempo real
         if (typeof FirebaseService !== 'undefined' && user.uid) {
           FirebaseService.startRealtimeSync(user.uid);
+          setTimeout(() => FirebaseService.initFCM(), 2000);
         }
 
         this.renderAll();

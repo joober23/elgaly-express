@@ -13,6 +13,7 @@ const filesToCopy = [
   'sp-cities.js',
   'manifest.webmanifest',
   'sw.js',
+  'firebase-messaging-sw.js',
   'magaficseal.png',
   'magaficseal.mp3',
   'shellcoin.png',

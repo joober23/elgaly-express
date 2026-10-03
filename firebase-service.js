@@ -16,11 +16,17 @@ const firebaseConfig = {
 const FirebaseService = {
   auth: null,
   db: null,
+  messaging: null,
   isInitialized: false,
   unsubscribeTasks: null,
   unsubscribeHabits: null,
   unsubscribeHistory: null,
   unsubscribeEvents: null,
+
+  // VAPID Key publica do Firebase Console:
+  // Firebase Console → Projeto → Cloud Messaging → Web Push certificates → Gerar par de chaves
+  // Cole a chave publica aqui:
+  VAPID_KEY: 'COLE_SUA_VAPID_KEY_AQUI',
 
   init() {
     if (typeof firebase === 'undefined') {
@@ -80,9 +86,78 @@ const FirebaseService = {
   },
 
   /**
+   * Inicializa o Firebase Cloud Messaging (FCM) para notificacoes push
+   * Solicita permissao, obtem o token e salva no Firestore
+   */
+  async initFCM() {
+    if (typeof firebase === 'undefined' || !firebase.messaging) {
+      console.log('FCM: SDK de messaging nao disponivel.');
+      return;
+    }
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+      console.log('FCM: Navegador nao suporta Service Workers ou Notifications.');
+      return;
+    }
+    if (this.VAPID_KEY === 'COLE_SUA_VAPID_KEY_AQUI') {
+      console.warn('FCM: VAPID Key nao configurada. Veja firebase-service.js > VAPID_KEY.');
+      return;
+    }
+    try {
+      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      this.messaging = firebase.messaging();
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        console.log('FCM: Permissao negada pelo usuario.');
+        return;
+      }
+      const token = await this.messaging.getToken({
+        vapidKey: this.VAPID_KEY,
+        serviceWorkerRegistration: swReg
+      });
+      if (token) {
+        await this.saveFcmToken(token);
+        this.messaging.onTokenRefresh(async () => {
+          const newToken = await this.messaging.getToken({ vapidKey: this.VAPID_KEY, serviceWorkerRegistration: swReg });
+          if (newToken) await this.saveFcmToken(newToken);
+        });
+        // Mensagens em foreground — exibe como toast
+        this.messaging.onMessage((payload) => {
+          const title = (payload.notification && payload.notification.title) ? payload.notification.title : 'Elgaly Express';
+          const body  = (payload.notification && payload.notification.body)  ? payload.notification.body  : '';
+          const type  = (payload.data && payload.data.type) ? payload.data.type : '';
+          if (typeof AppUI !== 'undefined' && AppUI.showToast) {
+            const icons = { package: '📦', friend_request: '🤝', poke: '📢' };
+            const icon  = icons[type] || '🔔';
+            AppUI.showToast(icon + ' ' + title + (body ? ': ' + body.substring(0, 60) : ''));
+          }
+        });
+        console.log('FCM: Notificacoes push ativas!');
+      }
+    } catch (err) {
+      console.warn('FCM: Erro ao inicializar:', err);
+    }
+  },
+
+  /**
+   * Salva o token FCM no documento do usuario no Firestore
+   */
+  async saveFcmToken(token) {
+    if (!this.auth || !this.auth.currentUser || !this.db) return;
+    try {
+      await this.db.collection('users').doc(this.auth.currentUser.uid).set(
+        { fcmToken: token, fcmUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+    } catch (e) {
+      console.warn('FCM: Erro ao salvar token:', e);
+    }
+  },
+
+  /**
    * Monitora estado de login do Firebase
    */
   setupAuthStateListener() {
+
     this.auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email || '';
@@ -158,6 +233,9 @@ const FirebaseService = {
           this.startRealtimeSync(firebaseUser.uid);
           AppUI.renderAll();
           AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.name}!`);
+          // Inicializa FCM para notificacoes push
+          setTimeout(() => this.initFCM(), 2000);
+
         } else {
           // Exige validação do EEX-PASS antes de liberar o despacho
           AuthManager.isEexPassVerified = false;
