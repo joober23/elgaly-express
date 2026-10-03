@@ -89,6 +89,10 @@ const FirebaseService = {
         const defaultNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'agente').toLowerCase().replace(/\s+/g, '.');
         const defaultEexEmail = AuthManager.formatEexNickname(defaultNick);
 
+        const realCreation = firebaseUser.metadata?.creationTime 
+          ? new Date(firebaseUser.metadata.creationTime).toISOString() 
+          : '2026-09-24T12:00:00.000Z';
+
         let userData = {
           id: firebaseUser.uid,
           uid: firebaseUser.uid,
@@ -100,7 +104,7 @@ const FirebaseService = {
           email: email,
           isGoogle: true,
           onboardingDone: false,
-          joinedAt: new Date().toISOString()
+          joinedAt: realCreation
         };
 
         // Verifica se o usuário já possui perfil customizado salvo no Firestore
@@ -108,10 +112,24 @@ const FirebaseService = {
           const profileDoc = await this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').get();
           if (profileDoc.exists) {
             const cloudProfile = profileDoc.data();
+            if (cloudProfile.joinedAt) {
+              const cloudDate = new Date(cloudProfile.joinedAt);
+              const todayStr = new Date().toLocaleDateString('en-CA');
+              const cloudStr = !isNaN(cloudDate.getTime()) ? cloudDate.toLocaleDateString('en-CA') : '';
+              if ((cloudStr === todayStr || !cloudStr) && realCreation) {
+                cloudProfile.joinedAt = realCreation;
+                this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
+              }
+            } else {
+              cloudProfile.joinedAt = realCreation;
+              this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
+            }
             userData = { ...userData, ...cloudProfile };
             if (cloudProfile.preferredTheme && typeof ThemeManager !== 'undefined') {
               ThemeManager.setTheme(cloudProfile.preferredTheme, false, false);
             }
+          } else {
+            this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
           }
         } catch (e) {
           console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');

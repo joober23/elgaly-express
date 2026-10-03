@@ -292,12 +292,43 @@ function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75
 }
 
 // ==========================================================================
-// GERENCIADOR DE CONCHAS EEX (ShellsManager — Moeda de Recompensa EEX)
+// GERENCIADOR DE CONCHAS EEX (ShellsManager — Moeda de Recompensa EEX com Anti-Farm)
 // ==========================================================================
 const ShellsManager = {
+  DAILY_CAP: 350,
+
   getStorageKey() {
     const user = AuthManager.getCurrentUser();
     return user ? `elgaly_shells_${user.id}` : 'elgaly_shells_default';
+  },
+
+  getAuditKey() {
+    const user = AuthManager.getCurrentUser();
+    return user ? `elgaly_shells_audit_${user.id}` : 'elgaly_shells_audit_default';
+  },
+
+  getAuditData() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.getAuditKey()) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  },
+
+  saveAuditData(audit) {
+    localStorage.setItem(this.getAuditKey(), JSON.stringify(audit));
+  },
+
+  getTodayKey() {
+    return new Date().toLocaleDateString('en-CA');
+  },
+
+  getTodayEarned() {
+    const audit = this.getAuditData();
+    const today = this.getTodayKey();
+    if (audit.lastDate !== today) return 0;
+    return audit.todayTotal || 0;
   },
 
   getBalance() {
@@ -332,6 +363,75 @@ const ShellsManager = {
     this.render();
     this.animateEarn(amount, reason);
     return updated;
+  },
+
+  /**
+   * Sistema Anti-Farm: Proteção contra spam de conchas
+   * - Impede ganhar conchas desmarcando e remarcando itens
+   * - Tarefas/Eventos: 1x por item (permanente)
+   * - Hábitos: 1x por dia por hábito
+   * - Limite diário de segurança (DAILY_CAP)
+   * - Anti-spam rate-limit de 400ms
+   */
+  async rewardWithProtection(sourceId, type, amount, reason = '') {
+    if (!sourceId) return 0;
+    const audit = this.getAuditData();
+    const today = this.getTodayKey();
+
+    // Reset diário se virou o dia
+    if (audit.lastDate !== today) {
+      audit.lastDate = today;
+      audit.todayTotal = 0;
+      audit.rewardedHabitsToday = [];
+    }
+    if (!Array.isArray(audit.rewardedItems)) audit.rewardedItems = [];
+    if (!Array.isArray(audit.rewardedHabitsToday)) audit.rewardedHabitsToday = [];
+
+    // 1. Verificação de hábito já recompensado hoje
+    if (type === 'habit') {
+      if (audit.rewardedHabitsToday.includes(sourceId)) {
+        AppUI.showToast('🐚 Hábito já recompensado hoje! Volte amanhã para mais conchas! ✨');
+        return 0;
+      }
+    } else {
+      // 2. Verificação de tarefa ou evento já recompensado
+      if (audit.rewardedItems.includes(sourceId)) {
+        AppUI.showToast('🐚 Essa entrega já foi recompensada! Sem trapaça com a C.E.O.! 😼📦');
+        return 0;
+      }
+    }
+
+    // 3. Verificação de limite diário de conchas
+    if (audit.todayTotal >= this.DAILY_CAP) {
+      AppUI.showToast('🐚 Limite diário de conchas atingido (350/dia)! Descanse suas patinhas, agente! 🐾');
+      return 0;
+    }
+
+    // 4. Rate-limit rápido (anti-autoclicker: 400ms)
+    const now = Date.now();
+    if (audit.lastRewardTimestamp && (now - audit.lastRewardTimestamp < 400)) {
+      return 0;
+    }
+
+    // Ajusta valor caso atinja o teto diário
+    let finalAmount = amount;
+    if (audit.todayTotal + finalAmount > this.DAILY_CAP) {
+      finalAmount = this.DAILY_CAP - audit.todayTotal;
+    }
+    if (finalAmount <= 0) return 0;
+
+    // Registra a recompensa na auditoria
+    audit.todayTotal += finalAmount;
+    audit.lastRewardTimestamp = now;
+
+    if (type === 'habit') {
+      audit.rewardedHabitsToday.push(sourceId);
+    } else {
+      audit.rewardedItems.push(sourceId);
+    }
+    this.saveAuditData(audit);
+
+    return await this.addShells(finalAmount, reason);
   },
 
   render() {
@@ -472,7 +572,7 @@ const TaskManager = {
 
       if (typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 11) + 15; // 15 a 25 conchas
-        ShellsManager.addShells(conchas, 'Encomenda entregue!');
+        ShellsManager.rewardWithProtection(task.id, 'task', conchas, 'Encomenda entregue!');
       }
     }
 
@@ -573,7 +673,7 @@ const HabitManager = {
       }
       if (typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 11) + 10; // 10 a 20 conchas
-        ShellsManager.addShells(conchas, 'Rotina cumprida!');
+        ShellsManager.rewardWithProtection(id, 'habit', conchas, 'Rotina cumprida!');
       }
     } else {
       this.history[todayKey].splice(idx, 1);
@@ -1998,7 +2098,7 @@ const EventManager = {
       }
       if (evt.completed && typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 6) + 10; // 10 a 15 conchas
-        ShellsManager.addShells(conchas, 'Evento cumprido!');
+        ShellsManager.rewardWithProtection(evt.id, 'event', conchas, 'Evento cumprido!');
       }
     }
   }
@@ -3677,7 +3777,9 @@ const AppUI = {
     if (headerShellsPill) {
       headerShellsPill.addEventListener('click', () => {
         const count = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
-        AppUI.showToast(`🐚 Saldo: ${count.toLocaleString('pt-BR')} Conchas! Complete rotinas e tarefas para encher seus bolsos! 🌊✨`);
+        const todayEarned = typeof ShellsManager !== 'undefined' ? ShellsManager.getTodayEarned() : 0;
+        const cap = typeof ShellsManager !== 'undefined' ? ShellsManager.DAILY_CAP : 350;
+        AppUI.showToast(`🐚 Saldo: ${count.toLocaleString('pt-BR')} Conchas! (Hoje você coletou ${todayEarned}/${cap} conchas) 🌊✨`);
       });
     }
   },
@@ -4555,6 +4657,24 @@ const AppUI = {
       }
     ];
 
+    const isOnline = navigator.onLine !== false;
+    const statusDot = isOnline ? '🟢' : '🔴';
+    const statusText = isOnline ? 'On-line' : 'Off-line';
+    const statusColor = isOnline ? '#16a34a' : '#dc2626';
+
+    // Cálculo da data de membro oficial (evita reset para hoje)
+    let memberDateFormatted = '24/09/2026';
+    if (user.joinedAt) {
+      const d = new Date(user.joinedAt);
+      if (!isNaN(d.getTime())) {
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const joinedStr = d.toLocaleDateString('en-CA');
+        if (joinedStr !== todayStr) {
+          memberDateFormatted = d.toLocaleDateString('pt-BR');
+        }
+      }
+    }
+
     wrap.innerHTML = `
       <div class="grand-profile-container">
         
@@ -4625,9 +4745,9 @@ const AppUI = {
 
               <div class="grand-agent-meta">
                 <div class="meta-row">📍 <strong>Setor:</strong> ${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</div>
-                <div class="meta-row">☁️ <strong>Status:</strong> Conectado via Nuvem Firebase / Google</div>
+                <div class="meta-row">${statusDot} <strong>Status:</strong> <span style="font-weight:800;color:${statusColor};">${statusText}</span></div>
                 <div class="meta-row">🎖️ <strong>Patente:</strong> Tier ${career.tierName} (Nível ${career.level}/100)</div>
-                <div class="meta-row">📅 <strong>Membro desde:</strong> ${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('pt-BR') : '2026'}</div>
+                <div class="meta-row">📅 <strong>Membro desde:</strong> ${memberDateFormatted}</div>
               </div>
 
               <!-- Barra de XP / Nível com 100 Patentes -->
