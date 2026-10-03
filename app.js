@@ -3006,18 +3006,18 @@ const AppUI = {
       });
     }
 
-    // 8. Botões de Nova Encomenda
-    const btnsNewTask = document.querySelectorAll('.action-new-task');
+    // 8. Botões de Nova Encomenda (delegação — botões podem ser renderizados dinamicamente)
     const modalTask = document.getElementById('modalTask');
     const formTask = document.getElementById('formTask');
     const modalTaskClose = document.getElementById('modalTaskClose');
 
-    btnsNewTask.forEach(btn => {
-      btn.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.action-new-task')) {
         if (!AuthManager.isLoggedIn()) return;
         this.openTaskModal();
-      });
+      }
     });
+
 
     if (modalTaskClose && modalTask) {
       modalTaskClose.addEventListener('click', () => {
@@ -3077,21 +3077,22 @@ const AppUI = {
       });
     });
 
-    // 10. Botões de Novo Hábito
-    const btnsNewHabit = document.querySelectorAll('.action-new-habit');
+    // 10. Botões de Novo Hábito (delegação — botões podem ser renderizados dinamicamente)
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
     const modalHabitClose = document.getElementById('modalHabitClose');
 
-    btnsNewHabit.forEach(btn => {
-      btn.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.action-new-habit')) {
         if (!AuthManager.isLoggedIn()) return;
-        document.getElementById('habitTitle').value = '';
+        const habitTitleEl = document.getElementById('habitTitle');
+        if (habitTitleEl) habitTitleEl.value = '';
         // Reseta todos os dias como ativos por padrão
         document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => b.classList.add('active'));
-        modalHabit.classList.add('active');
-      });
+        if (modalHabit) modalHabit.classList.add('active');
+      }
     });
+
 
     if (modalHabitClose && modalHabit) {
       modalHabitClose.addEventListener('click', () => {
