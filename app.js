@@ -1311,9 +1311,20 @@ const FriendsManager = {
         e.stopPropagation();
         const uid = btn.dataset.uid;
         const name = btn.dataset.name;
+
+        // Anti-farm: 1 buzina por amigo por dia
+        const cooldownKey = `eex_poke_cd_${AuthManager.getCurrentUser()?.id}_${uid}`;
+        const lastPoke = localStorage.getItem(cooldownKey);
+        const today = new Date().toLocaleDateString('en-CA');
+        if (lastPoke === today) {
+          AppUI.showToast(`📢 Você já buzinou para ${name} hoje! Volte amanhã. 😄`);
+          return;
+        }
+
         btn.disabled = true;
         btn.textContent = '⚡';
         await FirebaseService.sendPoke(uid);
+        localStorage.setItem(cooldownKey, today);
         if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
           AuthManager.addXp(10, `Apoio/buzina enviada para ${name}! 📢⚡`);
         }
@@ -1324,6 +1335,7 @@ const FriendsManager = {
         }, 3000);
       });
     });
+
 
     grid.querySelectorAll('.btn-del-friend').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1647,9 +1659,9 @@ const FriendsManager = {
     // Mapeamento do selo postal
     const stampMap = {
       'selo-brave': { icon: '🐾', title: 'Selo de Honra Brave' },
-      'selo-cafe': { icon: '☕', title: 'Vale Café Dimensional' },
+      'selo-cafe':  { icon: '☕', title: 'Vale Café Dimensional' },
       'selo-turbo': { icon: '⚡', title: 'Carga Turbo de Energia' },
-      'selo-fragil': { icon: '⚠️', title: 'Aviso: Cuidado Frágil' }
+      'selo-fragil':{ icon: '⚠️', title: 'Aviso: Cuidado Frágil' }
     };
     const s = stampMap[pkg.stamp] || stampMap['selo-brave'];
     if (stampIcon) stampIcon.textContent = s.icon;
@@ -1669,7 +1681,34 @@ const FriendsManager = {
         AuthManager.addXp(35, 'Encomenda postal recebida e desembalada! 🎁✨');
       }
     }
+
+    // 📦 Notificação local (Capacitor nativo) — dispara mesmo com app em segundo plano
+    try {
+      if (
+        typeof window !== 'undefined' &&
+        window.Capacitor &&
+        window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform() &&
+        window.Capacitor.Plugins &&
+        window.Capacitor.Plugins.LocalNotifications
+      ) {
+        const senderName = pkg.fromName || 'Um agente parceiro';
+        const boxEmoji = pkg.boxType === 'envelope-confidencial' ? '✉️' : (pkg.boxType === 'pacote-fita' ? '🎁' : '📦');
+        window.Capacitor.Plugins.LocalNotifications.schedule({
+          notifications: [{
+            id: Math.floor(Math.random() * 90000) + 10000,
+            title: `${boxEmoji} Nova Encomenda EEX chegou!`,
+            body: `${senderName} enviou uma encomenda para você: "${(pkg.message || '').substring(0, 60)}"`,
+            schedule: { at: new Date(Date.now() + 500) },
+            extra: JSON.stringify({ type: 'package', fromUid: pkg.fromUid })
+          }]
+        });
+      }
+    } catch (e) {
+      // Sem suporte nativo — ignora
+    }
   },
+
 
   // ==========================================================
   // SOS & RÁDIO COMUNICADOR
@@ -3788,9 +3827,20 @@ const AppUI = {
       btnFriendModalPoke.addEventListener('click', async () => {
         const friend = FriendsManager.activeFriendForProfile;
         if (!friend) return;
+
+        // Anti-farm: 1 buzina por amigo por dia
+        const cooldownKey = `eex_poke_cd_${AuthManager.getCurrentUser()?.id}_${friend.uid}`;
+        const lastPoke = localStorage.getItem(cooldownKey);
+        const today = new Date().toLocaleDateString('en-CA');
+        if (lastPoke === today) {
+          AppUI.showToast(`📢 Você já buzinou para ${friend.name || friend.nickname} hoje! Volte amanhã. 😄`);
+          return;
+        }
+
         btnFriendModalPoke.disabled = true;
         btnFriendModalPoke.textContent = '⚡ Enviando reforço...';
         await FirebaseService.sendPoke(friend.uid);
+        localStorage.setItem(cooldownKey, today);
         if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
           AuthManager.addXp(10, `Apoio/buzina enviada para ${friend.name || friend.nickname}! 📢⚡`);
         }
@@ -3801,6 +3851,7 @@ const AppUI = {
         }, 3000);
       });
     }
+
 
     // 27. EEX-Friends: Envio de Encomenda Express
     const formSendPackage = document.getElementById('formSendPackage');
