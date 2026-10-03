@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Ícone padrão (Roxo EEX) -->
     <color name="ic_launcher_background">#3a154d</color>
+
+    <!-- Rosa Express 🌸 -->
+    <color name="ic_launcher_rosa_bg">#e83f8a</color>
+
+    <!-- Roxo NuMetálico 🎸 -->
+    <color name="ic_launcher_roxo_bg">#1a0a2e</color>
+
+    <!-- Verde Magáfico 🌿 -->
+    <color name="ic_launcher_verde_bg">#1a3d2e</color>
 </resources>

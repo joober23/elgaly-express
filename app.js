@@ -2126,6 +2126,22 @@ const ThemeManager = {
     if (syncCloud && typeof FirebaseService !== 'undefined' && FirebaseService.saveProfileTheme) {
       FirebaseService.saveProfileTheme(themeId);
     }
+
+    // Troca o ícone do app no launcher Android (somente no app nativo Capacitor)
+    try {
+      if (
+        typeof window !== 'undefined' &&
+        window.Capacitor &&
+        window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform() &&
+        window.Capacitor.Plugins &&
+        window.Capacitor.Plugins.EexIcon
+      ) {
+        window.Capacitor.Plugins.EexIcon.setThemeIcon({ theme: themeId });
+      }
+    } catch (e) {
+      // Sem suporte nativo — ignora silenciosamente
+    }
   },
 
   updateQuoteBox(themeId) {

@@ -24,6 +24,53 @@
 
         </activity>
 
+        <!-- === ALIASES DE ÍCONE POR TEMA EEX === -->
+
+        <!-- Tema: Rosa Express 🌸 (desativado por padrão) -->
+        <activity-alias
+            android:name=".IconRosaExpress"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher_rosa"
+            android:roundIcon="@mipmap/ic_launcher_rosa_round"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Tema: Roxo NuMetálico 🎸 (desativado por padrão) -->
+        <activity-alias
+            android:name=".IconRoxoNumetalico"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher_roxo"
+            android:roundIcon="@mipmap/ic_launcher_roxo_round"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Tema: Verde Magáfico 🌿 (desativado por padrão) -->
+        <activity-alias
+            android:name=".IconVerdeMagafico"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher_verde"
+            android:roundIcon="@mipmap/ic_launcher_verde_round"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

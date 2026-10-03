@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(GoogleAuth.class);
         registerPlugin(EexWidgetPlugin.class);
+        registerPlugin(EexIconPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
