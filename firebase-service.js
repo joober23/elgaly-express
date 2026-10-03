@@ -561,6 +561,9 @@ const FirebaseService = {
         xp: typeof data.xp === 'number' ? data.xp : 0,
         rankLevel: typeof data.rankLevel === 'number' ? data.rankLevel : 1,
         rankTitle: data.rankTitle || 'Recruta da Rota Express 📦',
+        shells: typeof data.shells === 'number' ? data.shells : 0,
+        completedTasksCount: typeof data.completedTasksCount === 'number' ? data.completedTasksCount : 0,
+        unlockedAchievements: Array.isArray(data.unlockedAchievements) ? data.unlockedAchievements : [],
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 

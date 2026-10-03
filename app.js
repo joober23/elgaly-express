@@ -1020,6 +1020,20 @@ const FriendsManager = {
         ? AppUI.calculateCareerStats() 
         : { totalXp: 0, level: 1, rankTitle: 'Recruta da Rota Express 📦' };
 
+      const shells = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : (user.shells || 0);
+      const completedTasksCount = (TaskManager.tasks || []).filter(t => t.completed).length;
+      const myAchievements = (typeof AppUI !== 'undefined' && AppUI.getAchievements)
+        ? AppUI.getAchievements({
+            streak: stats.streak,
+            completedTasks: completedTasksCount,
+            friendsCount: (FriendsManager.friends || []).length,
+            memoriesCount: recentMemories.length,
+            sosActive: this.sosActive,
+            radioStatus: this.radioStatus,
+            shells: shells
+          }).filter(a => a.unlocked).map(a => a.id)
+        : [];
+
       await FirebaseService.updatePublicProfile({
         name: user.name,
         nickname: user.nickname,
@@ -1035,7 +1049,10 @@ const FriendsManager = {
         recentMemories: recentMemories,
         xp: career.totalXp,
         rankLevel: career.level,
-        rankTitle: career.rankTitle
+        rankTitle: career.rankTitle,
+        shells: shells,
+        completedTasksCount: completedTasksCount,
+        unlockedAchievements: myAchievements
       });
     } catch (e) {
       console.warn('Erro ao sincronizar perfil público:', e);
@@ -1451,6 +1468,45 @@ const FriendsManager = {
           </div>
         `).join('');
       }
+    }
+
+    // 5. Conquistas & Insígnias do Parceiro
+    const achievementsList = document.getElementById('friendModalAchievementsList');
+    if (achievementsList) {
+      const friendAchievements = (typeof AppUI !== 'undefined' && AppUI.getAchievements)
+        ? AppUI.getAchievements({
+            streak: friend.streak || 0,
+            completedTasks: friend.completedTasksCount || 0,
+            friendsCount: 1,
+            memoriesCount: (friend.recentMemories || []).length,
+            sosActive: friend.sosActive,
+            radioStatus: friend.radioStatus,
+            shells: friend.shells || 0
+          })
+        : [];
+      const unlockedCount = friendAchievements.filter(a => a.unlocked).length;
+
+      achievementsList.innerHTML = `
+        <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span style="font-weight: 700; color: var(--purple-dark); font-size: 0.95rem;">Insígnias & Medalhas Oficiais</span>
+          <span class="achievements-counter">${unlockedCount} de ${friendAchievements.length} Desbloqueadas</span>
+        </div>
+        <div class="achievements-grid">
+          ${friendAchievements.map(ach => `
+            <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
+              <div class="achievement-icon-wrap">
+                <span class="achievement-icon">${ach.icon}</span>
+                ${!ach.unlocked ? '<span class="lock-indicator">🔒</span>' : ''}
+              </div>
+              <div class="achievement-info">
+                <strong>${ach.title}</strong>
+                <p>${ach.desc}</p>
+                <span class="achievement-badge-pill">${ach.unlocked ? '✨ DESBLOQUEADO' : 'BLOQUEADO'}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     // Default para a aba de rotina
@@ -4587,6 +4643,82 @@ const AppUI = {
     };
   },
 
+  getAchievements(stats = {}) {
+    const streak = stats.streak || 0;
+    const completedTasks = stats.completedTasks || 0;
+    const friendsCount = stats.friendsCount || 0;
+    const memoriesCount = stats.memoriesCount || 0;
+    const sosActive = !!stats.sosActive;
+    const radioStatus = !!stats.radioStatus;
+    const shells = stats.shells || 0;
+
+    return [
+      {
+        id: 'primeira-missao',
+        icon: '🐾',
+        title: 'Primeira Missão',
+        desc: 'Completou seu primeiro hábito ou encomenda',
+        unlocked: completedTasks > 0 || streak > 0
+      },
+      {
+        id: 'chama-viva',
+        icon: '🔥',
+        title: 'Chama Viva',
+        desc: 'Manteve 3 ou mais dias de rotina seguida',
+        unlocked: streak >= 3
+      },
+      {
+        id: 'super-sonico',
+        icon: '⚡',
+        title: 'Super Sônico',
+        desc: 'Alcançou 7 dias de streak ininterrupto',
+        unlocked: streak >= 7
+      },
+      {
+        id: 'mestre-frete',
+        icon: '📦',
+        title: 'Mestre do Frete',
+        desc: 'Entregou 5 ou mais encomendas dimensionais',
+        unlocked: completedTasks >= 5
+      },
+      {
+        id: 'lembre-se',
+        icon: '🐚',
+        title: 'Lembre-se',
+        desc: 'Colete 55 conchas',
+        unlocked: shells >= 55
+      },
+      {
+        id: 'rede-coletiva',
+        icon: '🤝',
+        title: 'Rede Coletiva',
+        desc: 'Conectou-se com pelo menos 1 parceiro EEX',
+        unlocked: friendsCount >= 1
+      },
+      {
+        id: 'olho-postal',
+        icon: '📸',
+        title: 'Olho Postal',
+        desc: 'Registrou momentos da rotina com fotos e adesivos',
+        unlocked: memoriesCount >= 1
+      },
+      {
+        id: 'sinalizador-sos',
+        icon: '🚨',
+        title: 'Sinalizador SOS',
+        desc: 'Acionou o alerta de resgate da frota',
+        unlocked: sosActive
+      },
+      {
+        id: 'frequencia-aberta',
+        icon: '📻',
+        title: 'Frequência Aberta',
+        desc: 'Transmitiu aviso de status no Rádio Comunicador',
+        unlocked: radioStatus
+      }
+    ];
+  },
+
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
     if (!user) return;
@@ -4606,56 +4738,16 @@ const AppUI = {
     const career = this.calculateCareerStats();
 
     // Conquistas / Selos Colecionáveis
-    const achievements = [
-      {
-        icon: '🐾',
-        title: 'Primeira Missão',
-        desc: 'Completou seu primeiro hábito ou encomenda',
-        unlocked: completedTasks > 0 || streak > 0
-      },
-      {
-        icon: '🔥',
-        title: 'Chama Viva',
-        desc: 'Manteve 3 ou mais dias de rotina seguida',
-        unlocked: streak >= 3
-      },
-      {
-        icon: '⚡',
-        title: 'Super Sônico',
-        desc: 'Alcançou 7 dias de streak ininterrupto',
-        unlocked: streak >= 7
-      },
-      {
-        icon: '📦',
-        title: 'Mestre do Frete',
-        desc: 'Entregou 5 ou mais encomendas dimensionais',
-        unlocked: completedTasks >= 5
-      },
-      {
-        icon: '🤝',
-        title: 'Rede Coletiva',
-        desc: 'Conectou-se com pelo menos 1 parceiro EEX',
-        unlocked: friendsCount >= 1
-      },
-      {
-        icon: '📸',
-        title: 'Olho Postal',
-        desc: 'Registrou momentos da rotina com fotos e adesivos',
-        unlocked: memories.length >= 1
-      },
-      {
-        icon: '🚨',
-        title: 'Sinalizador SOS',
-        desc: 'Acionou o alerta de resgate da frota',
-        unlocked: FriendsManager.sosActive
-      },
-      {
-        icon: '📻',
-        title: 'Frequência Aberta',
-        desc: 'Transmitiu aviso de status no Rádio Comunicador',
-        unlocked: !!FriendsManager.radioStatus
-      }
-    ];
+    const myShells = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : (user.shells || 0);
+    const achievements = this.getAchievements({
+      streak: streak,
+      completedTasks: completedTasks,
+      friendsCount: friendsCount,
+      memoriesCount: memories.length,
+      sosActive: FriendsManager.sosActive,
+      radioStatus: FriendsManager.radioStatus,
+      shells: myShells
+    });
 
     const isOnline = navigator.onLine !== false;
     const statusDot = isOnline ? '🟢' : '🔴';
@@ -5121,7 +5213,26 @@ const AppUI = {
     }
   },
 
+  _toastQueue: [],
+  _toastTimer: null,
+  _toastActive: false,
+
   showToast(message) {
+    if (!message) return;
+    this._toastQueue.push(message);
+    if (!this._toastActive) {
+      this._processToastQueue();
+    }
+  },
+
+  _processToastQueue() {
+    if (this._toastQueue.length === 0) {
+      this._toastActive = false;
+      return;
+    }
+    this._toastActive = true;
+    const msg = this._toastQueue.shift();
+
     let toast = document.getElementById('eexToast');
     if (!toast) {
       toast = document.createElement('div');
@@ -5129,11 +5240,16 @@ const AppUI = {
       toast.className = 'eex-toast';
       document.body.appendChild(toast);
     }
-    toast.textContent = message;
+    toast.textContent = msg;
     toast.classList.add('show');
-    setTimeout(() => {
+
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-    }, 3500);
+      setTimeout(() => {
+        this._processToastQueue();
+      }, 300);
+    }, 2800);
   }
 };
 
