@@ -15,7 +15,8 @@ const filesToCopy = [
   'sw.js',
   'magaficseal.png',
   'magaficseal.mp3',
-  'shellcoin.png'
+  'shellcoin.png',
+  'version.json'
 ];
 
 const dirsToCopy = ['images', 'vendor'];

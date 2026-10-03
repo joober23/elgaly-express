@@ -5,6 +5,88 @@
  */
 
 // ==========================================================================
+// VERSÃO ATUAL DO APP
+// ==========================================================================
+const EEX_APP_VERSION = '1.0.0';
+const EEX_GITHUB_REPO = 'joober23/elgaly-express';
+
+// ==========================================================================
+// GERENCIADOR DE ATUALIZAÇÕES (Verifica nova versão via GitHub Releases)
+// ==========================================================================
+const UpdateManager = {
+  _checked: false,
+
+  /**
+   * Compara duas strings de versão semver (ex: "1.2.3")
+   * Retorna true se remoteVersion > localVersion
+   */
+  _isNewer(localVersion, remoteVersion) {
+    const parse = (v) => String(v || '0').replace(/^v/, '').split('.').map(Number);
+    const local = parse(localVersion);
+    const remote = parse(remoteVersion);
+    for (let i = 0; i < Math.max(local.length, remote.length); i++) {
+      const l = local[i] || 0;
+      const r = remote[i] || 0;
+      if (r > l) return true;
+      if (r < l) return false;
+    }
+    return false;
+  },
+
+  async check() {
+    // Só verifica uma vez por sessão
+    if (this._checked) return;
+    this._checked = true;
+
+    // Não verifica se estiver rodando no app nativo Capacitor (já tem a versão mais recente)
+    const isNative = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNative;
+
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${EEX_GITHUB_REPO}/releases/latest`,
+        { headers: { 'Accept': 'application/vnd.github+json' } }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const latestTag = data.tag_name || '';
+      const apkAsset = (data.assets || []).find(a =>
+        a.name && a.name.toLowerCase().endsWith('.apk')
+      );
+      const downloadUrl = apkAsset
+        ? apkAsset.browser_download_url
+        : data.html_url;
+
+      if (this._isNewer(EEX_APP_VERSION, latestTag)) {
+        // Mostra popup apenas no app nativo; no web, o código web já é o mais recente
+        if (isNative) {
+          this._showUpdateModal(latestTag, downloadUrl, data.body || '');
+        }
+      }
+    } catch (e) {
+      // Sem internet ou erro na API — ignora silenciosamente
+    }
+  },
+
+  _showUpdateModal(version, downloadUrl, notes) {
+    const modal = document.getElementById('modalUpdateAvailable');
+    if (!modal) return;
+
+    const verEl = document.getElementById('updateModalVersion');
+    const notesEl = document.getElementById('updateModalNotes');
+    const btnDownload = document.getElementById('btnUpdateDownload');
+
+    if (verEl) verEl.textContent = version;
+    if (notesEl) notesEl.textContent = notes || 'Melhorias de desempenho e correções de bugs.';
+    if (btnDownload) {
+      btnDownload.onclick = () => {
+        window.open(downloadUrl, '_blank');
+      };
+    }
+    modal.classList.add('active');
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE AUTENTICAÇÃO EEX (Somente Google + Rede EEX)
 // ==========================================================================
 const AuthManager = {
@@ -2582,6 +2664,51 @@ const PWAManager = {
 };
 
 // ==========================================================================
+// PORTÃO MOBILE — Exibe tela da Providente no navegador de celular
+// ==========================================================================
+const MobileGateManager = {
+  show() {
+    // Esconde splash e mostra a tela de download mobile
+    const splash = document.getElementById('eexSplashScreen');
+    if (splash) splash.classList.add('hidden');
+
+    const gate = document.getElementById('mobileGateScreen');
+    if (gate) {
+      gate.style.display = 'flex';
+    }
+
+    // Ao clicar em "Baixar APK", busca a última release no GitHub
+    const btnDl = document.getElementById('btnMobileGateDownload');
+    if (btnDl) {
+      btnDl.addEventListener('click', async () => {
+        btnDl.textContent = '⏳ Buscando versão mais recente...';
+        btnDl.disabled = true;
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${EEX_GITHUB_REPO}/releases/latest`,
+            { headers: { 'Accept': 'application/vnd.github+json' } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const apkAsset = (data.assets || []).find(a =>
+              a.name && a.name.toLowerCase().endsWith('.apk')
+            );
+            const url = apkAsset ? apkAsset.browser_download_url : data.html_url;
+            window.open(url, '_blank');
+          } else {
+            window.open(`https://github.com/${EEX_GITHUB_REPO}/releases/latest`, '_blank');
+          }
+        } catch {
+          window.open(`https://github.com/${EEX_GITHUB_REPO}/releases/latest`, '_blank');
+        }
+        btnDl.textContent = '📲 Baixar App EEX';
+        btnDl.disabled = false;
+      });
+    }
+  }
+};
+
+// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
@@ -2620,6 +2747,14 @@ const AppUI = {
   },
 
   init() {
+    // Detecta navegador mobile fora do app nativo — exibe tela de download
+    const isNative = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    const isMobileBrowser = !isNative && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileBrowser) {
+      MobileGateManager.show();
+      return; // Não inicializa o resto do app
+    }
+
     ThemeManager.init();
     AuthManager.init();
     TaskManager.init();
@@ -3756,6 +3891,16 @@ const AppUI = {
       });
     }
 
+    // Modal de Atualização Disponível — Botão "Agora Não"
+    const btnUpdateDismiss = document.getElementById('btnUpdateDismiss');
+    if (btnUpdateDismiss) {
+      btnUpdateDismiss.addEventListener('click', () => {
+        const modal = document.getElementById('modalUpdateAvailable');
+        if (modal) modal.classList.remove('active');
+        this.showToast('🔔 Você pode atualizar depois pelo app!');
+      });
+    }
+
     // 30. Popup da C.E.O. - Modo Profissão / Trabalho
     const btnCeoEnableWork = document.getElementById('btnCeoEnableWork');
     if (btnCeoEnableWork) {
@@ -3903,8 +4048,12 @@ const AppUI = {
       this.triggerMagafusLoginGreeting(user);
     }
 
+    // Verifica atualização disponível (uma vez por sessão, após login completo)
+    setTimeout(() => UpdateManager.check(), 3000);
+
     this.hideSplash();
   },
+
 
   /**
    * Exibe o modal de solicitação do EEX-PASS após o login com Google
