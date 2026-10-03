@@ -93,11 +93,15 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "📦 Versão detectada: $VERSION  |  Tag da release: $TAG"
 
+      - name: Rename APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/express.elgaly.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: elgaly-express-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/express.elgaly.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
@@ -113,13 +117,13 @@ jobs:
             **Commit:** ${{ github.sha }}
 
             ### Instalação
-            1. Baixe o arquivo `elgaly-express-debug.apk` abaixo
+            1. Baixe o arquivo `express.elgaly.apk` abaixo
             2. Abra o APK no seu Android
             3. Habilite "Fontes desconhecidas" se solicitado
             4. Instale e aproveite! 🎉
 
             > Atualização automática detectada pelo sistema da Providente no app.
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/express.elgaly.apk
           make_latest: true
           draft: false
           prerelease: false
@@ -130,4 +134,5 @@ jobs:
         run: |
           echo "### 🚀 APK Gerado e Release Criada!" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** \`${{ steps.read_version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Arquivo:** \`express.elgaly.apk\`" >> $GITHUB_STEP_SUMMARY
           echo "O app vai detectar esta versão automaticamente e notificar os usuários!" >> $GITHUB_STEP_SUMMARY
