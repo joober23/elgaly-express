@@ -21,6 +21,18 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Variáveis injetadas pelo GitHub Actions (via secrets) ou fallback para debug
+            def ksPath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/../android-overrides/debug.keystore"
+            def ksPass = System.getenv("KEYSTORE_PASSWORD") ?: "android"
+            def ksAlias = System.getenv("KEY_ALIAS") ?: "androiddebugkey"
+            def kPass  = System.getenv("KEY_PASSWORD") ?: "android"
+
+            storeFile file(ksPath)
+            storePassword ksPass
+            keyAlias ksAlias
+            keyPassword kPass
+        }
     }
     buildTypes {
         debug {
@@ -29,6 +41,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

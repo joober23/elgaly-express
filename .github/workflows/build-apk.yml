@@ -9,10 +9,10 @@ on:
 
 jobs:
   build:
-    name: Build Android Debug APK
+    name: Build Android Release APK
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # necessário para criar releases
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -63,6 +63,11 @@ jobs:
         env:
           CI: true
 
+      - name: Setup release keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/elgaly-release.keystore
+          echo "✅ Keystore decodificada em android/app/elgaly-release.keystore"
+
       - name: Setup consistent debug keystore
         run: |
           mkdir -p ~/.android
@@ -73,35 +78,38 @@ jobs:
         working-directory: android
         run: chmod +x gradlew
 
-      - name: Build debug APK
+      - name: Build release APK (assinado com keystore oficial)
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false -Xmx4g"
+          KEYSTORE_PATH: "${{ github.workspace }}/android/app/elgaly-release.keystore"
+          KEYSTORE_PASSWORD: "${{ secrets.KEYSTORE_PASSWORD }}"
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
 
-      - name: Verify APK signature SHA-1
+      - name: Rename APK
         run: |
-          keytool -printcert -jarfile android/app/build/outputs/apk/debug/app-debug.apk
+          cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/express.elgaly.apk
+
+      - name: Verify APK signature
+        run: |
+          keytool -printcert -jarfile android/app/build/outputs/apk/release/express.elgaly.apk || true
 
       - name: Read app version
         id: read_version
         run: |
           VERSION=$(node -e "const v=require('./version.json'); console.log(v.version);")
-          # Gera tag única: vX.Y.Z-buildN (evita colisão se a versão não mudou)
           TAG="v${VERSION}-build${{ github.run_number }}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "📦 Versão detectada: $VERSION  |  Tag da release: $TAG"
-
-      - name: Rename APK
-        run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/express.elgaly.apk
+          echo "📦 Versão: $VERSION  |  Tag: $TAG"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: elgaly-express-debug-apk
-          path: android/app/build/outputs/apk/debug/express.elgaly.apk
+          name: elgaly-express-release-apk
+          path: android/app/build/outputs/apk/release/express.elgaly.apk
           retention-days: 30
 
       - name: Create GitHub Release with APK
@@ -115,6 +123,7 @@ jobs:
             **Versão:** `${{ steps.read_version.outputs.version }}`
             **Build:** #${{ github.run_number }}
             **Commit:** ${{ github.sha }}
+            **Assinatura:** Release Keystore Oficial EEX ✅
 
             ### Instalação
             1. Baixe o arquivo `express.elgaly.apk` abaixo
@@ -123,7 +132,7 @@ jobs:
             4. Instale e aproveite! 🎉
 
             > Atualização automática detectada pelo sistema da Providente no app.
-          files: android/app/build/outputs/apk/debug/express.elgaly.apk
+          files: android/app/build/outputs/apk/release/express.elgaly.apk
           make_latest: true
           draft: false
           prerelease: false
@@ -132,7 +141,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo "### 🚀 APK Gerado e Release Criada!" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ APK Release Gerado e Assinado!" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** \`${{ steps.read_version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Arquivo:** \`express.elgaly.apk\`" >> $GITHUB_STEP_SUMMARY
-          echo "O app vai detectar esta versão automaticamente e notificar os usuários!" >> $GITHUB_STEP_SUMMARY
+          echo "**Assinatura:** Release Keystore Oficial EEX 🔐" >> $GITHUB_STEP_SUMMARY
