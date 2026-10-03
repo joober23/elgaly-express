@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1008407071059-qf710750br3gctnub0ga3vd0depea30f.apps.googleusercontent.com",
+          "client_id": "1008407071059-mhu2jo84omlro6vgppb4ak8b50958ajs.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.elgaly.express",
-            "certificate_hash": "a254a3f86c141a335957e47feb2ffa91c054d13d"
+            "certificate_hash": "c8dd25131b901246d64337abed0e98890f5fd7e8"
           }
         },
         {
