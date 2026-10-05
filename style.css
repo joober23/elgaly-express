@@ -7203,6 +7203,11 @@ html.theme-night::after {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.btn-eex-plus-pill img {
+  filter: brightness(0) saturate(100%) invert(14%) sepia(88%) saturate(3800%) hue-rotate(318deg) brightness(78%) contrast(110%) !important;
+  transition: filter 0.15s ease;
+}
+
 .btn-eex-plus-pill:hover {
   transform: translateY(-2px);
   box-shadow: 3.5px 3.5px 0px var(--black);
@@ -7211,6 +7216,10 @@ html.theme-night::after {
 .btn-eex-plus-pill.is-active {
   background: linear-gradient(135deg, #ec4899, #f59e0b);
   color: #ffffff;
+}
+
+.btn-eex-plus-pill.is-active img {
+  filter: none !important;
 }
 
 /* ==========================================================================
@@ -7385,6 +7394,149 @@ html.theme-night::after {
    ========================================================================== */
 .logo-eexplus-dark {
   filter: brightness(0) saturate(100%) invert(14%) sepia(50%) saturate(3500%) hue-rotate(275deg) brightness(85%) contrast(115%) !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="azul-arcanico"]) .logo-eexplus-dark,
+:is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="azul-arcanico"]) #modalEEXPlus .logo-eexplus-dark {
+  filter: none !important;
+}
+
+/* Modal EEX+ Componentes */
+.eexplus-coming-soon-banner {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 3px solid #d97706;
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  text-align: center;
+  box-shadow: 3px 3px 0 #b45309;
+}
+.eexplus-coming-soon-banner h3 {
+  margin: 0 0 4px;
+  color: #92400e;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+.eexplus-coming-soon-banner p {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #78350f;
+  line-height: 1.35;
+}
+
+.eexplus-code-box {
+  background: #ffffff;
+  border: 2px dashed var(--purple-main);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 14px;
+}
+.eexplus-code-box label {
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--purple-dark);
+}
+
+.eexplus-benefits-box {
+  background: var(--card-bg-light);
+  border: 2px solid var(--black);
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 14px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.eexplus-benefits-box strong {
+  color: var(--purple-dark);
+}
+.eexplus-benefits-box .benefits-list-content {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--purple-dark);
+}
+
+/* ==========================================================================
+   EEX+ NO TEMA ROXO NUMETÁLICO E TEMAS ESCUROS
+   ========================================================================== */
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-modal-box {
+  background: #1a062c !important;
+  color: #ffffff !important;
+  border-color: var(--black) !important;
+  box-shadow: 10px 10px 0px var(--magenta-bright) !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-coming-soon-banner {
+  background: #360f54 !important;
+  border: 3px solid #fde047 !important;
+  box-shadow: 4px 4px 0px #08020d !important;
+  color: #ffffff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-coming-soon-banner h3 {
+  color: #fde047 !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-coming-soon-banner p {
+  color: #f3e8ff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card {
+  background: #250a3d !important;
+  border-color: #08020d !important;
+  color: #ffffff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card strong {
+  color: #ffffff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card small {
+  color: #c4b5fd !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card .eexplus-plan-price {
+  color: #ff3b94 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card.highlight {
+  background: #3b105c !important;
+  border: 3px solid #fde047 !important;
+  box-shadow: 4px 4px 0px #08020d !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card.highlight strong {
+  color: #fde047 !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card.highlight small {
+  color: #fde047 !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-plan-card.highlight .eexplus-plan-price {
+  color: #fde047 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-code-box {
+  background: #2a0c47 !important;
+  border-color: #a855f7 !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-code-box label {
+  color: #f3e8ff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-code-box input {
+  background: #19052b !important;
+  border-color: #581c87 !important;
+  color: #ffffff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-benefits-box {
+  background: #250a3d !important;
+  border-color: #08020d !important;
+  color: #f3e8ff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-benefits-box strong {
+  color: #fde047 !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-benefits-box .benefits-list-content {
+  color: #f3e8ff !important;
+}
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) #modalEEXPlus .modal-close {
+  color: #f3e8ff !important;
 }
 
 /* ==========================================================================

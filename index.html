@@ -838,9 +838,12 @@
               </div>
 
               <!-- Ciclo Dia/Noite (EEX+) -->
-              <div style="margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--purple-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div id="rowSettingsNightCycle" style="margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--purple-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                 <div>
-                  <strong style="font-size: 0.9rem; color: var(--purple-dark);">🌙 Ciclo Dia & Noite</strong>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <strong style="font-size: 0.9rem; color: var(--purple-dark);">🌙 Ciclo Dia & Noite</strong>
+                    <span style="font-size: 0.7rem; font-weight: 900; background: linear-gradient(135deg, #ec4899, #f59e0b); color: #fff; padding: 2px 7px; border-radius: 999px; border: 1.5px solid var(--black);">EEX+ ✨</span>
+                  </div>
                   <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 0;">Filtro âmbar quente noturno (19h às 07h).</p>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
@@ -1003,7 +1006,7 @@
               </button>
             </div>
 
-            <div style="margin-top: 10px; text-align: right;">
+            <div id="containerEexPlusTestMode" style="display: none !important; margin-top: 10px; text-align: right;">
               <button type="button" id="btnToggleEexPlusTestMode" class="btn-comic btn-secondary" style="padding: 6px 14px; font-size: 0.78rem;" title="Ativa ou desativa o EEX+ instantaneamente para testes">
                 🧪 Testar EEX+ (Alternar)
               </button>
@@ -1894,10 +1897,10 @@
       <!-- SEÇÃO PARA NÃO ASSINANTES (Modo Em Breve) -->
       <div id="modalEexPlusGuestSection">
         <!-- Banner de Lançamento em Breve -->
-        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 3px solid #d97706; border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; text-align: center; box-shadow: 3px 3px 0 #b45309;">
+        <div class="eexplus-coming-soon-banner">
           <span style="font-size: 1.6rem; display: block; margin-bottom: 2px;">🚀✨</span>
-          <h3 style="margin: 0 0 4px; color: #92400e; font-size: 1.15rem; font-weight: 900;">LANÇAMENTO EM BREVE!</h3>
-          <p style="margin: 0; font-size: 0.82rem; font-weight: 700; color: #78350f; line-height: 1.35;">
+          <h3>LANÇAMENTO EM BREVE!</h3>
+          <p>
             O sistema de assinaturas e ativações do Elgaly Express+ está em fase final de preparação. Conheça abaixo todos os privilégios VIP que estarão disponíveis!
           </p>
         </div>
@@ -1923,8 +1926,8 @@
         </div>
 
         <!-- Ativação por Código (Em Breve) -->
-        <div style="background: #fff; border: 2px dashed var(--purple-main); border-radius: 12px; padding: 12px; margin-top: 14px;">
-          <label for="inputModalEexPlusCode" style="font-weight: 800; font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--purple-dark);">Possui um código de ativação?</label>
+        <div class="eexplus-code-box">
+          <label for="inputModalEexPlusCode" style="font-weight: 800; font-size: 0.85rem; display: block; margin-bottom: 6px;">Possui um código de ativação?</label>
           <div style="display: flex; gap: 8px;">
             <input type="text" id="inputModalEexPlusCode" placeholder="CÓDIGOS EM BREVE..." disabled style="flex: 1; text-transform: uppercase; font-family: monospace; font-weight: 800; letter-spacing: 1px; padding: 8px; border: 2px solid var(--black); border-radius: 8px; background: #f3f4f6; color: #9ca3af; cursor: not-allowed;">
             <button type="button" id="btnModalActivateEexPlus" class="btn-comic" disabled style="padding: 8px 16px; opacity: 0.7; cursor: not-allowed;">Em Breve</button>
@@ -1933,9 +1936,9 @@
       </div>
 
       <!-- Benefícios (Visíveis sempre para consulta) -->
-      <div style="background: var(--card-bg-light); border: 2px solid var(--black); border-radius: 14px; padding: 14px; margin-top: 14px; margin-bottom: 16px; text-align: left;">
-        <strong style="font-size: 0.9rem; color: var(--purple-dark); display: block; margin-bottom: 8px;">✨ O que você ganha com o EEX+:</strong>
-        <div style="font-size: 0.82rem; line-height: 1.6; color: var(--purple-dark);">
+      <div class="eexplus-benefits-box">
+        <strong style="font-size: 0.9rem; display: block; margin-bottom: 8px;">✨ O que você ganha com o EEX+:</strong>
+        <div class="benefits-list-content">
           <div>🍅 <strong>Relógio Pomodoro</strong> integrado</div>
           <div>🌙 <strong>Ciclo Dia & Noite</strong> com conforto ocular</div>
           <div>🎨 <strong>Temas Exclusivos:</strong> Azul Arcânico & Ouro Providêntico</div>
@@ -1947,8 +1950,8 @@
         </div>
       </div>
 
-      <!-- Botão para Teste Rápido -->
-      <div style="margin-top: 14px; text-align: center;">
+      <!-- Botão para Teste Rápido (Exclusivo Kotun) -->
+      <div id="containerModalEexPlusTestMode" style="display: none !important; margin-top: 14px; text-align: center;">
         <button type="button" id="btnModalToggleTestMode" class="btn-comic btn-secondary" style="font-size: 0.8rem; padding: 6px 14px;">
           🧪 Alternar Modo de Teste EEX+ (Ativar / Desativar Agora)
         </button>

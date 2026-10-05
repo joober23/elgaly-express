@@ -662,6 +662,12 @@ const EEXPlusManager = {
   },
 
   applyNightMode(force) {
+    if (!this.isPremium()) {
+      this._nightMode = false;
+      document.documentElement.classList.remove('theme-night');
+      localStorage.setItem('eex_night_manual', '0');
+      return;
+    }
     const shouldBeNight = force !== undefined ? force : (this.isPremium() && this.isNightTime());
     this._nightMode = shouldBeNight;
     document.documentElement.classList.toggle('theme-night', shouldBeNight);
@@ -669,12 +675,19 @@ const EEXPlusManager = {
   },
 
   startDayNightCycle() {
-    if (!this.isPremium()) return;
+    if (!this.isPremium()) {
+      this.applyNightMode(false);
+      return;
+    }
     // Aplica imediatamente e verifica a cada 5 min
     this.applyNightMode();
     if (this._nightTimer) clearInterval(this._nightTimer);
     this._nightTimer = setInterval(() => {
-      if (this.isPremium()) this.applyNightMode();
+      if (this.isPremium()) {
+        this.applyNightMode();
+      } else {
+        this.stopDayNightCycle();
+      }
     }, 5 * 60 * 1000);
   },
 
@@ -689,6 +702,8 @@ const EEXPlusManager = {
     await this.loadStatus();
     if (this.isPremium()) {
       this.startDayNightCycle();
+    } else {
+      this.applyNightMode(false);
     }
   }
 };
@@ -4591,6 +4606,12 @@ const AppUI = {
     const badgeNightStatus = document.getElementById('badgeNightStatus');
     const updateNightBadge = () => {
       if (!badgeNightStatus) return;
+      if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
+        badgeNightStatus.textContent = '🔒 BLOQUEADO';
+        badgeNightStatus.style.background = '#fef2f2';
+        badgeNightStatus.style.color = '#ef4444';
+        return;
+      }
       const isNight = document.documentElement.classList.contains('theme-night');
       badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
       badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
@@ -4599,7 +4620,7 @@ const AppUI = {
     if (btnToggleNightMode) {
       btnToggleNightMode.addEventListener('click', () => {
         if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
-          this.showToast('🔒 O Ciclo Noturno Automático é exclusivo do EEX+! ✨');
+          this.showToast('🔒 O Conforto Ocular e Ciclo Dia & Noite são exclusivos do EEX+! ✨');
           openEexPlus();
           return;
         }
@@ -6073,21 +6094,44 @@ const AppUI = {
       modalActivePlanDesc.textContent = `Plano Ativo: ${planLabel}. Seu terminal está com todos os privilégios VIP dimensional liberados!`;
     }
 
-    // Botão de teste EEX+: visível APENAS para os desenvolvedores / VIPs (Kotun & Magafus)
-    const btnToggleEexPlusTestMode = document.getElementById('btnToggleEexPlusTestMode');
-    if (btnToggleEexPlusTestMode && btnToggleEexPlusTestMode.parentElement) {
-      const user = AuthManager.getCurrentUser();
-      const isDevVip = user && AuthManager.isMagafusVIP(user);
-      btnToggleEexPlusTestMode.parentElement.style.display = isDevVip ? 'block' : 'none';
+    // Botão de teste EEX+: visível EXCLUSIVAMENTE para a conta oficial de testes (kotundashed.express.com)
+    // Para todas as outras contas, permanece 100% oculto
+    const user = AuthManager.getCurrentUser();
+    const isKotun = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isKotunUser(user);
+
+    const containerEexPlusTestMode = document.getElementById('containerEexPlusTestMode') || (document.getElementById('btnToggleEexPlusTestMode')?.parentElement);
+    if (containerEexPlusTestMode) {
+      containerEexPlusTestMode.style.setProperty('display', isKotun ? 'block' : 'none', 'important');
     }
 
-    // Badge noturno
+    const containerModalEexPlusTestMode = document.getElementById('containerModalEexPlusTestMode') || (document.getElementById('btnModalToggleTestMode')?.parentElement);
+    if (containerModalEexPlusTestMode) {
+      containerModalEexPlusTestMode.style.setProperty('display', isKotun ? 'block' : 'none', 'important');
+    }
+
+    // Badge e controle noturno (Ciclo Dia & Noite / Conforto Ocular EEX+)
     const badgeNightStatus = document.getElementById('badgeNightStatus');
-    if (badgeNightStatus) {
-      const isNight = document.documentElement.classList.contains('theme-night');
-      badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
-      badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
-      badgeNightStatus.style.color = isNight ? '#000' : '#475569';
+    const btnToggleNightMode = document.getElementById('btnToggleNightMode');
+    if (!isPrem) {
+      document.documentElement.classList.remove('theme-night');
+      if (badgeNightStatus) {
+        badgeNightStatus.textContent = '🔒 BLOQUEADO';
+        badgeNightStatus.style.background = '#fef2f2';
+        badgeNightStatus.style.color = '#ef4444';
+      }
+      if (btnToggleNightMode) {
+        btnToggleNightMode.classList.add('eexplus-lustroso');
+      }
+    } else {
+      if (btnToggleNightMode) {
+        btnToggleNightMode.classList.remove('eexplus-lustroso');
+      }
+      if (badgeNightStatus) {
+        const isNight = document.documentElement.classList.contains('theme-night');
+        badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
+        badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
+        badgeNightStatus.style.color = isNight ? '#000' : '#475569';
+      }
     }
   },
 
