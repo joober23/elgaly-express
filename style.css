@@ -3397,17 +3397,42 @@ footer {
   position: fixed;
   inset: 0;
   z-index: 999999;
-  background-color: var(--bg-color, #f7a8ca);
+  background-color: #831843; /* Rosa Chiclete Escuro com alto contraste para logotipo branco */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end; /* PC: centro inferior da tela */
-  padding-bottom: 14vh;
+  justify-content: center; /* Meio centro exato tanto no PC quanto no Mobile */
+  padding-bottom: 0;
   user-select: none;
   opacity: 1;
   visibility: visible;
   transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: opacity, visibility;
+}
+
+/* Fundo da splash por tema: versão escura e contrastante no Rosa Express */
+:is(:root, [data-theme="rosa-express"]) .eex-splash-screen {
+  background-color: #831843; /* Rosa/Bordeaux Express Escuro */
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eex-splash-screen {
+  background-color: #12071f;
+}
+
+[data-theme="verde-magafico"] .eex-splash-screen {
+  background-color: #3b5832;
+}
+
+[data-theme="vermelho-culposo"] .eex-splash-screen {
+  background-color: #ba4c4c;
+}
+
+[data-theme="azul-arcanico"] .eex-splash-screen {
+  background-color: #0b1329;
+}
+
+[data-theme="ouro-providentico"] .eex-splash-screen {
+  background-color: #2b1f05;
 }
 
 /* Fade out do fundo da tela splash */
@@ -3438,24 +3463,26 @@ footer {
 }
 
 .eex-splash-logo {
-  width: 110px;
-  height: 110px;
+  width: 195px;
+  height: 195px;
+  max-width: 80vw;
+  max-height: 80vh;
   object-fit: contain;
   display: block;
   /* Sem animação estática, profissional como Duolingo */
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.18));
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.22));
 }
 
-/* Mobile: logotipo no meio centro exato da tela */
+/* Mobile: logotipo no meio centro, tamanho equilibrado */
 @media (max-width: 768px) {
   .eex-splash-screen {
-    justify-content: center; /* Meio centro */
+    justify-content: center;
     padding-bottom: 0;
   }
 
   .eex-splash-logo {
-    width: 95px;
-    height: 95px;
+    width: 135px;
+    height: 135px;
   }
 }
 
