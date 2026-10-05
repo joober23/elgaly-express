@@ -153,7 +153,8 @@ const AuthManager = {
         avatar: this.currentUser.avatar,
         eexEmail: this.currentUser.eexEmail,
         nickname: this.currentUser.nickname,
-        bonusXp: this.currentUser.bonusXp || 0
+        bonusXp: this.currentUser.bonusXp || 0,
+        unlockedAchievements: this.currentUser.unlockedAchievements || []
       });
     }
     return this.currentUser;
@@ -208,6 +209,10 @@ const AuthManager = {
       MemoriesManager.memories = [];
       localStorage.removeItem('elgaly_express_daily_memories');
     }
+    if (typeof EEXPlusManager !== 'undefined') {
+      EEXPlusManager._premium = null;
+    }
+    localStorage.removeItem('elgaly_eexplus_status');
     AppUI.renderAll();
     AppUI.showToast('Você saiu da sua conta.');
   },
@@ -390,11 +395,23 @@ const EEXPlusManager = {
   _nightMode: false,    // modo noturno ativo
   _nightTimer: null,    // intervalo do ciclo dia/noite
 
+  isKotunUser(user) {
+    if (!user) user = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    if (!user) return false;
+    const nick = (user.nickname || '').toLowerCase().trim();
+    const eex = (user.eexEmail || '').toLowerCase().trim();
+    const email = (user.email || '').toLowerCase().trim();
+    return nick === 'kotundashed' || eex.includes('kotundashed') || email.includes('kotundashed');
+  },
+
   // ── STATUS ───────────────────────────────────────────────────────────────
 
   isPremium() {
     if (!this._premium) return false;
-    if (this._premium.plan === 'lifetime') return true;
+    // O modo de teste 'lifetime' é restrito exclusivamente para kotundashed.express.com
+    if (this._premium.plan === 'lifetime') {
+      return this.isKotunUser();
+    }
     if (this._premium.plan === 'monthly' && this._premium.expiresAt) {
       return new Date(this._premium.expiresAt) > new Date();
     }
@@ -420,26 +437,42 @@ const EEXPlusManager = {
   // ── CARREGAR / SALVAR STATUS ──────────────────────────────────────────────
 
   async loadStatus() {
-    // 1. Carrega do localStorage primeiro (cache rápido e modo de teste local)
-    const local = localStorage.getItem('elgaly_eexplus_status');
-    if (local) {
-      try {
-        this._premium = JSON.parse(local);
-      } catch (e) {
-        this._premium = null;
+    const user = AuthManager.getCurrentUser();
+    const uid = user?.id;
+    const isKotun = this.isKotunUser(user);
+
+    // Se NÃO for kotundashed, limpa qualquer resquício de teste local imediatamente!
+    if (!isKotun) {
+      this._premium = null;
+      localStorage.removeItem('elgaly_eexplus_status');
+      if (uid) localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
+    } else {
+      const local = (uid ? localStorage.getItem(`elgaly_eexplus_status_${uid}`) : null) || localStorage.getItem('elgaly_eexplus_status');
+      if (local) {
+        try {
+          this._premium = JSON.parse(local);
+        } catch (e) {
+          this._premium = null;
+        }
       }
     }
 
-    const uid = AuthManager.getCurrentUser()?.id;
     if (!uid || !FirebaseService.db) return;
     try {
       const doc = await FirebaseService.db
         .collection('users').doc(uid)
         .collection('system').doc('eexplus').get();
       if (doc.exists) {
-        this._premium = doc.data();
-        localStorage.setItem('elgaly_eexplus_status', JSON.stringify(this._premium));
-      } else if (!local) {
+        const data = doc.data();
+        if (data && data.plan === 'lifetime' && !isKotun) {
+          // Se uma conta não-kotun tiver documento de teste, limpa no Firestore
+          this._premium = null;
+          await FirebaseService.db.collection('users').doc(uid).collection('system').doc('eexplus').delete().catch(() => {});
+        } else {
+          this._premium = data;
+          if (uid) localStorage.setItem(`elgaly_eexplus_status_${uid}`, JSON.stringify(this._premium));
+        }
+      } else if (!isKotun) {
         this._premium = null;
       }
     } catch (e) {
@@ -448,14 +481,16 @@ const EEXPlusManager = {
   },
 
   async _saveStatus(data) {
+    const uid = AuthManager.getCurrentUser()?.id;
     this._premium = data;
     if (data) {
       localStorage.setItem('elgaly_eexplus_status', JSON.stringify(data));
+      if (uid) localStorage.setItem(`elgaly_eexplus_status_${uid}`, JSON.stringify(data));
     } else {
       localStorage.removeItem('elgaly_eexplus_status');
+      if (uid) localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
     }
 
-    const uid = AuthManager.getCurrentUser()?.id;
     if (!uid || !FirebaseService.db) return;
     try {
       await FirebaseService.db
@@ -468,8 +503,8 @@ const EEXPlusManager = {
 
   toggleTestMode() {
     const currentUser = AuthManager.getCurrentUser();
-    if (!currentUser || !AuthManager.isMagafusVIP(currentUser)) {
-      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Modo de teste restrito aos desenvolvedores.');
+    if (!this.isKotunUser(currentUser)) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Apenas a conta kotundashed.express.com pode ativar o modo teste!');
       return false;
     }
     if (this.isPremium()) {
@@ -2019,6 +2054,9 @@ const FriendsManager = {
     AppUI.showToast(`📻 [RÁDIO EEX]: Câmbio, status transmitido: "${statusText}"`);
     const modal = document.getElementById('modalRadioBip');
     if (modal) modal.classList.remove('active');
+    if (typeof AppUI !== 'undefined') {
+      AppUI.unlockAchievement('frequencia-aberta');
+    }
     this.syncMyPublicProfile();
     this.render();
   }
@@ -6320,94 +6358,121 @@ const AppUI = {
     };
   },
 
+  unlockAchievement(achId) {
+    const user = AuthManager.getCurrentUser();
+    if (!user) return;
+    const list = Array.isArray(user.unlockedAchievements) ? [...user.unlockedAchievements] : [];
+    if (!list.includes(achId)) {
+      list.push(achId);
+      user.unlockedAchievements = list;
+      AuthManager.currentUser = user;
+      AuthManager.saveCurrent();
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.id) {
+        FirebaseService.saveProfileToCloud({ unlockedAchievements: list });
+      }
+    }
+  },
+
   getAchievements(stats = {}) {
+    const user           = AuthManager.getCurrentUser();
+    const unlockedList   = (user && Array.isArray(user.unlockedAchievements))
+      ? [...user.unlockedAchievements]
+      : [];
 
-    const streak            = stats.streak            || 0;
-    const completedTasks    = stats.completedTasks    || 0;
-    const friendsCount      = stats.friendsCount      || 0;
-    const memoriesCount     = stats.memoriesCount     || 0;
-    const sosActive         = !!stats.sosActive;
-    const radioStatus       = !!stats.radioStatus;
-    const shells            = stats.shells            || 0;
-    // "100% Express" — desbloqueado permanentemente ao ativar EEX+ uma vez
-    const user              = AuthManager.getCurrentUser();
-    const unlockedEexPlus   = (user && Array.isArray(user.unlockedAchievements))
-      ? user.unlockedAchievements.includes('express-total')
-      : false;
+    const streak         = stats.streak         || 0;
+    const completedTasks = stats.completedTasks || 0;
+    const friendsCount   = stats.friendsCount   || 0;
+    const memoriesCount  = stats.memoriesCount  || 0;
+    const radioStatus    = !!stats.radioStatus;
+    const shells         = stats.shells         || 0;
 
-    return [
+    // Conquistas disponíveis (SOS temporariamente removido a pedido do usuário)
+    const list = [
       {
         id: 'primeira-missao',
         icon: '🐾',
         title: 'Primeira Missão',
         desc: 'Completou seu primeiro hábito ou encomenda',
-        unlocked: completedTasks > 0 || streak > 0
+        unlocked: unlockedList.includes('primeira-missao') || completedTasks > 0 || streak > 0
       },
       {
         id: 'chama-viva',
         icon: '🔥',
         title: 'Chama Viva',
         desc: 'Manteve 3 ou mais dias de rotina seguida',
-        unlocked: streak >= 3
+        unlocked: unlockedList.includes('chama-viva') || streak >= 3
       },
       {
         id: 'super-sonico',
         icon: '⚡',
         title: 'Super Sônico',
         desc: 'Alcançou 7 dias de streak ininterrupto',
-        unlocked: streak >= 7
+        unlocked: unlockedList.includes('super-sonico') || streak >= 7
       },
       {
         id: 'mestre-frete',
         icon: '📦',
         title: 'Mestre do Frete',
         desc: 'Entregou 5 ou mais encomendas dimensionais',
-        unlocked: completedTasks >= 5
+        unlocked: unlockedList.includes('mestre-frete') || completedTasks >= 5
       },
       {
         id: 'lembre-se',
         icon: '🐚',
         title: 'Lembre-se',
         desc: 'Colete 55 conchas',
-        unlocked: shells >= 55
+        unlocked: unlockedList.includes('lembre-se') || shells >= 55
       },
       {
         id: 'rede-coletiva',
         icon: '🤝',
         title: 'Rede Coletiva',
         desc: 'Conectou-se com pelo menos 1 parceiro EEX',
-        unlocked: friendsCount >= 1
+        unlocked: unlockedList.includes('rede-coletiva') || friendsCount >= 1
       },
       {
         id: 'olho-postal',
         icon: '📸',
         title: 'Olho Postal',
         desc: 'Registrou momentos da rotina com fotos e adesivos',
-        unlocked: memoriesCount >= 1
-      },
-      {
-        id: 'sinalizador-sos',
-        icon: '🚨',
-        title: 'Sinalizador SOS',
-        desc: 'Acionou o alerta de resgate da frota',
-        unlocked: sosActive
+        unlocked: unlockedList.includes('olho-postal') || memoriesCount >= 1
       },
       {
         id: 'frequencia-aberta',
         icon: '📻',
         title: 'Frequência Aberta',
         desc: 'Transmitiu aviso de status no Rádio Comunicador',
-        unlocked: radioStatus
+        unlocked: unlockedList.includes('frequencia-aberta') || radioStatus
       },
       {
         id: 'express-total',
         icon: '✨',
         title: '100% Express',
         desc: 'Ativou o EEX+ uma vez — Agente de Elite da Frota!',
-        unlocked: unlockedEexPlus,
+        unlocked: unlockedList.includes('express-total'),
         exclusive: true // marca visual EEX+
       }
     ];
+
+    // Persiste no banco de dados do Firebase qualquer conquista que acabou de ser cumprida
+    let hasNew = false;
+    list.forEach(a => {
+      if (a.unlocked && !unlockedList.includes(a.id)) {
+        unlockedList.push(a.id);
+        hasNew = true;
+      }
+    });
+
+    if (hasNew && user) {
+      user.unlockedAchievements = unlockedList;
+      AuthManager.currentUser = user;
+      AuthManager.saveCurrent();
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.id) {
+        FirebaseService.saveProfileToCloud({ unlockedAchievements: unlockedList });
+      }
+    }
+
+    return list;
   },
 
 
