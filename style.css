@@ -2794,19 +2794,32 @@ footer {
 }
 
 /* ==========================================================================
-   BOTTOM NAV BAR â€” MOBILE (ESTÃ‰TICA NEO-BRUTALISTA OFICIAL EEX)
+   BOTTOM NAV BAR — MOBILE (ESTÉTICA NEO-BRUTALISTA OFICIAL EEX)
    ========================================================================== */
+.bottom-nav-container {
+  display: none;
+}
+
 .bottom-nav-bar {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .bottom-nav-bar {
-    display: flex;
+  .bottom-nav-container {
+    display: block;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: 500;
+  }
+
+  .bottom-nav-bar {
+    display: flex;
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
     z-index: 500;
     background: var(--purple-dark);
     border-top: 5px solid var(--black);
@@ -2822,6 +2835,65 @@ footer {
 
   .bottom-nav-bar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Indicativo animado de arrastar / deslizar */
+  .bottom-nav-drag-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: absolute;
+    top: -18px;
+    right: 14px;
+    z-index: 502;
+    background: var(--yellow-bright);
+    color: var(--black);
+    font-family: var(--font-main);
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 2px solid var(--black);
+    box-shadow: 2px 2px 0px var(--black);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    animation: dragHintBounce 1.8s ease-in-out infinite;
+  }
+
+  .bottom-nav-drag-hint.hidden {
+    opacity: 0;
+    transform: translateX(12px) scale(0.9);
+    pointer-events: none;
+  }
+
+  @keyframes dragHintBounce {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-5px);
+    }
+  }
+
+  /* Gradiente na borda direita para evidenciar continuidade */
+  .bottom-nav-container::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4));
+    pointer-events: none;
+    z-index: 501;
+    border-top: 5px solid transparent;
+    transition: opacity 0.25s ease;
+  }
+
+  .bottom-nav-container.scrolled-end::after {
+    opacity: 0;
   }
 
   .bottom-nav-item {
@@ -3319,111 +3391,71 @@ footer {
 }
 
 /* ==========================================================================
-   TELA SPLASH OFICIAL EEX (ELGALY ARROW GIRATÃ“RIO)
+   TELA SPLASH OFICIAL EEX (3s OBRIGATÓRIOS - ESTILO MINIMALISTA PROFISSIONAL)
    ========================================================================== */
 .eex-splash-screen {
   position: fixed;
   inset: 0;
   z-index: 999999;
-  background: #180728;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
-  user-select: none;
-}
-
-.eex-splash-screen.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.eex-splash-box {
+  background-color: var(--bg-color, #f7a8ca);
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding: 32px 24px;
-  max-width: 360px;
-  width: 90%;
+  justify-content: flex-end; /* PC: centro inferior da tela */
+  padding-bottom: 14vh;
+  user-select: none;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, visibility;
 }
 
-.eex-splash-arrow-wrap {
-  width: 104px;
-  height: 104px;
+/* Fade out do fundo da tela splash */
+.eex-splash-screen.fade-out {
+  opacity: 0;
+}
+
+.eex-splash-screen.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+
+.eex-splash-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
-  position: relative;
+  opacity: 1;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
-.eex-splash-arrow {
-  width: 90px;
-  height: 90px;
+/* Fade out do logotipo */
+.eex-splash-logo-wrap.fade-out {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.eex-splash-logo {
+  width: 110px;
+  height: 110px;
   object-fit: contain;
-  animation: eexArrowSpin 1.4s cubic-bezier(0.55, 0.08, 0.35, 0.95) infinite;
-  filter: drop-shadow(0 0 16px rgba(255, 59, 148, 0.8));
+  display: block;
+  /* Sem animação estática, profissional como Duolingo */
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.18));
 }
 
-@keyframes eexArrowSpin {
-  0% {
-    transform: rotate(0deg) scale(0.96);
+/* Mobile: logotipo no meio centro exato da tela */
+@media (max-width: 768px) {
+  .eex-splash-screen {
+    justify-content: center; /* Meio centro */
+    padding-bottom: 0;
   }
-  50% {
-    transform: rotate(180deg) scale(1.08);
-  }
-  100% {
-    transform: rotate(360deg) scale(0.96);
-  }
-}
 
-.eex-splash-title {
-  font-family: var(--font-display, 'Darumadrop One', cursive);
-  font-size: 2.1rem;
-  color: #ffffff;
-  letter-spacing: 1px;
-  margin: 0 0 6px 0;
-  text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255, 59, 148, 0.6);
-}
-
-.eex-splash-subtitle {
-  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
-  font-size: 0.86rem;
-  font-weight: 800;
-  color: #ffeb3b;
-  letter-spacing: 1.5px;
-  margin: 0 0 20px 0;
-  text-transform: uppercase;
-}
-
-.eex-splash-bar-outer {
-  width: 100%;
-  height: 12px;
-  background: #2b0d42;
-  border: 3px solid #000;
-  border-radius: 999px;
-  overflow: hidden;
-  box-shadow: 3px 3px 0 #000;
-}
-
-.eex-splash-bar-inner {
-  height: 100%;
-  width: 45%;
-  background: linear-gradient(90deg, #ffeb3b, #ff3b94);
-  border-radius: 999px;
-  animation: eexSplashProgress 1.2s ease-in-out infinite alternate;
-}
-
-@keyframes eexSplashProgress {
-  0% {
-    width: 20%;
-    transform: translateX(0);
-  }
-  100% {
-    width: 75%;
-    transform: translateX(35%);
+  .eex-splash-logo {
+    width: 95px;
+    height: 95px;
   }
 }
 

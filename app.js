@@ -3345,10 +3345,18 @@ const NotesManager = {
 
   save() {
     localStorage.setItem('elgaly_express_notes', JSON.stringify(this.notes));
-    if (typeof FirebaseService !== 'undefined' && AuthManager.isLoggedIn()) {
-      const user = AuthManager.getCurrentUser();
-      if (user && user.id && FirebaseService.saveUserNotes) {
-        FirebaseService.saveUserNotes(user.id, this.notes).catch(() => {});
+  },
+
+  onCloudSync(cloudNotes) {
+    if (!Array.isArray(cloudNotes)) return;
+    if (cloudNotes.length > 0) {
+      this.notes = cloudNotes;
+      localStorage.setItem('elgaly_express_notes', JSON.stringify(this.notes));
+      this.render();
+    } else if (this.notes.length > 0) {
+      // Se a nuvem estiver vazia mas houver notas locais salvas, sobe para o Firestore
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.saveAllNotesToCloud) {
+        FirebaseService.saveAllNotesToCloud(this.notes);
       }
     }
   },
@@ -3376,6 +3384,11 @@ const NotesManager = {
     }
     this.save();
     this.render();
+
+    // Sincroniza em tempo real com o Firestore
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(newNote);
+    }
     return true;
   },
 
@@ -3386,12 +3399,22 @@ const NotesManager = {
     this.notes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     this.save();
     this.render();
+
+    // Atualiza status do pin no Firestore
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(note);
+    }
   },
 
   deleteNote(id) {
     this.notes = this.notes.filter(n => n.id !== id);
     this.save();
     this.render();
+
+    // Exclui do Firestore
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.deleteNoteFromCloud) {
+      FirebaseService.deleteNoteFromCloud(id);
+    }
   },
 
   render(searchTerm = '') {
@@ -4233,20 +4256,90 @@ const AppUI = {
     );
   },
 
-  showSplash(message = 'CARREGANDO...') {
+  _splashDone: false,
+
+  initSplash() {
     const splash = document.getElementById('eexSplashScreen');
-    const msgEl = document.getElementById('eexSplashStatus');
-    if (msgEl) msgEl.textContent = message;
-    if (splash) splash.classList.remove('hidden');
+    const logoWrap = document.getElementById('eexSplashLogoWrap');
+    if (!splash) {
+      this._splashDone = true;
+      return;
+    }
+
+    // Cronograma OBRIGATÓRIO de 3 segundos (3000ms):
+    // 1. Aos 2100ms: Fade-out do logotipo
+    setTimeout(() => {
+      if (logoWrap) logoWrap.classList.add('fade-out');
+    }, 2100);
+
+    // 2. Aos 2550ms: Fade-out do fundo da tela splash
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+    }, 2550);
+
+    // 3. Aos 3000ms: Oculta o splash completamente e revela o sistema
+    setTimeout(() => {
+      splash.classList.add('hidden');
+      this._splashDone = true;
+
+      // Agora sim o sistema e a saudação da Providente / VIP aparecem
+      const user = AuthManager.getCurrentUser();
+      if (user) {
+        this.triggerMagafusLoginGreeting(user);
+      }
+      setTimeout(() => UpdateManager.check(), 1000);
+    }, 3000);
+  },
+
+  showSplash() {
+    const splash = document.getElementById('eexSplashScreen');
+    const logoWrap = document.getElementById('eexSplashLogoWrap');
+    if (!splash) return;
+    splash.classList.remove('hidden', 'fade-out');
+    if (logoWrap) logoWrap.classList.remove('fade-out');
   },
 
   hideSplash() {
-    const splash = document.getElementById('eexSplashScreen');
-    if (splash) {
-      setTimeout(() => {
-        splash.classList.add('hidden');
-      }, 400);
+    if (this._splashDone) {
+      const splash = document.getElementById('eexSplashScreen');
+      if (splash) splash.classList.add('hidden');
     }
+  },
+
+  initBottomNavScrollHint() {
+    const nav = document.getElementById('bottomNavBar');
+    const hint = document.getElementById('bottomNavDragHint');
+    const container = document.getElementById('bottomNavContainer');
+    if (!nav) return;
+
+    const updateScrollHint = () => {
+      const maxScroll = nav.scrollWidth - nav.clientWidth;
+      if (maxScroll <= 12) {
+        if (hint) hint.classList.add('hidden');
+        if (container) container.classList.add('scrolled-end');
+        return;
+      }
+      if (nav.scrollLeft >= maxScroll - 16) {
+        if (hint) hint.classList.add('hidden');
+        if (container) container.classList.add('scrolled-end');
+      } else {
+        if (hint) hint.classList.remove('hidden');
+        if (container) container.classList.remove('scrolled-end');
+      }
+    };
+
+    nav.addEventListener('scroll', updateScrollHint, { passive: true });
+    window.addEventListener('resize', updateScrollHint);
+
+    setTimeout(updateScrollHint, 300);
+
+    // Efeito sutil de demonstração (peek) para orientar o usuário no mobile
+    setTimeout(() => {
+      if (window.innerWidth <= 768 && nav.scrollLeft === 0 && nav.scrollWidth > nav.clientWidth) {
+        nav.scrollTo({ left: 36, behavior: 'smooth' });
+        setTimeout(() => nav.scrollTo({ left: 0, behavior: 'smooth' }), 550);
+      }
+    }, 3600);
   },
 
   init() {
@@ -4257,6 +4350,9 @@ const AppUI = {
       MobileGateManager.show();
       return; // Não inicializa o resto do app
     }
+
+    this.initSplash();
+    this.initBottomNavScrollHint();
 
     AuthManager.init();
     ThemeManager.init();
@@ -6007,6 +6103,8 @@ const AppUI = {
       if (desktopNav) desktopNav.style.display = 'none';
       if (btnMobileMenu) btnMobileMenu.style.display = 'none';
       if (bottomNavBar) bottomNavBar.style.display = 'none';
+      const bottomNavContainer = document.getElementById('bottomNavContainer');
+      if (bottomNavContainer) bottomNavContainer.style.display = 'none';
       this.renderHeaderProfile();
       this.hideSplash();
       return;
@@ -6018,6 +6116,8 @@ const AppUI = {
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
     if (btnMobileMenu) btnMobileMenu.style.display = 'none';
     if (bottomNavBar) bottomNavBar.style.removeProperty('display');
+    const bottomNavContainer = document.getElementById('bottomNavContainer');
+    if (bottomNavContainer) bottomNavContainer.style.removeProperty('display');
 
     this.renderHeaderProfile();
     this.renderHomeOverview();
@@ -6036,11 +6136,16 @@ const AppUI = {
     if (user) {
       this.updateWorkModeUI(!!user.workMode);
       this.checkCeoWorkPrompt(user);
-      this.triggerMagafusLoginGreeting(user);
+      // Dispara a saudação da Providente/VIP apenas após o término do splash de 3s
+      if (this._splashDone) {
+        this.triggerMagafusLoginGreeting(user);
+      }
     }
 
-    // Verifica atualização disponível (uma vez por sessão, após login completo)
-    setTimeout(() => UpdateManager.check(), 3000);
+    // Verifica atualização disponível (uma vez por sessão, após splash)
+    if (this._splashDone) {
+      setTimeout(() => UpdateManager.check(), 3000);
+    }
 
     this.hideSplash();
   },

@@ -542,6 +542,20 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar perfil do Firestore:', err);
     });
+
+    // 11. Escuta anotações do Bloquinho EEX em tempo real
+    this.unsubscribeNotes = userDoc.collection('notes').onSnapshot(snapshot => {
+      const cloudNotes = [];
+      snapshot.forEach(doc => {
+        cloudNotes.push({ id: doc.id, ...doc.data() });
+      });
+      cloudNotes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+      if (typeof NotesManager !== 'undefined') {
+        NotesManager.onCloudSync(cloudNotes);
+      }
+    }, err => {
+      console.warn('Erro ao escutar notas do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
@@ -550,6 +564,7 @@ const FirebaseService = {
     if (this.unsubscribeHistory) { this.unsubscribeHistory(); this.unsubscribeHistory = null; }
     if (this.unsubscribeEvents) { this.unsubscribeEvents(); this.unsubscribeEvents = null; }
     if (this.unsubscribeMemories) { this.unsubscribeMemories(); this.unsubscribeMemories = null; }
+    if (this.unsubscribeNotes) { this.unsubscribeNotes(); this.unsubscribeNotes = null; }
     if (this.unsubscribeFriends) { this.unsubscribeFriends(); this.unsubscribeFriends = null; }
     if (this.unsubscribeRequests) { this.unsubscribeRequests(); this.unsubscribeRequests = null; }
     if (this.unsubscribePokes) { this.unsubscribePokes(); this.unsubscribePokes = null; }
@@ -629,6 +644,43 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('memories').doc(memoryId).delete();
+  },
+
+  async saveNoteToCloud(note) {
+    if (!this.auth || !this.auth.currentUser || !this.db || !note || !note.id) return;
+    const uid = this.auth.currentUser.uid;
+    try {
+      await this.db.collection('users').doc(uid).collection('notes').doc(note.id).set(note, { merge: true });
+    } catch (e) {
+      console.warn('Erro ao salvar nota na nuvem:', e);
+    }
+  },
+
+  async deleteNoteFromCloud(noteId) {
+    if (!this.auth || !this.auth.currentUser || !this.db || !noteId) return;
+    const uid = this.auth.currentUser.uid;
+    try {
+      await this.db.collection('users').doc(uid).collection('notes').doc(noteId).delete();
+    } catch (e) {
+      console.warn('Erro ao excluir nota da nuvem:', e);
+    }
+  },
+
+  async saveAllNotesToCloud(notes) {
+    if (!this.auth || !this.auth.currentUser || !this.db || !Array.isArray(notes)) return;
+    const uid = this.auth.currentUser.uid;
+    const batch = this.db.batch();
+    const notesCol = this.db.collection('users').doc(uid).collection('notes');
+    notes.forEach(n => {
+      if (n && n.id) {
+        batch.set(notesCol.doc(n.id), n, { merge: true });
+      }
+    });
+    try {
+      await batch.commit();
+    } catch (e) {
+      console.warn('Erro ao salvar lote de notas na nuvem:', e);
+    }
   },
 
   // ========================================================

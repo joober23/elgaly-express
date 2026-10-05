@@ -29,22 +29,23 @@
   <link rel="apple-touch-icon" href="images/icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
   <meta name="google-signin-client_id" content="1008407071059-g2fqbpnscjgtq0st91g32q3bpf7r88lt.apps.googleusercontent.com">
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('elgaly_theme') || 'rosa-express';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 
   <!-- ==========================================================================
-       TELA SPLASH / CARREGAMENTO OFICIAL (ELGALY ARROW GIRATÓRIO)
+       TELA SPLASH OFICIAL EEX (3s OBRIGATÓRIOS - ESTILO MINIMALISTA PROFISSIONAL)
        ========================================================================== -->
   <div class="eex-splash-screen" id="eexSplashScreen">
-    <div class="eex-splash-box">
-      <div class="eex-splash-arrow-wrap">
-        <img src="images/elgalylogo_arrow.png" alt="Carregando..." class="eex-splash-arrow">
-      </div>
-      <h2 class="eex-splash-title">ELGALY EXPRESS</h2>
-      <p class="eex-splash-subtitle" id="eexSplashStatus">CONECTANDO À REDE EEX...</p>
-      <div class="eex-splash-bar-outer">
-        <div class="eex-splash-bar-inner"></div>
-      </div>
+    <div class="eex-splash-logo-wrap" id="eexSplashLogoWrap">
+      <img src="images/elgalylogo.png" alt="Elgaly Express" class="eex-splash-logo" id="eexSplashLogo">
     </div>
   </div>
 
@@ -1376,48 +1377,55 @@
   <!-- ==========================================================================
        BOTTOM NAV BAR — MOBILE (ESTÉTICA NEO-BRUTALISTA EEX)
        ========================================================================== -->
-  <nav class="bottom-nav-bar" id="bottomNavBar">
-    <a href="#inicio" class="bottom-nav-item active" data-tab="inicio">
-      <span class="bottom-nav-icon">🏠</span>
-      <span class="bottom-nav-label">Início</span>
-    </a>
-    <a href="#rotina" class="bottom-nav-item" data-tab="rotina">
-      <span class="bottom-nav-icon">☀️</span>
-      <span class="bottom-nav-label">Rotina</span>
-    </a>
-    <a href="#encomendas" class="bottom-nav-item" data-tab="encomendas">
-      <span class="bottom-nav-icon">📦</span>
-      <span class="bottom-nav-label">Encomendas</span>
-    </a>
-    <a href="#notas" class="bottom-nav-item" data-tab="notas">
-      <span class="bottom-nav-icon">📝</span>
-      <span class="bottom-nav-label">Notas</span>
-    </a>
-    <a href="#pomodoro" class="bottom-nav-item" id="btnBottomPomodoro" data-tab="pomodoro">
-      <span class="bottom-nav-icon">🍅</span>
-      <span class="bottom-nav-label">Pomodoro</span>
-    </a>
-    <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
-      <span class="bottom-nav-icon">🏪</span>
-      <span class="bottom-nav-label">Loja EEX</span>
-    </a>
-    <a href="#relatorios" class="bottom-nav-item" data-tab="relatorios">
-      <span class="bottom-nav-icon">📊</span>
-      <span class="bottom-nav-label">Relatórios</span>
-    </a>
-    <a href="#amigos" class="bottom-nav-item" data-tab="amigos">
-      <span class="bottom-nav-icon">🤝</span>
-      <span class="bottom-nav-label">Amigos</span>
-    </a>
-    <a href="#perfil" class="bottom-nav-item" data-tab="perfil">
-      <span class="bottom-nav-icon">👤</span>
-      <span class="bottom-nav-label">Perfil</span>
-    </a>
-    <a href="#configuracoes" class="bottom-nav-item" data-tab="configuracoes">
-      <span class="bottom-nav-icon">⚙️</span>
-      <span class="bottom-nav-label">Config</span>
-    </a>
-  </nav>
+  <div class="bottom-nav-container" id="bottomNavContainer">
+    <nav class="bottom-nav-bar" id="bottomNavBar">
+      <a href="#inicio" class="bottom-nav-item active" data-tab="inicio">
+        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-label">Início</span>
+      </a>
+      <a href="#rotina" class="bottom-nav-item" data-tab="rotina">
+        <span class="bottom-nav-icon">☀️</span>
+        <span class="bottom-nav-label">Rotina</span>
+      </a>
+      <a href="#encomendas" class="bottom-nav-item" data-tab="encomendas">
+        <span class="bottom-nav-icon">📦</span>
+        <span class="bottom-nav-label">Encomendas</span>
+      </a>
+      <a href="#notas" class="bottom-nav-item" data-tab="notas">
+        <span class="bottom-nav-icon">📝</span>
+        <span class="bottom-nav-label">Notas</span>
+      </a>
+      <a href="#pomodoro" class="bottom-nav-item" id="btnBottomPomodoro" data-tab="pomodoro">
+        <span class="bottom-nav-icon">🍅</span>
+        <span class="bottom-nav-label">Pomodoro</span>
+      </a>
+      <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
+        <span class="bottom-nav-icon">🏪</span>
+        <span class="bottom-nav-label">Loja EEX</span>
+      </a>
+      <a href="#relatorios" class="bottom-nav-item" data-tab="relatorios">
+        <span class="bottom-nav-icon">📊</span>
+        <span class="bottom-nav-label">Relatórios</span>
+      </a>
+      <a href="#amigos" class="bottom-nav-item" data-tab="amigos">
+        <span class="bottom-nav-icon">🤝</span>
+        <span class="bottom-nav-label">Amigos</span>
+      </a>
+      <a href="#perfil" class="bottom-nav-item" data-tab="perfil">
+        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-label">Perfil</span>
+      </a>
+      <a href="#configuracoes" class="bottom-nav-item" data-tab="configuracoes">
+        <span class="bottom-nav-icon">⚙️</span>
+        <span class="bottom-nav-label">Config</span>
+      </a>
+    </nav>
+    <!-- Indicativo visual de arrastar / deslizar -->
+    <div class="bottom-nav-drag-hint" id="bottomNavDragHint" title="Deslize para ver mais opções">
+      <span class="drag-hint-icon">👉</span>
+      <span class="drag-hint-text">deslize</span>
+    </div>
+  </div>
 
   <!-- ==========================================================================
        SCRIPTS (RELATIVOS PARA GITHUB PAGES COM FALLBACK CDN)
