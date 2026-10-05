@@ -25,24 +25,8 @@ public class EexIconPlugin extends Plugin {
      */
     @PluginMethod
     public void setThemeIcon(PluginCall call) {
-        String theme = call.getString("theme", "default");
-        String targetAlias;
-
-        switch (theme) {
-            case "rosa-express":
-                targetAlias = ALIAS_ROSA;
-                break;
-            case "roxo-numetalico":
-                targetAlias = ALIAS_ROXO;
-                break;
-            case "verde-magafico":
-                targetAlias = ALIAS_VERDE;
-                break;
-            default:
-                // Volta ao ícone padrão (roxo escuro original)
-                targetAlias = ALIAS_DEFAULT;
-                break;
-        }
+        // Desativado a pedido do usuário: manter sempre o ícone padrão oficial (sem trocar cor)
+        String targetAlias = ALIAS_DEFAULT;
 
         try {
             PackageManager pm = getContext().getPackageManager();
@@ -60,7 +44,7 @@ public class EexIconPlugin extends Plugin {
 
             call.resolve();
         } catch (Exception e) {
-            call.reject("Erro ao trocar ícone: " + e.getMessage(), e);
+            call.reject("Erro ao fixar ícone padrão: " + e.getMessage(), e);
         }
     }
 }

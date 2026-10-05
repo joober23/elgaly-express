@@ -2811,10 +2811,17 @@ footer {
     background: var(--purple-dark);
     border-top: 5px solid var(--black);
     box-shadow: 0 -5px 0px var(--magenta-bright);
-    padding: 6px 6px max(10px, env(safe-area-inset-bottom));
-    justify-content: space-around;
-    align-items: stretch;
+    padding: 6px 8px max(10px, env(safe-area-inset-bottom));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .bottom-nav-bar::-webkit-scrollbar {
+    display: none;
   }
 
   .bottom-nav-item {
@@ -2823,13 +2830,13 @@ footer {
     align-items: center;
     justify-content: center;
     gap: 2px;
-    flex: 1;
-    padding: 6px 2px;
+    flex: 0 0 auto;
+    min-width: 58px;
+    padding: 6px 4px;
     text-decoration: none;
     border-radius: 12px;
     border: 2px solid transparent;
     transition: background 0.15s, transform 0.1s, border-color 0.15s;
-    min-width: 0;
     color: rgba(255, 255, 255, 0.6);
     font-family: var(--font-main);
   }
@@ -2867,9 +2874,21 @@ footer {
     padding-bottom: max(96px, calc(86px + env(safe-area-inset-bottom)));
   }
 
-  /* Esconde o menu hambÃºrguer no mobile */
+  /* Menu hambúrguer visível no mobile */
   .btn-mobile-menu {
-    display: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  /* Balão flutuante do Pomodoro posicionado acima da bottom bar no celular */
+  .pomodoro-floating-bubble {
+    bottom: calc(75px + max(10px, env(safe-area-inset-bottom))) !important;
+    right: 12px !important;
+    padding: 8px 14px 8px 10px !important;
   }
 
   /* Header mobile mais compacto */

@@ -2538,7 +2538,7 @@ const ThemeManager = {
       FirebaseService.saveProfileTheme(themeId);
     }
 
-    // Troca o ícone do app no launcher Android (somente no app nativo Capacitor)
+    // Mantém sempre o ícone padrão oficial (sem trocar cor do ícone no launcher Android a pedido do usuário)
     try {
       if (
         typeof window !== 'undefined' &&
@@ -2548,7 +2548,7 @@ const ThemeManager = {
         window.Capacitor.Plugins &&
         window.Capacitor.Plugins.EexIcon
       ) {
-        window.Capacitor.Plugins.EexIcon.setThemeIcon({ theme: themeId });
+        window.Capacitor.Plugins.EexIcon.setThemeIcon({ theme: 'default' });
       }
     } catch (e) {
       // Sem suporte nativo — ignora silenciosamente
@@ -3885,6 +3885,11 @@ const AppUI = {
     document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(link => {
       link.addEventListener('click', (e) => {
         const tab = link.dataset.tab;
+        if (tab === 'pomodoro') {
+          e.preventDefault();
+          openPomodoro();
+          return;
+        }
         if (tab) {
           e.preventDefault();
           if (window.location.hash !== `#${tab}`) {
@@ -3905,6 +3910,12 @@ const AppUI = {
     document.querySelectorAll('.nav-link, .drawer-nav-link, .bottom-nav-item').forEach(link => {
       link.classList.toggle('active', link.dataset.tab === tabName);
     });
+
+    // Rola suavemente o item da barra inferior para visualização caso necessário
+    const activeBottom = document.querySelector(`.bottom-nav-item[data-tab="${tabName}"]`);
+    if (activeBottom && typeof activeBottom.scrollIntoView === 'function') {
+      activeBottom.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    }
 
     document.querySelectorAll('.app-view').forEach(view => {
       view.classList.toggle('active-view', view.id === `view-${tabName}`);
@@ -4427,6 +4438,14 @@ const AppUI = {
     if (btnDrawerPomodoro) {
       btnDrawerPomodoro.addEventListener('click', () => {
         if (typeof this.closeMobileDrawer === 'function') this.closeMobileDrawer();
+        openPomodoro();
+      });
+    }
+
+    const btnBottomPomodoro = document.getElementById('btnBottomPomodoro');
+    if (btnBottomPomodoro) {
+      btnBottomPomodoro.addEventListener('click', (e) => {
+        e.preventDefault();
         openPomodoro();
       });
     }
@@ -5470,6 +5489,7 @@ const AppUI = {
     if (authGateway) authGateway.style.display = 'none';
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
+    if (btnMobileMenu) btnMobileMenu.style.removeProperty('display');
     if (bottomNavBar) bottomNavBar.style.removeProperty('display');
 
     this.renderHeaderProfile();
@@ -6009,11 +6029,23 @@ const AppUI = {
     const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
     const planLabel = isPrem ? EEXPlusManager.getPlanLabel() : null;
 
-    // Botão Pomodoro na Navbar e no Drawer: SÓ aparece se o usuário for assinante EEX+!
+    // Botão Pomodoro na Navbar, no Drawer e na Barra Inferior Mobile
     const btnNavPomodoro = document.getElementById('btnNavPomodoro');
     const btnDrawerPomodoro = document.getElementById('btnDrawerPomodoro');
-    if (btnNavPomodoro) btnNavPomodoro.style.display = isPrem ? 'inline-flex' : 'none';
-    if (btnDrawerPomodoro) btnDrawerPomodoro.style.display = isPrem ? 'flex' : 'none';
+    const btnBottomPomodoro = document.getElementById('btnBottomPomodoro');
+
+    if (btnNavPomodoro) {
+      btnNavPomodoro.style.display = 'inline-flex';
+      btnNavPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+    }
+    if (btnDrawerPomodoro) {
+      btnDrawerPomodoro.style.display = 'flex';
+      btnDrawerPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+    }
+    if (btnBottomPomodoro) {
+      btnBottomPomodoro.style.display = 'flex';
+      btnBottomPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+    }
 
     // Se o usuário não for premium, esconde também o balãozinho flutuante e pausa o timer
     const floatingWidget = document.getElementById('pomodoroFloatingWidget');
