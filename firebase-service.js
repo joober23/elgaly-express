@@ -526,11 +526,16 @@ const FirebaseService = {
           ThemeManager.syncPurchasedThemes(data.purchasedThemes);
         }
         if (data && data.preferredTheme && typeof ThemeManager !== 'undefined') {
-          const targetTheme = ThemeManager.isThemeUnlocked(data.preferredTheme)
-            ? data.preferredTheme
-            : 'rosa-express';
-          if (ThemeManager.current !== targetTheme) {
-            ThemeManager.setTheme(targetTheme, false, false);
+          // Se o usuário alterou o tema localmente nos últimos 3 segundos,
+          // não permite que snapshot defasado do Firestore reverta ou cause conflito/loop
+          const isRecentLocalChange = ThemeManager.lastLocalChange && (Date.now() - ThemeManager.lastLocalChange < 3000);
+          if (!isRecentLocalChange) {
+            const targetTheme = ThemeManager.isThemeUnlocked(data.preferredTheme)
+              ? data.preferredTheme
+              : 'rosa-express';
+            if (ThemeManager.current !== targetTheme) {
+              ThemeManager.setTheme(targetTheme, false, false);
+            }
           }
         }
       }

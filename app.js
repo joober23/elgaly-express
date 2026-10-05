@@ -2577,6 +2577,12 @@ const ThemeManager = {
   },
 
   getPurchasedThemes(user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    if (!user) {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('elgaly_express_current_user') || 'null');
+        if (savedUser) user = savedUser;
+      } catch (e) {}
+    }
     const uid = user ? (user.id || user.uid) : 'default';
     let local = [];
     try {
@@ -2589,6 +2595,12 @@ const ThemeManager = {
   },
 
   savePurchasedThemes(list, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    if (!user) {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('elgaly_express_current_user') || 'null');
+        if (savedUser) user = savedUser;
+      } catch (e) {}
+    }
     const uid = user ? (user.id || user.uid) : 'default';
     localStorage.setItem(`elgaly_purchased_themes_${uid}`, JSON.stringify(list));
     if (user) {
@@ -2605,9 +2617,18 @@ const ThemeManager = {
     const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
     const current = this.getPurchasedThemes(user);
     const merged = Array.from(new Set([...current, ...cloudList]));
+    // Evita loop e re-renderizações se os temas não mudaram
+    if (merged.length === current.length && current.every(t => cloudList.includes(t))) {
+      return;
+    }
     this.savePurchasedThemes(merged, user);
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.render();
-    if (typeof AppUI !== 'undefined') AppUI.renderConfiguracoes();
+    if (typeof AppUI !== 'undefined') {
+      const cfgView = document.getElementById('view-configuracoes');
+      if (cfgView && cfgView.classList.contains('active-view')) {
+        AppUI.renderConfiguracoes();
+      }
+    }
   },
 
   isThemeUnlocked(themeId, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
@@ -2661,7 +2682,7 @@ const ThemeManager = {
     }
     this.savePurchasedThemes(purchased, user);
 
-    if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.uid) {
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.db && (user.id || user.uid)) {
       try {
         await FirebaseService.saveProfileToCloud({ purchasedThemes: purchased });
       } catch (e) {
@@ -2688,7 +2709,7 @@ const ThemeManager = {
     if (!this.isThemeUnlocked(saved)) {
       saved = 'rosa-express';
     }
-    this.setTheme(saved, false);
+    this.setTheme(saved, false, false);
   },
 
   cycle() {
@@ -2699,58 +2720,77 @@ const ThemeManager = {
     this.setTheme(unlocked[nextIdx], true);
   },
 
+  lastLocalChange: 0,
+  _isSettingTheme: false,
 
   setTheme(themeId, showToastNotification = false, syncCloud = true) {
-    if (!this.themes[themeId]) themeId = 'rosa-express';
-    // Se o tema estiver bloqueado, volta para rosa-express
-    if (!this.isThemeUnlocked(themeId)) {
-      themeId = 'rosa-express';
-    }
-    this.current = themeId;
-    const themeObj = this.themes[themeId];
-
-    document.documentElement.setAttribute('data-theme', themeId);
-    localStorage.setItem('elgaly_theme', themeId);
-
-    // Atualiza botão do Header
-    const iconBtn = document.getElementById('btnHeaderTheme');
-    if (iconBtn) {
-      iconBtn.innerHTML = themeObj.icon;
-      iconBtn.title = `Tema: ${themeObj.name} (Clique para alternar)`;
-    }
-
-    // Atualiza os cartões seletores na tela de configurações
-    document.querySelectorAll('.theme-pick-card').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.themeId === themeId);
-    });
-
-    // Atualiza a caixinha de mensagem com frases do tema
-    this.updateQuoteBox(themeId);
-
-    if (showToastNotification && typeof AppUI !== 'undefined' && AppUI.showToast) {
-      const quote = themeObj.quotes[0];
-      AppUI.showToast(`${themeObj.icon} ${themeObj.name}: "${quote}"`);
-    }
-
-    // Sincronização em tempo real do tema entre PC e Celular via Firestore
-    if (syncCloud && typeof FirebaseService !== 'undefined' && FirebaseService.saveProfileTheme) {
-      FirebaseService.saveProfileTheme(themeId);
-    }
-
-    // Mantém sempre o ícone padrão oficial (sem trocar cor do ícone no launcher Android a pedido do usuário)
+    if (this._isSettingTheme) return;
+    this._isSettingTheme = true;
     try {
-      if (
-        typeof window !== 'undefined' &&
-        window.Capacitor &&
-        window.Capacitor.isNativePlatform &&
-        window.Capacitor.isNativePlatform() &&
-        window.Capacitor.Plugins &&
-        window.Capacitor.Plugins.EexIcon
-      ) {
-        window.Capacitor.Plugins.EexIcon.setThemeIcon({ theme: 'default' });
+      if (!this.themes[themeId]) themeId = 'rosa-express';
+      // Se o tema estiver bloqueado, volta para rosa-express
+      if (!this.isThemeUnlocked(themeId)) {
+        themeId = 'rosa-express';
       }
-    } catch (e) {
-      // Sem suporte nativo — ignora silenciosamente
+
+      const themeChanged = (this.current !== themeId) || (document.documentElement.getAttribute('data-theme') !== themeId);
+
+      // Se nada mudou e não deve exibir notificação toast, encerra sem trabalho redundante
+      if (!themeChanged && !showToastNotification) {
+        return;
+      }
+
+      this.current = themeId;
+      this.lastLocalChange = Date.now();
+      const themeObj = this.themes[themeId];
+
+      document.documentElement.setAttribute('data-theme', themeId);
+      localStorage.setItem('elgaly_theme', themeId);
+
+      // Atualiza botão do Header
+      const iconBtn = document.getElementById('btnHeaderTheme');
+      if (iconBtn) {
+        iconBtn.innerHTML = themeObj.icon;
+        iconBtn.title = `Tema: ${themeObj.name} (Clique para alternar)`;
+      }
+
+      // Atualiza os cartões seletores na tela de configurações
+      document.querySelectorAll('.theme-pick-card').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.themeId === themeId);
+      });
+
+      // Atualiza a caixinha de mensagem com frases do tema apenas se mudou
+      if (themeChanged) {
+        this.updateQuoteBox(themeId);
+      }
+
+      if (showToastNotification && typeof AppUI !== 'undefined' && AppUI.showToast) {
+        const quote = themeObj.quotes[0];
+        AppUI.showToast(`${themeObj.icon} ${themeObj.name}: "${quote}"`);
+      }
+
+      // Sincronização em tempo real do tema entre PC e Celular via Firestore apenas se houve mudança real
+      if (syncCloud && themeChanged && typeof FirebaseService !== 'undefined' && FirebaseService.saveProfileTheme) {
+        FirebaseService.saveProfileTheme(themeId);
+      }
+
+      // Mantém sempre o ícone padrão oficial (sem trocar cor do ícone no launcher Android a pedido do usuário)
+      try {
+        if (
+          typeof window !== 'undefined' &&
+          window.Capacitor &&
+          window.Capacitor.isNativePlatform &&
+          window.Capacitor.isNativePlatform() &&
+          window.Capacitor.Plugins &&
+          window.Capacitor.Plugins.EexIcon
+        ) {
+          window.Capacitor.Plugins.EexIcon.setThemeIcon({ theme: 'default' });
+        }
+      } catch (e) {
+        // Sem suporte nativo — ignora silenciosamente
+      }
+    } finally {
+      this._isSettingTheme = false;
     }
   },
 
@@ -4218,8 +4258,8 @@ const AppUI = {
       return; // Não inicializa o resto do app
     }
 
-    ThemeManager.init();
     AuthManager.init();
+    ThemeManager.init();
     TaskManager.init();
     HabitManager.init();
     EventManager.init();
@@ -6462,7 +6502,10 @@ const AppUI = {
     if (eexEl) eexEl.textContent = user.eexEmail;
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
-    ThemeManager.setTheme(ThemeManager.current, false);
+    // Atualiza estado visual dos cartões de tema nas configurações
+    document.querySelectorAll('.theme-pick-card').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themeId === ThemeManager.current);
+    });
 
     // Status do Modo Profissão
     const workStatus = document.getElementById('cfgWorkModeStatus');
