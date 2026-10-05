@@ -63,6 +63,7 @@
       <a href="#inicio" class="drawer-nav-link active" data-tab="inicio">🏠 Início</a>
       <a href="#rotina" class="drawer-nav-link" data-tab="rotina">☀️ Rotina Diária</a>
       <a href="#encomendas" class="drawer-nav-link" data-tab="encomendas">📦 Encomendas & Prazos</a>
+      <a href="#notas" class="drawer-nav-link" data-tab="notas">📝 Bloquinho de Notas</a>
       <a href="#relatorios" class="drawer-nav-link" data-tab="relatorios">📊 Relatórios & PDF</a>
       <a href="#amigos" class="drawer-nav-link" data-tab="amigos">🤝 EEX-Friends</a>
       <a href="#perfil" class="drawer-nav-link" data-tab="perfil">👤 Perfil EEX</a>
@@ -71,6 +72,15 @@
       <button type="button" class="drawer-nav-btn" id="btnDrawerProvidenteNews" style="width: 100%; text-align: left; background: var(--yellow-bright); color: var(--black); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 10px 0 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
         <span>📰 Gazeta da Providência (C.E.O.)</span>
         <span class="providente-badge pulse-anim" style="background: #e11d48; color: #fff; font-size: 0.72rem; padding: 2px 6px; border-radius: 8px;">NOVO</span>
+      </button>
+
+      <button type="button" class="drawer-nav-btn" id="btnDrawerPomodoro" style="width: 100%; text-align: left; background: var(--card-bg); color: var(--purple-dark); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <span>🍅 Relógio Pomodoro</span>
+      </button>
+
+      <button type="button" class="drawer-nav-btn" id="btnDrawerEexPlus" style="width: 100%; text-align: left; background: linear-gradient(135deg, #fce7f3, #fed7aa); color: #be185d; border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: 900; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <span>⭐ Elgaly Express+</span>
+        <span style="font-size:0.75rem; background: #e62b7e; color: #fff; padding: 2px 8px; border-radius: 8px;">PREMIUM</span>
       </button>
       
       <div style="display: flex; gap: 8px; margin-top: 10px;">
@@ -109,11 +119,18 @@
       </a>
 
       <!-- Área de Autenticação / Perfil + Tema + Gazeta Providente -->
+      <div class="header-actions-wrapper" style="display: flex; align-items: center; gap: 8px;">
         <!-- Saldo de Conchas EEX (Moeda de Recompensa) -->
         <div class="header-shells-pill" id="headerShellsPill" title="Seu saldo de Conchas EEX! Conclua rotinas e encomendas para ganhar conchinhas!">
           <img src="images/shellcoin.png" alt="Conchas" class="shell-coin-icon">
           <span class="shell-coin-count" id="headerShellsCount">0</span>
         </div>
+
+        <!-- Elgaly Express+ -->
+        <button id="btnHeaderEexPlus" class="btn-eex-plus-pill" title="Elgaly Express+ (Planos & Benefícios)" aria-label="EEX+">
+          <img src="elgalyexpressplus_logo.png" alt="EEX+" style="height: 18px; object-fit: contain;">
+          <span id="headerEexPlusText">EEX+</span>
+        </button>
         
         <button id="btnProvidenteNews" class="btn-theme-toggle btn-providente-news" title="Gazeta da Providência (Boletim da C.E.O.)" aria-label="Atualizações do Sistema">
           <span class="providente-icon">📰</span>
@@ -124,19 +141,23 @@
           <img src="images/elgalylogo.png" alt="Avatar" class="header-user-avatar">
         </a>
       </div>
+
     </div>
     
     <!-- Navegação Desktop (Abas Estruturadas & Intuitivas) -->
     <nav class="desktop-nav">
       <div class="nav-tabs-group">
         <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
-        <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina Diária</a>
+        <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina</a>
         <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
+        <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
+        <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
         <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
-        <a href="#amigos" class="nav-link" data-tab="amigos">🤝 EEX-Friends</a>
+        <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
         <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil</a>
         <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
       </div>
+
       <div class="nav-actions-group">
         <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
         <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
@@ -273,7 +294,10 @@
             <div class="daily-header">
               <div class="daily-date-title">
                 <h3 id="currentDateDisplay">Hoje</h3>
-                <span>Sincronizado com os Vórtices Temporais</span>
+                <div class="daily-weather-badge" id="dailyWeatherBadge" title="Clima atual no seu setor de despacho">
+                  <span class="weather-icon" id="dailyWeatherIcon">⛅</span>
+                  <span class="weather-text" id="dailyWeatherText">Carregando clima...</span>
+                </div>
               </div>
 
               <div class="daily-progress-wrap">
@@ -286,7 +310,10 @@
                 </div>
               </div>
 
-              <button class="btn-comic btn-secondary action-new-habit">+ Adicionar Hábito</button>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span id="routineLimitBadge" class="habits-limit-badge">Rotinas: <strong>0/12</strong></span>
+                <button class="btn-comic btn-secondary action-new-habit">+ Adicionar Hábito</button>
+              </div>
             </div>
 
             <!-- Grade de Hábitos -->
@@ -359,6 +386,74 @@
       </div>
 
       <!-- ==========================================================================
+           VISUALIZAÇÃO: BLOQUINHO DE NOTAS (MEMORANDOS & LEMBRETES EEX)
+           ========================================================================== -->
+      <div class="app-view" id="view-notas">
+        <section class="site-section">
+          <div class="section-header-block">
+            <h2 class="section-title">BLOQUINHO DE NOTAS EEX</h2>
+            <div class="section-subtitle">Anotações Rápidas, Ideias & Lembretes de Despacho</div>
+          </div>
+
+          <div class="notes-container">
+            <!-- Criador de Nova Nota -->
+            <div class="notes-creator-card">
+              <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: var(--purple-dark); display: flex; align-items: center; gap: 8px;">
+                <span>✏️</span> Nova Anotação
+              </h3>
+              
+              <div class="form-group" style="margin-bottom: 10px;">
+                <input type="text" id="noteTitleInput" placeholder="Título ou Assunto (opcional)" style="width: 100%; font-weight: 800;">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 12px;">
+                <textarea id="noteContentInput" rows="3" placeholder="Escreva o que quiser lembrar... (contatos, senhas temporárias, ideias, recados)" style="width: 100%; resize: vertical; min-height: 80px; font-family: var(--font-main);"></textarea>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 0.85rem; font-weight: 800; color: var(--purple-dark);">Cor do Post-it:</span>
+                  <div class="notes-color-picker" id="noteColorPicker">
+                    <button type="button" class="note-color-btn active" data-color="yellow" style="background: #fef08a;" title="Amarelo"></button>
+                    <button type="button" class="note-color-btn" data-color="pink" style="background: #fbcfe8;" title="Rosa"></button>
+                    <button type="button" class="note-color-btn" data-color="blue" style="background: #bae6fd;" title="Azul"></button>
+                    <button type="button" class="note-color-btn" data-color="green" style="background: #bbf7d0;" title="Verde"></button>
+                    <button type="button" class="note-color-btn" data-color="purple" style="background: #e9d5ff;" title="Roxo"></button>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 800; cursor: pointer; color: var(--purple-dark);">
+                    <input type="checkbox" id="notePinCheckbox" style="transform: scale(1.2);">
+                    <span>📌 Fixar no Topo</span>
+                  </label>
+                  <button type="button" id="btnAddNote" class="btn-comic" style="padding: 8px 18px; font-size: 0.9rem;">
+                    💾 Salvar Nota
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra de Busca de Notas -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="font-weight: 900; font-size: 1.1rem; color: var(--purple-dark); display: flex; align-items: center; gap: 6px;">
+                <span>📋 Suas Anotações</span>
+                <span id="notesCountBadge" style="font-size: 0.8rem; background: var(--purple-main); color: #fff; padding: 2px 8px; border-radius: 999px;">0</span>
+              </div>
+              <div style="flex: 1; max-width: 320px;">
+                <input type="text" id="noteSearchInput" placeholder="🔍 Buscar notas..." style="width: 100%; padding: 6px 12px; font-size: 0.88rem; border-radius: 12px;">
+              </div>
+            </div>
+
+            <!-- Grade de Notas -->
+            <div class="notes-grid" id="notesGrid">
+              <!-- Renderizado dinamicamente pelo NotesManager -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================================================
            VISUALIZAÇÃO 4: CENTRAL DE RELATÓRIOS & PDF
            ========================================================================== -->
       <div class="app-view" id="view-relatorios">
@@ -370,12 +465,25 @@
 
           <div class="report-panel">
             
-            <!-- Seletor de Período: 7, 15 ou 30 Dias -->
+            <!-- Seletor de Período: 7, 15, 30 Dias ou Personalizado (EEX+) -->
             <div class="report-timeframe-picker">
               <button class="timeframe-btn active" data-days="7">📅 Últimos 7 Dias (Semanal)</button>
               <button class="timeframe-btn" data-days="15">📅 Últimos 15 Dias (Quinzenal)</button>
               <button class="timeframe-btn" data-days="30">📅 Últimos 30 Dias (Mensal)</button>
+              <button class="timeframe-btn" id="btnCustomDaysReport" data-days="custom" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span>✨ Personalizado</span>
+                <span style="font-size: 0.65rem; background: #f59e0b; color: #000; font-weight: 900; padding: 1px 5px; border-radius: 6px;">EEX+</span>
+              </button>
             </div>
+
+            <!-- Caixa de dias personalizados (EEX+) -->
+            <div id="customDaysBox" style="display: none; background: var(--card-bg-light); border: 2px dashed var(--purple-main); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 0.88rem; font-weight: 800; color: var(--purple-dark);">✨ Período de Análise Customizado:</span>
+              <input type="number" id="inputCustomDays" min="1" max="365" value="45" style="width: 80px; padding: 6px 10px; font-weight: 800; border: 2px solid var(--black); border-radius: 8px;">
+              <span style="font-size: 0.85rem; font-weight: 700;">dias</span>
+              <button type="button" id="btnApplyCustomDays" class="btn-comic" style="padding: 6px 14px; font-size: 0.82rem;">Gerar Análise</button>
+            </div>
+
 
             <!-- Banner de Rank do Entregador -->
             <div class="rank-banner">
@@ -643,15 +751,16 @@
           </div>
 
           <div class="settings-grid">
-            <!-- Card 1: Temas da Frota Dimensional (3 Temas) -->
+            
+            <!-- Card 1: Temas da Frota Dimensional -->
             <div class="settings-card settings-theme-card">
               <div class="settings-theme-header">
                 <span class="settings-theme-badge">ESTILO VISUAL</span>
-                <h3>🎨 Temas da Frota Dimensional</h3>
+                <h3>🎨 Temas da Frota</h3>
                 <p>Personalize todo o visual do sistema de despacho com a sua paleta favorita!</p>
               </div>
 
-              <!-- Grade com os 3 Temas -->
+              <!-- Grade com os 5 Temas -->
               <div class="theme-picker-grid">
                 
                 <!-- Tema 1: Rosa Express -->
@@ -696,6 +805,50 @@
                   <span class="theme-check-pill">ATIVO</span>
                 </button>
 
+                <!-- Tema 4: Azul Arcânico (EEX+) -->
+                <button type="button" class="theme-pick-card theme-locked" data-theme-id="azul-arcanico" id="btnThemeAzul">
+                  <div class="theme-swatch swatch-azul">
+                    <span class="swatch-stripe s1" style="background:#1e3a8a;"></span>
+                    <span class="swatch-stripe s2" style="background:#3b82f6;"></span>
+                    <span class="swatch-stripe s3" style="background:#f97316;"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">🌌 Azul Arcânico</strong>
+                    <span class="theme-tagline">Azul & Laranja Cósmico</span>
+                  </div>
+                  <span class="theme-lock-badge">EEX+</span>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+                <!-- Tema 5: Ouro Providêntico (EEX+) -->
+                <button type="button" class="theme-pick-card theme-locked" data-theme-id="ouro-providentico" id="btnThemeOuro">
+                  <div class="theme-swatch swatch-ouro">
+                    <span class="swatch-stripe s1" style="background:#4d370b;"></span>
+                    <span class="swatch-stripe s2" style="background:#d97706;"></span>
+                    <span class="swatch-stripe s3" style="background:#ffd700;"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">👑 Ouro Providêntico</strong>
+                    <span class="theme-tagline">Nobreza da C.E.O.</span>
+                  </div>
+                  <span class="theme-lock-badge">EEX+</span>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+              </div>
+
+              <!-- Ciclo Dia/Noite (EEX+) -->
+              <div style="margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--purple-main); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <div>
+                  <strong style="font-size: 0.9rem; color: var(--purple-dark);">🌙 Ciclo Dia & Noite</strong>
+                  <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 0;">Filtro âmbar quente noturno (19h às 07h).</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <button type="button" id="btnToggleNightMode" class="btn-comic btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;">
+                    Conforto Ocular
+                  </button>
+                  <span id="badgeNightStatus" style="font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 999px; background: #e2e8f0; color: #475569;">DESLIGADO</span>
+                </div>
               </div>
 
               <!-- Caixinha de Mensagem Temática (Balão de Fala Comic) -->
@@ -710,7 +863,7 @@
 
             <!-- Card 2: Segurança do Crachá (EEX-PASS de 6 dígitos) -->
             <div class="settings-card">
-              <h3>🔐 EEX-PASS (Chave de Segurança)</h3>
+              <h3>🔐 EEX-PASS (Segurança)</h3>
               <p>Atualize seu EEX-PASS de 6 dígitos exigido para liberar o acesso ao entrar com sua Conta Google.</p>
               <form class="comic-form" id="formChangePin">
                 <div class="form-group">
@@ -725,7 +878,7 @@
 
             <!-- Card 3: Setor de Operações (Localização com Autocomplete SP) -->
             <div class="settings-card">
-              <h3>📍 Setor de Operações (Cidade)</h3>
+              <h3>📍 Setor de Operações</h3>
               <p>Altere sua cidade operacional (com sugestão de todos os 645 municípios de SP).</p>
               <form class="comic-form" id="formChangeLocation">
                 <div class="form-group">
@@ -754,8 +907,8 @@
 
             <!-- Card 5: Aplicativo & Notificações -->
             <div class="settings-card">
-              <h3>📲 Aplicativo & Notificações</h3>
-              <p>Alertas automáticos de rotina a cada 3h, avisos de encomendas (3 dias, amanhã, hoje) e eventos próximos.</p>
+              <h3>📲 Notificações</h3>
+              <p>Alertas automáticos de rotina a cada 3h, avisos de encomendas e eventos próximos.</p>
               <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button type="button" class="btn-comic btn-pwa-install" id="btnSettingsPWAInstall" style="width: 100%; display: none;">
                   📲 Instalar no Aparelho (Tela Inicial)
@@ -768,41 +921,96 @@
                 </div>
               </div>
             </div>
+
+            <!-- Card 6: Modo Profissão / Trabalho -->
+            <div class="settings-card">
+              <h3>💼 Modo Profissão / Trabalho</h3>
+              <p>Ative categorias, filtros e prazos profissionais no seu dia a dia (tarefas, rotinas e eventos).</p>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+                <div style="padding: 10px 14px; background: var(--card-bg-light); border: 2px solid var(--black); border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 0.9rem; color: var(--purple-dark);">Status:</strong>
+                  <span id="cfgWorkModeStatus" style="font-size: 0.85rem; font-weight: 900; color: #6b7280;">Desativado</span>
+                </div>
+                <button type="button" class="btn-comic" id="btnToggleSettingsWorkMode" style="width: 100%;">
+                  Ativar Modo Profissão
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 7: Saudação do Coração Magáfico (VIP) -->
+            <div class="settings-card" id="cardSettingsMagaficGreeting" style="display: none;">
+              <h3>💜 Coração Magáfico</h3>
+              <p>Exibe o Coraçãozinho Magáfico com som e mensagem de carinho toda vez que você entrar.</p>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+                <div style="padding: 10px 14px; background: var(--card-bg-light); border: 2px solid var(--black); border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 0.9rem; color: var(--purple-dark);">Saudação:</strong>
+                  <span id="cfgMagaficGreetingStatus" style="font-size: 0.85rem; font-weight: 900; color: #16a34a;">Ativada</span>
+                </div>
+                <button type="button" class="btn-comic btn-secondary" id="btnToggleMagaficGreeting" style="width: 100%;">
+                  Desativar
+                </button>
+              </div>
+            </div>
+
           </div>
 
-          <div style="height: 16px;"></div>
-
-          <!-- Card 6: Modo Profissão / Trabalho -->
-          <div class="settings-card">
-            <h3>💼 Modo Profissão / Trabalho</h3>
-            <p>Ative categorias, filtros e prazos profissionais no seu dia a dia (tarefas, rotinas e eventos).</p>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--card-bg);border:2px solid var(--purple-main);border-radius:12px;margin-top:10px;">
-              <div>
-                <strong style="font-size:0.9rem;display:block;color:var(--purple-dark);">Status Profissional:</strong>
-                <span id="cfgWorkModeStatus" style="font-size:0.8rem;font-weight:800;color:#6b7280;">Desativado</span>
+          <!-- CARD ESPECIAL: ELGALY EXPRESS+ (EEX+) — FORMATO HORIZONTAL LÁ EMBAIXO DE TUDO -->
+          <div class="settings-card settings-eexplus-horizontal" id="settingsCardEexPlus" style="margin-top: 24px;">
+            <div class="eexplus-horizontal-header">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <img src="elgalyexpressplus_logo.png" alt="Elgaly Express+" class="logo-eexplus-dark" style="height: 44px; object-fit: contain;">
+                <div>
+                  <h3 style="margin: 0; font-size: 1.25rem; color: var(--purple-dark);">Elgaly Express+ (Elite Dimensional)</h3>
+                  <p style="color: var(--text-muted); font-size: 0.85rem; margin: 2px 0 0;">Foco absoluto, produtividade dimensional, temas exclusivos e conchas extras!</p>
+                </div>
               </div>
-              <button type="button" class="btn-comic btn-sm" id="btnToggleSettingsWorkMode">
-                Ativar
+              <span id="settingsEexPlusStatusBadge" style="background: #f59e0b; color: #000; font-weight: 900; font-size: 0.85rem; padding: 6px 16px; border-radius: 999px; border: 2.5px solid var(--black); box-shadow: 2px 2px 0 var(--black);">VERSÃO GRATUITA</span>
+            </div>
+
+            <!-- Benefícios em Linha Horizontal -->
+            <div class="eexplus-benefits-horizontal">
+              <div class="eexplus-benefit-item">🍅 <strong>Relógio Pomodoro</strong> integrado</div>
+              <div class="eexplus-benefit-item">🌙 <strong>Ciclo Dia & Noite</strong> (Conforto Ocular)</div>
+              <div class="eexplus-benefit-item">🎨 <strong>Temas Exclusivos</strong> (Azul & Ouro)</div>
+              <div class="eexplus-benefit-item">🐚 <strong>+5 Conchas Extras</strong> em tudo</div>
+              <div class="eexplus-benefit-item">📊 <strong>Relatórios Personalizados</strong></div>
+              <div class="eexplus-benefit-item">🌈 <strong>Crachá Holográfico EEX+</strong></div>
+              <div class="eexplus-benefit-item">☀️ <strong>Hábitos Ilimitados</strong> (Free: 12)</div>
+              <div class="eexplus-benefit-item">🏆 <strong>Conquista Permanente 100%</strong></div>
+            </div>
+
+            <!-- Painel para Assinante Ativo (quando já é Plus) -->
+            <div id="eexplusActiveSubscriberBox" class="eexplus-active-box" style="display: none;">
+              <div class="eexplus-active-text">
+                ✨ <strong>Você já é um assinante EEX+ Ativo!</strong><br>
+                <small style="font-weight: 600; opacity: 0.9;">Todos os recursos e benefícios da frota de elite estão liberados neste terminal.</small>
+              </div>
+              <button type="button" class="btn-comic btn-secondary" id="btnSettingsManagePlan" style="font-size: 0.8rem; padding: 6px 14px;">
+                ⭐ Detalhes
+              </button>
+            </div>
+
+            <!-- Ações para Não-Assinantes: Modo Em Breve -->
+            <div id="eexplusNonSubscriberActions" class="eexplus-actions-horizontal">
+              <div style="flex: 1; min-width: 260px; display: flex; gap: 8px;">
+                <input type="text" id="inputEexPlusCode" placeholder="CÓDIGOS EM BREVE..." disabled style="flex: 1; text-transform: uppercase; font-family: monospace; font-weight: 800; letter-spacing: 1px; padding: 8px 12px; border: 2.5px solid var(--black); border-radius: 10px; background: #f3f4f6; color: #9ca3af; cursor: not-allowed;">
+                <button type="button" id="btnActivateEexPlus" class="btn-comic" disabled style="padding: 8px 18px; font-size: 0.88rem; opacity: 0.7; cursor: not-allowed;">
+                  Em Breve
+                </button>
+              </div>
+              <button type="button" id="btnOpenPlansModal" class="btn-comic" style="background: linear-gradient(135deg, #ec4899, #f59e0b); color: #fff; padding: 8px 20px; font-size: 0.88rem;">
+                ⭐ Conhecer o EEX+ (Em Breve)
+              </button>
+            </div>
+
+            <div style="margin-top: 10px; text-align: right;">
+              <button type="button" id="btnToggleEexPlusTestMode" class="btn-comic btn-secondary" style="padding: 6px 14px; font-size: 0.78rem;" title="Ativa ou desativa o EEX+ instantaneamente para testes">
+                🧪 Testar EEX+ (Alternar)
               </button>
             </div>
           </div>
 
-          <div style="height: 16px;"></div>
 
-          <!-- Card 7: Saudação do Coração Magáfico (VIP) -->
-          <div class="settings-card" id="cardSettingsMagaficGreeting" style="display: none;">
-            <h3>💜 Saudação do Coração Magáfico</h3>
-            <p>Exibe o Coraçãozinho Magáfico com som e mensagem de carinho toda vez que você entrar no sistema.</p>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--card-bg);border:2px solid var(--purple-main);border-radius:12px;margin-top:10px;">
-              <div>
-                <strong style="font-size:0.9rem;display:block;color:var(--purple-dark);">Saudação ao Entrar:</strong>
-                <span id="cfgMagaficGreetingStatus" style="font-size:0.8rem;font-weight:800;color:#16a34a;">Ativada</span>
-              </div>
-              <button type="button" class="btn-comic btn-sm btn-secondary" id="btnToggleMagaficGreeting">
-                Desativar
-              </button>
-            </div>
-          </div>
         </section>
       </div>
 
@@ -1047,25 +1255,30 @@
       </div>
 
       <div class="moment-creator-box">
-        <!-- Prévia da Foto com Adesivo Interativo -->
+        <!-- Prévia da Foto com Adesivos Interativos em Qualquer Canto -->
         <div class="moment-preview-stage" id="momentPreviewStage">
-          <img id="momentPhotoPreview" src="images/widgetbackground.png" alt="Prévia" style="display: none;">
+          <img id="momentPhotoPreview" src="images/widgetbackground.png" alt="Prévia" style="display: none; width: 100%; height: 100%; object-fit: contain;">
           <div id="momentPlaceholder" class="moment-upload-placeholder">
             <span style="font-size: 2.2rem;">📷</span>
             <span>Toque para tirar uma foto ou escolher da galeria</span>
           </div>
-          <!-- Adesivo sobreposto -->
-          <img id="momentStickerOverlay" src="images/brave.png" alt="Adesivo" class="moment-sticker-stamp">
+          <!-- Camada de Adesivos Livres -->
+          <div id="momentStickersContainer" style="position: absolute; inset: 0; pointer-events: auto;"></div>
           <input type="file" accept="image/*" capture="environment" id="momentFileInput" class="moment-file-input">
         </div>
 
         <!-- Seletor de Adesivos EEX -->
         <div style="margin-top: 14px;">
-          <label style="font-weight: 800; font-size: 0.9rem; color: var(--purple-dark); display: block; margin-bottom: 6px;">
-            🏷️ Escolha seu Adesivo EEX:
-          </label>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <label style="font-weight: 800; font-size: 0.88rem; color: var(--purple-dark); margin: 0;">
+              🏷️ Adicionar Adesivos (Toque para colar e arraste):
+            </label>
+            <button type="button" id="btnClearStickers" class="btn-comic btn-secondary" style="font-size: 0.72rem; padding: 2px 8px;">
+              🗑️ Limpar
+            </button>
+          </div>
           <div class="moment-stickers-selector">
-            <button type="button" class="moment-sticker-btn active" data-sticker="brave">
+            <button type="button" class="moment-sticker-btn" data-sticker="brave">
               <img src="images/brave.png" alt="Brave">
               <span>Brave ✨</span>
             </button>
@@ -1077,7 +1290,18 @@
               <img src="images/fireon.png" alt="Fogo">
               <span>Chama 🔥</span>
             </button>
+            <button type="button" class="moment-sticker-btn" data-sticker="shell">
+              <img src="images/shellcoin.png" alt="Concha">
+              <span>Concha 🐚</span>
+            </button>
+            <button type="button" class="moment-sticker-btn" data-sticker="seal">
+              <img src="images/magaficseal.png" alt="Selo">
+              <span>Selo 👑</span>
+            </button>
           </div>
+          <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 4px;">
+            💡 Toque em um adesivo para colocá-lo na foto. Arraste para qualquer canto e adicione quantos quiser!
+          </small>
         </div>
 
         <!-- Legenda do Momento -->
@@ -1095,6 +1319,23 @@
             🚀 Guardar Registro
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE ZOOM DA FOTO (GRANDE ÂNGULO)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalPhotoZoom">
+    <div class="modal-content">
+      <button class="modal-close" id="modalPhotoZoomClose" aria-label="Fechar">&times;</button>
+      <div class="photo-zoom-stage">
+        <img id="photoZoomImage" src="images/widgetbackground.png" alt="Foto Ampliada" class="photo-zoom-img">
+      </div>
+      <div class="photo-zoom-caption-box">
+        <div class="photo-zoom-title" id="photoZoomTitle">Momento da Rotina</div>
+        <div class="photo-zoom-subtitle" id="photoZoomCaption">Legenda da foto</div>
+        <small id="photoZoomDate" style="font-weight: 700; color: var(--purple-main); display: block; margin-top: 4px;"></small>
       </div>
     </div>
   </div>
@@ -1282,7 +1523,7 @@
     <div class="magafic-welcome-box">
       <img src="images/magaficseal.png" alt="Coração Magáfico" class="magafic-welcome-seal magafic-dance" id="magaficGreetingImg">
       <div class="magafic-welcome-content">
-        <div class="magafic-welcome-title">💜 Coração Magáfico</div>
+        <div class="magafic-welcome-title" id="magaficGreetingTitle">💜 Coração Magáfico</div>
         <p class="magafic-welcome-msg" id="magaficGreetingText">Oi, Magafus! Que bom te ver por aqui hoje! 💜✨</p>
       </div>
       <button type="button" class="magafic-welcome-close" id="btnCloseMagaficGreeting" aria-label="Fechar">✕</button>
@@ -1579,5 +1820,152 @@
     </div>
   </div>
 
+  <!-- ==========================================================================
+       MODAL RELÓGIO POMODORO EEX+
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalPomodoro" style="z-index: 10000;">
+    <div class="modal-box pomodoro-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0; color: var(--purple-dark); font-size: 1.25rem;">🍅 Relógio Pomodoro EEX+</h3>
+        <button type="button" class="btn-close-modal" id="btnPomodoroClose" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--purple-dark);">&times;</button>
+      </div>
+
+      <div class="pomodoro-phase-badge">
+        <span id="pomodoroPhaseIcon">🍅</span>
+        <span id="pomodoroPhaseLabel">Foco</span>
+      </div>
+
+      <div class="pomodoro-timer-display" id="pomodoroTime">25:00</div>
+
+      <div class="pomodoro-progress-track">
+        <div class="pomodoro-progress-bar" id="pomodoroProgressBar"></div>
+      </div>
+
+      <div class="pomodoro-cycles-text" id="pomodoroCycles">Ciclos de foco: 0</div>
+
+      <div class="pomodoro-actions">
+        <button type="button" class="btn-comic" id="btnPomodoroStart" style="background: #10b981; color: #fff; min-width: 110px;">
+          ▶️ Iniciar
+        </button>
+        <button type="button" class="btn-comic" id="btnPomodoroPause" style="background: #f59e0b; color: #000; min-width: 110px; display: none;">
+          ⏸️ Pausar
+        </button>
+        <button type="button" class="btn-comic btn-secondary" id="btnPomodoroReset" style="min-width: 100px;">
+          🔄 Reiniciar
+        </button>
+        <button type="button" class="btn-comic btn-secondary" id="btnPomodoroSkip" style="min-width: 100px;">
+          ⏭️ Pular
+        </button>
+      </div>
+
+      <div class="pomodoro-bonus-hint">
+        ✨ <strong>Vantagem EEX+:</strong> Assinantes ganham +10 Conchas EEX a cada ciclo de foco concluído!
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL ELGALY EXPRESS+ (EEX+)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalEEXPlus" style="z-index: 10000;">
+    <div class="modal-box eexplus-modal-box">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: -10px;">
+        <button type="button" class="btn-close-modal" id="btnEexPlusClose" style="background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--purple-dark);">&times;</button>
+      </div>
+      
+      <img src="elgalyexpressplus_logo.png" alt="Elgaly Express+" class="logo-eexplus-dark" style="height: 52px; object-fit: contain; margin-bottom: 8px;">
+
+      <h2 style="font-size: 1.4rem; color: var(--purple-dark); margin: 0 0 6px;">Evolua para o Elgaly Express+</h2>
+      <p style="font-size: 0.88rem; color: var(--purple-main); font-weight: 700; margin: 0 0 16px;">Tenha acesso a todas as ferramentas de produtividade dimensional e recursos de elite da Frota EEX!</p>
+
+
+      <!-- PAINEL DE ASSINANTE ATIVO NO MODAL (quando já é Plus) -->
+      <div id="modalEexPlusActiveSection" style="display: none; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 3px solid #059669; border-radius: 16px; padding: 18px; margin-bottom: 16px; text-align: center; box-shadow: 4px 4px 0px #065f46;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🎉</span>
+        <h3 style="margin: 0 0 6px; color: #065f46; font-size: 1.25rem;">Você é um Membro EEX+ Ativo!</h3>
+        <p id="modalActivePlanDesc" style="font-size: 0.9rem; font-weight: 700; color: #047857; margin: 0 0 12px;">
+          Seu terminal está com todos os privilégios VIP dimensional liberados.
+        </p>
+        <div style="background: rgba(255,255,255,0.7); border-radius: 10px; padding: 8px 12px; font-size: 0.82rem; color: #065f46; font-weight: 800;">
+          Pomodoro • Temas Exclusivos • Hábitos Ilimitados • Conchas +5 • Modo Noturno
+        </div>
+      </div>
+
+      <!-- SEÇÃO PARA NÃO ASSINANTES (Modo Em Breve) -->
+      <div id="modalEexPlusGuestSection">
+        <!-- Banner de Lançamento em Breve -->
+        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 3px solid #d97706; border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; text-align: center; box-shadow: 3px 3px 0 #b45309;">
+          <span style="font-size: 1.6rem; display: block; margin-bottom: 2px;">🚀✨</span>
+          <h3 style="margin: 0 0 4px; color: #92400e; font-size: 1.15rem; font-weight: 900;">LANÇAMENTO EM BREVE!</h3>
+          <p style="margin: 0; font-size: 0.82rem; font-weight: 700; color: #78350f; line-height: 1.35;">
+            O sistema de assinaturas e ativações do Elgaly Express+ está em fase final de preparação. Conheça abaixo todos os privilégios VIP que estarão disponíveis!
+          </p>
+        </div>
+
+        <!-- Grade dos 2 Planos (Em Breve) -->
+        <div class="eexplus-plans-grid">
+          <!-- Plano 1: Mensal -->
+          <div class="eexplus-plan-card" style="opacity: 0.95;">
+            <strong style="display:block; font-size: 0.95rem; color: var(--purple-dark);">Plano Mensal</strong>
+            <div class="eexplus-plan-price">R$ 4,99</div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">por mês</small>
+            <button type="button" class="btn-comic btn-sm btn-plan-purchase disabled" data-plan="mensal" style="width: 100%; margin-top: 10px; background: #64748b; color: #fff; font-size: 0.82rem; cursor: not-allowed;">⏳ Em Breve</button>
+          </div>
+
+          <!-- Plano 2: Vitalício / 4 Meses -->
+          <div class="eexplus-plan-card highlight" style="opacity: 0.95;">
+            <span class="eexplus-plan-badge">EM BREVE</span>
+            <strong style="display:block; font-size: 0.95rem; color: #b45309;">Acesso 4 Meses</strong>
+            <div class="eexplus-plan-price" style="color: #d97706;">R$ 19,99</div>
+            <small style="color: #b45309; font-weight: 800; font-size: 0.75rem;">pagamento único (~4 meses)</small>
+            <button type="button" class="btn-comic btn-sm btn-plan-purchase disabled" data-plan="4meses" style="width: 100%; margin-top: 10px; background: #64748b; color: #fff; font-weight: 800; font-size: 0.82rem; cursor: not-allowed;">⏳ Em Breve</button>
+          </div>
+        </div>
+
+        <!-- Ativação por Código (Em Breve) -->
+        <div style="background: #fff; border: 2px dashed var(--purple-main); border-radius: 12px; padding: 12px; margin-top: 14px;">
+          <label for="inputModalEexPlusCode" style="font-weight: 800; font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--purple-dark);">Possui um código de ativação?</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="inputModalEexPlusCode" placeholder="CÓDIGOS EM BREVE..." disabled style="flex: 1; text-transform: uppercase; font-family: monospace; font-weight: 800; letter-spacing: 1px; padding: 8px; border: 2px solid var(--black); border-radius: 8px; background: #f3f4f6; color: #9ca3af; cursor: not-allowed;">
+            <button type="button" id="btnModalActivateEexPlus" class="btn-comic" disabled style="padding: 8px 16px; opacity: 0.7; cursor: not-allowed;">Em Breve</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benefícios (Visíveis sempre para consulta) -->
+      <div style="background: var(--card-bg-light); border: 2px solid var(--black); border-radius: 14px; padding: 14px; margin-top: 14px; margin-bottom: 16px; text-align: left;">
+        <strong style="font-size: 0.9rem; color: var(--purple-dark); display: block; margin-bottom: 8px;">✨ O que você ganha com o EEX+:</strong>
+        <div style="font-size: 0.82rem; line-height: 1.6; color: var(--purple-dark);">
+          <div>🍅 <strong>Relógio Pomodoro</strong> integrado</div>
+          <div>🌙 <strong>Ciclo Dia & Noite</strong> com conforto ocular</div>
+          <div>🎨 <strong>Temas Exclusivos:</strong> Azul Arcânico & Ouro Providêntico</div>
+          <div>🐚 <strong>+5 Conchas Extras</strong> em todas as recompensas</div>
+          <div>📊 <strong>Relatórios com Período Personalizado</strong></div>
+          <div>🌈 <strong>Crachá & Passaporte Holográfico EEX+</strong></div>
+          <div>☀️ <strong>Hábitos Ilimitados</strong> (sem travas)</div>
+          <div>🏆 <strong>Conquista Permanente "100% Express"</strong></div>
+        </div>
+      </div>
+
+      <!-- Botão para Teste Rápido -->
+      <div style="margin-top: 14px; text-align: center;">
+        <button type="button" id="btnModalToggleTestMode" class="btn-comic btn-secondary" style="font-size: 0.8rem; padding: 6px 14px;">
+          🧪 Alternar Modo de Teste EEX+ (Ativar / Desativar Agora)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Balão Flutuante do Pomodoro (quando em segundo plano) -->
+  <div id="pomodoroFloatingWidget" class="pomodoro-floating-bubble" title="Pomodoro em andamento — clique para abrir">
+    <span class="pomodoro-floating-icon">🍅</span>
+    <div class="pomodoro-floating-info">
+      <span class="pomodoro-floating-time" id="pomodoroFloatingTime">25:00</span>
+      <span class="pomodoro-floating-label" id="pomodoroFloatingPhase">Foco</span>
+      <span class="pomodoro-floating-hint">↑ clique para abrir</span>
+    </div>
+  </div>
+
 </body>
+
 </html>

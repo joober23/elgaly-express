@@ -106,6 +106,10 @@ const AuthManager = {
             } else {
               parsed.avatar = 'images/elgalylogo.png';
             }
+          }
+          // Sanitização preventiva de cidade: cidades inventadas do sistema antigo viram 'São Paulo - SP'
+          if (!parsed.location || (typeof isValidSpCity === 'function' && !isValidSpCity(parsed.location)) || /nova amerit|nova arcanis|elgaly edge/i.test(parsed.location || '')) {
+            parsed.location = 'São Paulo - SP';
             localStorage.setItem('elgaly_express_current_user', JSON.stringify(parsed));
           }
           this.currentUser = parsed;
@@ -133,6 +137,9 @@ const AuthManager = {
 
   async updateUserProfile(updatedFields) {
     if (!this.currentUser) return;
+    if (updatedFields && updatedFields.location && ((typeof isValidSpCity === 'function' && !isValidSpCity(updatedFields.location)) || /nova amerit|nova arcanis|elgaly edge/i.test(updatedFields.location))) {
+      updatedFields.location = 'São Paulo - SP';
+    }
     this.currentUser = { ...this.currentUser, ...updatedFields };
     this.saveCurrent();
 
@@ -374,9 +381,283 @@ function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75
 }
 
 // ==========================================================================
+// EEX+ — GERENCIADOR DE ASSINATURA PREMIUM
+// Dois planos: Mensal (R$4,99) e Vitalício (R$19,99 = ~4 meses)
+// Ativação via código gerado na coleção Firestore `eex_codes`
+// ==========================================================================
+const EEXPlusManager = {
+  _premium: null,       // cache do status premium
+  _nightMode: false,    // modo noturno ativo
+  _nightTimer: null,    // intervalo do ciclo dia/noite
+
+  // ── STATUS ───────────────────────────────────────────────────────────────
+
+  isPremium() {
+    if (!this._premium) return false;
+    if (this._premium.plan === 'lifetime') return true;
+    if (this._premium.plan === 'monthly' && this._premium.expiresAt) {
+      return new Date(this._premium.expiresAt) > new Date();
+    }
+    return false;
+  },
+
+  getPlan() { return this._premium ? this._premium.plan : null; },
+
+  getExpiresAt() {
+    if (!this._premium || !this._premium.expiresAt) return null;
+    return new Date(this._premium.expiresAt);
+  },
+
+  // Retorna label bonitinho para UI
+  getPlanLabel() {
+    if (!this.isPremium()) return null;
+    if (this._premium.plan === 'lifetime') return 'Vitalício ♾️';
+    const exp = this.getExpiresAt();
+    if (!exp) return 'Mensal';
+    return 'Mensal (até ' + exp.toLocaleDateString('pt-BR') + ')';
+  },
+
+  // ── CARREGAR / SALVAR STATUS ──────────────────────────────────────────────
+
+  async loadStatus() {
+    // 1. Carrega do localStorage primeiro (cache rápido e modo de teste local)
+    const local = localStorage.getItem('elgaly_eexplus_status');
+    if (local) {
+      try {
+        this._premium = JSON.parse(local);
+      } catch (e) {
+        this._premium = null;
+      }
+    }
+
+    const uid = AuthManager.getCurrentUser()?.id;
+    if (!uid || !FirebaseService.db) return;
+    try {
+      const doc = await FirebaseService.db
+        .collection('users').doc(uid)
+        .collection('system').doc('eexplus').get();
+      if (doc.exists) {
+        this._premium = doc.data();
+        localStorage.setItem('elgaly_eexplus_status', JSON.stringify(this._premium));
+      } else if (!local) {
+        this._premium = null;
+      }
+    } catch (e) {
+      console.warn('EEX+: erro ao carregar status:', e);
+    }
+  },
+
+  async _saveStatus(data) {
+    this._premium = data;
+    if (data) {
+      localStorage.setItem('elgaly_eexplus_status', JSON.stringify(data));
+    } else {
+      localStorage.removeItem('elgaly_eexplus_status');
+    }
+
+    const uid = AuthManager.getCurrentUser()?.id;
+    if (!uid || !FirebaseService.db) return;
+    try {
+      await FirebaseService.db
+        .collection('users').doc(uid)
+        .collection('system').doc('eexplus').set(data || {}, { merge: true });
+    } catch (e) {
+      console.warn('EEX+: erro ao salvar no Firestore:', e);
+    }
+  },
+
+  toggleTestMode() {
+    if (this.isPremium()) {
+      this._saveStatus(null);
+      return false;
+    } else {
+      const testData = {
+        plan: 'lifetime',
+        activatedAt: new Date().toISOString(),
+        expiresAt: null,
+        codeUsed: 'MODO-TESTE-VIP'
+      };
+      this._saveStatus(testData);
+
+      // Desbloqueia conquista permanente "100% Express"
+      const user = AuthManager.getCurrentUser();
+      if (user) {
+        const existing = user.unlockedAchievements || [];
+        if (!existing.includes('express-total')) {
+          user.unlockedAchievements = [...existing, 'express-total'];
+          AuthManager.currentUser = user;
+          AuthManager.saveCurrent();
+        }
+      }
+      return true;
+    }
+  },
+
+  // ── ATIVAÇÃO POR CÓDIGO ───────────────────────────────────────────────────
+
+  async activate(rawCode) {
+    const code = (rawCode || '').trim().toUpperCase();
+    if (!code) return { ok: false, msg: 'Código inválido.' };
+
+    const uid = AuthManager.getCurrentUser()?.id;
+
+    // Códigos rápidos de demonstração / teste
+    const TEST_CODES = ['TESTE', 'EEXPLUS', 'PLUS', 'VIP', 'VITALICIO', 'PROMO499'];
+    if (TEST_CODES.includes(code)) {
+      const plan = (code === 'PROMO499') ? 'monthly' : 'lifetime';
+      let expiresAt = null;
+      if (plan === 'monthly') {
+        const exp = new Date();
+        exp.setMonth(exp.getMonth() + 1);
+        expiresAt = exp.toISOString();
+      }
+      const premiumData = {
+        plan: plan,
+        activatedAt: new Date().toISOString(),
+        expiresAt: expiresAt,
+        codeUsed: code
+      };
+      await this._saveStatus(premiumData);
+
+      const user = AuthManager.getCurrentUser();
+      if (user) {
+        const existing = user.unlockedAchievements || [];
+        if (!existing.includes('express-total')) {
+          user.unlockedAchievements = [...existing, 'express-total'];
+          AuthManager.currentUser = user;
+          AuthManager.saveCurrent();
+        }
+      }
+      return { ok: true, plan: plan };
+    }
+
+    if (!FirebaseService.db) return { ok: false, msg: 'Sem conexão com Firebase.' };
+    if (!uid) return { ok: false, msg: 'Você precisa estar logado.' };
+
+    try {
+      // Busca o código na coleção
+      const snap = await FirebaseService.db
+        .collection('eex_codes')
+        .where('code', '==', code)
+        .limit(1).get();
+
+      if (snap.empty) return { ok: false, msg: 'Código não encontrado. Verifique e tente novamente.' };
+
+      const codeDoc = snap.docs[0];
+      const codeData = codeDoc.data();
+
+      if (codeData.used) return { ok: false, msg: 'Este código já foi utilizado.' };
+
+      // Marca o código como usado
+      await codeDoc.ref.update({
+        used: true,
+        usedBy: uid,
+        usedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Calcula expiração para plano mensal
+      let expiresAt = null;
+      if (codeData.plan === 'monthly') {
+        const exp = new Date();
+        exp.setMonth(exp.getMonth() + 1);
+        expiresAt = exp.toISOString();
+      }
+
+      const premiumData = {
+        plan: codeData.plan || 'monthly',
+        activatedAt: new Date().toISOString(),
+        expiresAt: expiresAt,
+        codeUsed: code
+      };
+
+      await this._saveStatus(premiumData);
+
+      // Desbloqueia conquista "100% Express" permanentemente
+      const user = AuthManager.getCurrentUser();
+      if (user) {
+        const existing = user.unlockedAchievements || [];
+        if (!existing.includes('express-total')) {
+          user.unlockedAchievements = [...existing, 'express-total'];
+          AuthManager.currentUser = user;
+          AuthManager.saveCurrent();
+          if (FirebaseService.db) {
+            await FirebaseService.db.collection('users').doc(uid).set(
+              { unlockedAchievements: user.unlockedAchievements },
+              { merge: true }
+            );
+          }
+        }
+      }
+
+      return { ok: true, plan: codeData.plan };
+    } catch (e) {
+      console.error('EEX+: erro ao ativar:', e);
+      return { ok: false, msg: 'Erro ao validar o código. Tente novamente.' };
+    }
+  },
+
+  // ── LIMITE DE HÁBITOS ─────────────────────────────────────────────────────
+
+  HABIT_LIMIT_FREE: 12,
+
+  canAddHabit() {
+    if (this.isPremium()) return true;
+    const count = (typeof HabitManager !== 'undefined') ? HabitManager.habits.length : 0;
+    return count < this.HABIT_LIMIT_FREE;
+  },
+
+  // ── BÔNUS DE CONCHAS EEX+ (+5 por recompensa) ────────────────────────────
+
+  async applyShellBonus(baseAmount, sourceId, type) {
+    if (!this.isPremium()) return;
+    // Bonus flat de +5 conchas, sem passar pelo anti-farm (é um bônus separado)
+    await ShellsManager.addShells(5, '✨ Bônus EEX+ (+5 conchas)');
+  },
+
+  // ── CICLO DIA/NOITE ───────────────────────────────────────────────────────
+
+  isNightTime() {
+    const h = new Date().getHours();
+    return h >= 19 || h < 7; // Noite: 19h–7h
+  },
+
+  applyNightMode(force) {
+    const shouldBeNight = force !== undefined ? force : (this.isPremium() && this.isNightTime());
+    this._nightMode = shouldBeNight;
+    document.documentElement.classList.toggle('theme-night', shouldBeNight);
+    localStorage.setItem('eex_night_manual', shouldBeNight ? '1' : '0');
+  },
+
+  startDayNightCycle() {
+    if (!this.isPremium()) return;
+    // Aplica imediatamente e verifica a cada 5 min
+    this.applyNightMode();
+    if (this._nightTimer) clearInterval(this._nightTimer);
+    this._nightTimer = setInterval(() => {
+      if (this.isPremium()) this.applyNightMode();
+    }, 5 * 60 * 1000);
+  },
+
+  stopDayNightCycle() {
+    if (this._nightTimer) { clearInterval(this._nightTimer); this._nightTimer = null; }
+    this.applyNightMode(false);
+  },
+
+  // ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
+
+  async init() {
+    await this.loadStatus();
+    if (this.isPremium()) {
+      this.startDayNightCycle();
+    }
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE CONCHAS EEX (ShellsManager — Moeda de Recompensa EEX com Anti-Farm)
 // ==========================================================================
 const ShellsManager = {
+
   DAILY_CAP: 350,
 
   getStorageKey() {
@@ -654,8 +935,10 @@ const TaskManager = {
 
       if (typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 11) + 15; // 15 a 25 conchas
-        ShellsManager.rewardWithProtection(task.id, 'task', conchas, 'Encomenda entregue!');
+        await ShellsManager.rewardWithProtection(task.id, 'task', conchas, 'Encomenda entregue!');
+        if (typeof EEXPlusManager !== 'undefined') EEXPlusManager.applyShellBonus(conchas, task.id, 'task');
       }
+
     }
 
     return task;
@@ -755,8 +1038,10 @@ const HabitManager = {
       }
       if (typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 11) + 10; // 10 a 20 conchas
-        ShellsManager.rewardWithProtection(id, 'habit', conchas, 'Rotina cumprida!');
+        await ShellsManager.rewardWithProtection(id, 'habit', conchas, 'Rotina cumprida!');
+        if (typeof EEXPlusManager !== 'undefined') EEXPlusManager.applyShellBonus(conchas, id, 'habit');
       }
+
     } else {
       this.history[todayKey].splice(idx, 1);
     }
@@ -2089,6 +2374,7 @@ const ThemeManager = {
       id: 'rosa-express',
       name: 'Rosa Express',
       icon: '🌸',
+      premium: false,
       quotes: [
         'Esse tema ficou demais! 🌸',
         'O clássico despacho postal de Nova Amerit em tons de chiclete cósmico!',
@@ -2099,6 +2385,7 @@ const ThemeManager = {
       id: 'roxo-numetalico',
       name: 'Roxo NuMetálico',
       icon: '🎸',
+      premium: false,
       quotes: [
         'Pesado, sombrio e distorcido! 🎸⚡ Sintonizado na frequência dos anos 2000!',
         'Para quem pilota rotas noturnas ouvindo guitarras pesadas! 🤘🌙',
@@ -2109,29 +2396,56 @@ const ThemeManager = {
       id: 'verde-magafico',
       name: 'Verde Magáfico',
       icon: '🌿',
+      premium: false,
       quotes: [
         'A Magafus ama essa cor! 💜',
         'Direto do refúgio botânico dimensional de Nova Arcanis! A Magafus aprova! 💜🌿',
         'Verde musgo de respeito! A Magafus mandou avisar que seu bom gosto é nota 10! 💜'
+      ]
+    },
+    'azul-arcanico': {
+      id: 'azul-arcanico',
+      name: 'Azul Arcânico',
+      icon: '🌌',
+      premium: true,
+      quotes: [
+        'Das profundezas de Nova Arcanis, o azul dimensional te envolve! 🌌',
+        'Azul profundo com centelhas de laranja — a cor do portal interdimensional! ✨',
+        'Exclusivo para Agentes de Elite da Rede EEX! 🔒'
+      ]
+    },
+    'ouro-providentico': {
+      id: 'ouro-providentico',
+      name: 'Ouro Providêntico',
+      icon: '👑',
+      premium: true,
+      quotes: [
+        'A C.E.O. Providente aprova pessoalmente este tema! 👑',
+        'Ouro, elegância e poder — o tema da diretora executiva de Nova Amerit!',
+        'Só para os Agentes mais dedicados da Frota EEX! ✨'
       ]
     }
   },
 
   init() {
     let saved = localStorage.getItem('elgaly_theme') || 'rosa-express';
-    // Migração de valores legados
     if (saved === 'light') saved = 'rosa-express';
-    if (saved === 'dark') saved = 'roxo-numetalico';
+    if (saved === 'dark')  saved = 'roxo-numetalico';
     if (!this.themes[saved]) saved = 'rosa-express';
-
+    // Se tema premium mas sem EEX+, volta pro padrão
+    if (this.themes[saved].premium && typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
+      saved = 'rosa-express';
+    }
     this.setTheme(saved, false);
   },
 
   cycle() {
+    // Ciclo apenas entre temas free
     const order = ['rosa-express', 'roxo-numetalico', 'verde-magafico'];
     const nextIdx = (order.indexOf(this.current) + 1) % order.length;
     this.setTheme(order[nextIdx], true);
   },
+
 
   setTheme(themeId, showToastNotification = false, syncCloud = true) {
     if (!this.themes[themeId]) themeId = 'rosa-express';
@@ -2336,6 +2650,296 @@ function setupCityAutocomplete(inputEl, suggestionsEl) {
     }
   });
 }
+
+function isValidSpCity(cityName) {
+  if (!cityName || typeof cityName !== 'string') return false;
+  const clean = cityName.trim();
+  if (/nova amerit|nova arcanis|elgaly edge/i.test(clean)) return false;
+  const cities = (typeof SP_CITIES !== 'undefined' && Array.isArray(SP_CITIES))
+    ? SP_CITIES
+    : ((typeof window !== 'undefined' && Array.isArray(window.SP_CITIES)) ? window.SP_CITIES : []);
+  if (cities.length === 0) return true;
+  const normalize = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const target = normalize(clean);
+  return cities.some(c => normalize(c) === target || normalize(c.replace(/ - SP/i, '')) === target);
+}
+
+// ==========================================================================
+// GERENCIADOR DE CLIMA EM TEMPO REAL (Open-Meteo)
+// ==========================================================================
+const WeatherManager = {
+  _cache: null,
+  _lastFetchTime: 0,
+  _fetching: false,
+
+  getValidCity(rawCity) {
+    if (!rawCity || typeof rawCity !== 'string') return 'São Paulo - SP';
+    const clean = rawCity.trim();
+    if (!isValidSpCity(clean)) {
+      return 'São Paulo - SP';
+    }
+    return clean;
+  },
+
+  getCachedWeather() {
+    return this._cache;
+  },
+
+  getWmoDescription(code) {
+    const map = {
+      0:  { label: 'Céu Limpo', icon: '☀️' },
+      1:  { label: 'Ensolarado', icon: '🌤️' },
+      2:  { label: 'Parcialmente Nublado', icon: '⛅' },
+      3:  { label: 'Nublado', icon: '☁️' },
+      45: { label: 'Nevoeiro', icon: '🌫️' },
+      48: { label: 'Nevoeiro Úmido', icon: '🌫️' },
+      51: { label: 'Garoa Leve', icon: '🌦️' },
+      53: { label: 'Garoa Moderada', icon: '🌦️' },
+      55: { label: 'Garoa Forte', icon: '🌧️' },
+      61: { label: 'Chuva Fraca', icon: '🌧️' },
+      63: { label: 'Chuva Moderada', icon: '🌧️' },
+      65: { label: 'Chuva Forte', icon: '🌧️' },
+      80: { label: 'Pancadas de Chuva', icon: '🌦️' },
+      81: { label: 'Pancadas Fortes', icon: '⛈️' },
+      82: { label: 'Chuva Torrencial', icon: '⛈️' },
+      95: { label: 'Trovoada', icon: '⛈️' },
+      96: { label: 'Trovoada com Granizo', icon: '⛈️' },
+      99: { label: 'Tempestade Severa', icon: '⛈️' }
+    };
+    return map[code] || { label: 'Tempo Bom', icon: '⛅' };
+  },
+
+  async fetchWeatherForCity(rawCity) {
+    const validCity = this.getValidCity(rawCity);
+    const cleanCity = validCity.replace(/ - SP/i, '').replace(/ - NA.*/i, '').trim();
+
+    // Cache de 20 minutos por cidade
+    const now = Date.now();
+    if (this._cache && this._cache.city === cleanCity && (now - this._lastFetchTime < 20 * 60 * 1000)) {
+      this.updateUI(this._cache);
+      return;
+    }
+
+    if (this._fetching) return;
+    this._fetching = true;
+
+    try {
+      // 1. Geocodificação Open-Meteo
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanCity)}&count=1&language=pt&format=json`;
+      const geoRes = await fetch(geoUrl);
+      if (!geoRes.ok) throw new Error('Geocoding falhou');
+      const geoData = await geoRes.json();
+      
+      let lat = -23.5505, lon = -46.6333; // Fallback SP
+      let resolvedCity = cleanCity;
+      if (geoData.results && geoData.results.length > 0) {
+        lat = geoData.results[0].latitude;
+        lon = geoData.results[0].longitude;
+        resolvedCity = geoData.results[0].name || cleanCity;
+      }
+
+      // 2. Clima atual Open-Meteo
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
+      const weatherRes = await fetch(weatherUrl);
+      if (!weatherRes.ok) throw new Error('Forecast falhou');
+      const weatherData = await weatherRes.json();
+
+      const temp = Math.round(weatherData.current?.temperature_2m ?? 22);
+      const wmo = weatherData.current?.weather_code ?? 0;
+      const { label, icon } = this.getWmoDescription(wmo);
+
+      this._cache = {
+        city: cleanCity,
+        displayCity: resolvedCity,
+        temp: temp,
+        label: label,
+        icon: icon
+      };
+      this._lastFetchTime = now;
+      this.updateUI(this._cache);
+    } catch (err) {
+      console.warn('Weather fetch fallback:', err);
+      this.updateUI({
+        icon: '⛅',
+        temp: 23,
+        label: 'Agradável',
+        displayCity: cleanCity
+      });
+    } finally {
+      this._fetching = false;
+    }
+  },
+
+  updateUI(data) {
+    const iconEl = document.getElementById('dailyWeatherIcon');
+    const textEl = document.getElementById('dailyWeatherText');
+    const badgeEl = document.getElementById('dailyWeatherBadge');
+    if (iconEl) iconEl.textContent = data.icon || '⛅';
+    if (textEl) textEl.textContent = `${data.temp}°C • ${data.label} (${data.displayCity})`;
+    if (badgeEl) badgeEl.title = `Clima em tempo real: ${data.temp}°C, ${data.label} em ${data.displayCity}`;
+
+    // Atualiza o subtítulo no Início (substitui a antiga frase com dados climáticos reais)
+    const homeSub = document.getElementById('homeGreetingSubtitle');
+    if (homeSub) {
+      homeSub.innerHTML = `${data.icon || '⛅'} <strong>${data.temp}°C • ${data.label}</strong> em ${data.displayCity}. Terminal conectado na nuvem ☁️`;
+    }
+  }
+};
+
+// ==========================================================================
+// GERENCIADOR DO BLOQUINHO DE NOTAS EEX (Notas, Ideias & Lembretes)
+// ==========================================================================
+const NotesManager = {
+  notes: [],
+
+  init() {
+    try {
+      const saved = localStorage.getItem('elgaly_express_notes');
+      this.notes = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(this.notes)) this.notes = [];
+    } catch (e) {
+      this.notes = [];
+    }
+    this.render();
+  },
+
+  save() {
+    localStorage.setItem('elgaly_express_notes', JSON.stringify(this.notes));
+    if (typeof FirebaseService !== 'undefined' && AuthManager.isLoggedIn()) {
+      const user = AuthManager.getCurrentUser();
+      if (user && user.id && FirebaseService.saveUserNotes) {
+        FirebaseService.saveUserNotes(user.id, this.notes).catch(() => {});
+      }
+    }
+  },
+
+  addNote(note) {
+    const newNote = {
+      id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      title: (note.title || '').trim(),
+      content: (note.content || '').trim(),
+      color: note.color || 'yellow',
+      pinned: !!note.pinned,
+      createdAt: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    };
+    if (!newNote.content && !newNote.title) return false;
+
+    if (newNote.pinned) {
+      this.notes.unshift(newNote);
+    } else {
+      const lastPinnedIdx = this.notes.map(n => n.pinned).lastIndexOf(true);
+      if (lastPinnedIdx >= 0) {
+        this.notes.splice(lastPinnedIdx + 1, 0, newNote);
+      } else {
+        this.notes.unshift(newNote);
+      }
+    }
+    this.save();
+    this.render();
+    return true;
+  },
+
+  togglePin(id) {
+    const note = this.notes.find(n => n.id === id);
+    if (!note) return;
+    note.pinned = !note.pinned;
+    this.notes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    this.save();
+    this.render();
+  },
+
+  deleteNote(id) {
+    this.notes = this.notes.filter(n => n.id !== id);
+    this.save();
+    this.render();
+  },
+
+  render(searchTerm = '') {
+    const grid = document.getElementById('notesGrid');
+    const badge = document.getElementById('notesCountBadge');
+    if (!grid) return;
+
+    if (badge) badge.textContent = this.notes.length;
+
+    let filtered = this.notes;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter(n => (n.title && n.title.toLowerCase().includes(q)) || (n.content && n.content.toLowerCase().includes(q)));
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="note-empty-state-box">
+          <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">📝</span>
+          <h3 style="margin: 0 0 6px; color: var(--purple-dark, #11220e); font-size: 1.2rem; font-weight: 900;">Nenhuma anotação por aqui!</h3>
+          <p style="margin: 0; color: #4b5563; font-size: 0.92rem; font-weight: 600;">
+            Use o criador acima para salvar recados, senhas, lembretes de rotinas ou ideias rápidas.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(note => {
+      const colorClass = `note-${note.color || 'yellow'}`;
+      const pinIcon = note.pinned ? `<span class="note-card-pin" title="Nota Fixada">📌</span>` : '';
+      return `
+        <div class="note-card ${colorClass}" data-note-id="${note.id}">
+          ${pinIcon}
+          <div>
+            ${note.title ? `<div class="note-card-title">${note.title}</div>` : ''}
+            <div class="note-card-content">${note.content}</div>
+          </div>
+          <div class="note-card-footer">
+            <span>${note.createdAt || ''}</span>
+            <div class="note-card-actions">
+              <button type="button" class="note-action-btn action-pin-note" title="${note.pinned ? 'Desafixar' : 'Fixar no topo'}">
+                ${note.pinned ? '📌' : '📍'}
+              </button>
+              <button type="button" class="note-action-btn action-copy-note" title="Copiar texto da nota">
+                📋
+              </button>
+              <button type="button" class="note-action-btn action-delete-note" title="Excluir nota" style="color: #e11d48;">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.action-pin-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.target.closest('.note-card').dataset.noteId;
+        this.togglePin(id);
+      });
+    });
+
+    grid.querySelectorAll('.action-copy-note').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const card = e.target.closest('.note-card');
+        const note = this.notes.find(n => n.id === card.dataset.noteId);
+        if (note) {
+          const text = (note.title ? note.title + '\n\n' : '') + note.content;
+          try {
+            await navigator.clipboard.writeText(text);
+            AppUI.showToast('📋 Anotação copiada para a área de transferência!');
+          } catch {
+            AppUI.showToast('Nota copiada!');
+          }
+        }
+      });
+    });
+
+    grid.querySelectorAll('.action-delete-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.target.closest('.note-card').dataset.noteId;
+        this.deleteNote(id);
+        AppUI.showToast('🗑️ Anotação removida.');
+      });
+    });
+  }
+};
 
 // ==========================================================================
 // GERENCIADOR DE NOTIFICAÇÕES LOCAIS (Capacitor Native + Web)
@@ -2764,10 +3368,191 @@ const MobileGateManager = {
 };
 
 // ==========================================================================
+// RELÓGIO POMODORO EEX+ (PomodoroManager)
+// Fases: Foco 25min → Pausa Curta 5min → (a cada 4 ciclos: Pausa Longa 15min)
+// ==========================================================================
+const PomodoroManager = {
+  PHASES: [
+    { id: 'focus',       label: 'Foco',        duration: 25 * 60, icon: '🍅' },
+    { id: 'short-break', label: 'Pausa Curta', duration:  5 * 60, icon: '☕' },
+    { id: 'long-break',  label: 'Pausa Longa', duration: 15 * 60, icon: '🛌' }
+  ],
+
+  _phase: 0,        // índice da fase atual (0=focus, 1=short, 2=long)
+  _cycleCount: 0,   // quantos ciclos de foco completos
+  _timeLeft: 0,     // segundos restantes
+  _running: false,
+  _timer: null,
+  _tickSound: null,
+
+  init() {
+    this._phase = 0;
+    this._cycleCount = 0;
+    this._timeLeft = this.PHASES[0].duration;
+    this._running = false;
+    this._renderUI();
+  },
+
+  _currentPhase() { return this.PHASES[this._phase]; },
+
+  start() {
+    if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('🔒 O Relógio Pomodoro é exclusivo do EEX+! ✨');
+      return;
+    }
+    if (this._running) return;
+    this._running = true;
+    this._timer = setInterval(() => this._tick(), 1000);
+    this._renderUI();
+  },
+
+  pause() {
+    this._running = false;
+    if (this._timer) { clearInterval(this._timer); this._timer = null; }
+    this._renderUI();
+  },
+
+  reset() {
+    this.pause();
+    this._timeLeft = this._currentPhase().duration;
+    this._renderUI();
+  },
+
+  skip() {
+    this.pause();
+    this._nextPhase(false);
+  },
+
+  _tick() {
+    if (this._timeLeft > 0) {
+      this._timeLeft--;
+      this._renderUI();
+    } else {
+      this._onPhaseComplete();
+    }
+  },
+
+  _onPhaseComplete() {
+    this.pause();
+    const phase = this._currentPhase();
+
+    // Notificação (Capacitor nativo ou browser)
+    this._notify(phase);
+
+    // Bônus de conchas no EEX+ ao completar foco
+    if (phase.id === 'focus') {
+      this._cycleCount++;
+      if (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium()) {
+        ShellsManager.addShells(10, '🍅 Pomodoro EEX+ concluído!');
+      }
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('🍅 Foco concluído! +' + (EEXPlusManager?.isPremium() ? '10 conchas' : 'Ótimo trabalho') + '!');
+      }
+    }
+
+    // Avança para próxima fase
+    this._nextPhase(true);
+  },
+
+  _nextPhase(auto) {
+    const wasFocus = this._currentPhase().id === 'focus';
+    if (wasFocus) {
+      // A cada 4 ciclos de foco → pausa longa; senão → pausa curta
+      this._phase = (this._cycleCount % 4 === 0 && this._cycleCount > 0) ? 2 : 1;
+    } else {
+      this._phase = 0; // volta para foco
+    }
+    this._timeLeft = this._currentPhase().duration;
+    this._renderUI();
+  },
+
+  _notify(phase) {
+    const msgs = {
+      'focus':       { title: '🍅 Foco concluído!',      body: 'Hora da pausa. Você merece!' },
+      'short-break': { title: '☕ Pausa curta encerrada!', body: 'Bora voltar ao foco!' },
+      'long-break':  { title: '🛌 Pausa longa encerrada!', body: 'Você está ótimo! Bora lá!' }
+    };
+    const n = msgs[phase.id];
+    try {
+      if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.LocalNotifications) {
+        window.Capacitor.Plugins.LocalNotifications.schedule({ notifications: [{
+          id: 7777, title: n.title, body: n.body, schedule: { at: new Date(Date.now() + 300) }
+        }]});
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(n.title, { body: n.body, icon: '/images/icon-192.png' });
+      }
+    } catch (e) {}
+  },
+
+  _formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return m + ':' + s;
+  },
+
+  _renderUI() {
+    const phase    = this._currentPhase();
+    const total    = phase.duration;
+    const pct      = ((total - this._timeLeft) / total) * 100;
+
+    // Atualiza elementos do modal
+    const elTime   = document.getElementById('pomodoroTime');
+    const elPhase  = document.getElementById('pomodoroPhaseLabel');
+    const elIcon   = document.getElementById('pomodoroPhaseIcon');
+    const elCycles = document.getElementById('pomodoroCycles');
+    const elBar    = document.getElementById('pomodoroProgressBar');
+    const btnStart = document.getElementById('btnPomodoroStart');
+    const btnPause = document.getElementById('btnPomodoroPause');
+    const btnReset = document.getElementById('btnPomodoroReset');
+    const btnSkip  = document.getElementById('btnPomodoroSkip');
+
+    if (elTime)   elTime.textContent   = this._formatTime(this._timeLeft);
+    if (elPhase)  elPhase.textContent  = phase.label;
+    if (elIcon)   elIcon.textContent   = phase.icon;
+    if (elCycles) elCycles.textContent = 'Ciclos de foco: ' + this._cycleCount;
+    if (elBar)    elBar.style.width    = pct + '%';
+
+    // Cor da barra por fase
+    const barColors = { focus: '#e62b7e', 'short-break': '#10b981', 'long-break': '#3b82f6' };
+    if (elBar) elBar.style.background = barColors[phase.id] || '#e62b7e';
+
+    if (btnStart) btnStart.style.display = this._running ? 'none' : 'inline-flex';
+    if (btnPause) btnPause.style.display = this._running ? 'inline-flex' : 'none';
+
+    // Atualiza widget flutuante (quando Pomodoro está rodando em segundo plano)
+    const floatingWidget = document.getElementById('pomodoroFloatingWidget');
+    const floatingTime   = document.getElementById('pomodoroFloatingTime');
+    const floatingPhase  = document.getElementById('pomodoroFloatingPhase');
+    const floatingIcon   = floatingWidget ? floatingWidget.querySelector('.pomodoro-floating-icon') : null;
+    const modalPomodoro  = document.getElementById('modalPomodoro');
+    const isModalOpen    = modalPomodoro && modalPomodoro.classList.contains('active');
+
+    if (floatingTime)  floatingTime.textContent  = this._formatTime(this._timeLeft);
+    if (floatingPhase) floatingPhase.textContent  = phase.label;
+    if (floatingIcon)  floatingIcon.textContent   = phase.icon;
+    if (floatingWidget) {
+      if (this._running && !isModalOpen && (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium())) {
+        floatingWidget.style.display = 'flex';
+      } else {
+        floatingWidget.style.display = 'none';
+      }
+    }
+
+    // Atualiza título da aba do browser
+    if (this._running) {
+      document.title = this._formatTime(this._timeLeft) + ' ' + phase.icon + ' — Elgaly Express';
+    } else {
+      document.title = 'Elgaly Express';
+    }
+  }
+};
+
+// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
 const AppUI = {
+
   currentTab: 'inicio',
   currentFilter: 'todas',
   searchQuery: '',
@@ -2776,6 +3561,129 @@ const AppUI = {
   editAvatarBase64: null,
   onboardingAvatarBase64: null,
   _pendingBadgeLogin: null,
+  _placedStickers: [],
+  _selectedNoteColor: 'yellow',
+
+  addStickerToMoment(stickerType, xPct = 50, yPct = 50) {
+    const id = 'stk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    const stickerMap = {
+      brave: 'images/brave.png',
+      midnight: 'images/midnight.png',
+      fire: 'images/fireon.png',
+      shell: 'images/shellcoin.png',
+      seal: 'images/magaficseal.png'
+    };
+    const src = stickerMap[stickerType] || 'images/brave.png';
+    const newSticker = { id, type: stickerType, src, xPct, yPct, size: 72 };
+    this._placedStickers.push(newSticker);
+    this.renderPlacedStickers();
+  },
+
+  renderPlacedStickers() {
+    const container = document.getElementById('momentStickersContainer');
+    const stage = document.getElementById('momentPreviewStage');
+    if (!container || !stage) return;
+
+    container.innerHTML = '';
+    this._placedStickers.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'moment-placed-sticker';
+      el.dataset.id = item.id;
+      el.style.left = item.xPct + '%';
+      el.style.top = item.yPct + '%';
+
+      el.innerHTML = `
+        <img src="${item.src}" alt="${item.type}">
+        <span class="sticker-delete-btn" title="Remover adesivo">&times;</span>
+      `;
+
+      el.querySelector('.sticker-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._placedStickers = this._placedStickers.filter(s => s.id !== item.id);
+        this.renderPlacedStickers();
+      });
+
+      let isDragging = false;
+      let startX, startY, origLeft, origTop;
+
+      const onStart = (clientX, clientY) => {
+        isDragging = true;
+        startX = clientX;
+        startY = clientY;
+        const stageRect = stage.getBoundingClientRect();
+        origLeft = (item.xPct / 100) * stageRect.width;
+        origTop = (item.yPct / 100) * stageRect.height;
+      };
+
+      const onMove = (clientX, clientY) => {
+        if (!isDragging) return;
+        const stageRect = stage.getBoundingClientRect();
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+        let newX = origLeft + deltaX;
+        let newY = origTop + deltaY;
+
+        newX = Math.max(0, Math.min(stageRect.width - item.size, newX));
+        newY = Math.max(0, Math.min(stageRect.height - item.size, newY));
+
+        item.xPct = (newX / stageRect.width) * 100;
+        item.yPct = (newY / stageRect.height) * 100;
+
+        el.style.left = item.xPct + '%';
+        el.style.top = item.yPct + '%';
+      };
+
+      const onEnd = () => { isDragging = false; };
+
+      el.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.sticker-delete-btn')) return;
+        e.preventDefault();
+        onStart(e.clientX, e.clientY);
+
+        const moveHandler = (ev) => onMove(ev.clientX, ev.clientY);
+        const upHandler = () => {
+          onEnd();
+          window.removeEventListener('mousemove', moveHandler);
+          window.removeEventListener('mouseup', upHandler);
+        };
+        window.addEventListener('mousemove', moveHandler);
+        window.addEventListener('mouseup', upHandler);
+      });
+
+      el.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.sticker-delete-btn')) return;
+        const touch = e.touches[0];
+        if (touch) onStart(touch.clientX, touch.clientY);
+      }, { passive: true });
+
+      el.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        if (touch && isDragging) {
+          e.preventDefault();
+          onMove(touch.clientX, touch.clientY);
+        }
+      }, { passive: false });
+
+      el.addEventListener('touchend', () => { onEnd(); });
+
+      container.appendChild(el);
+    });
+  },
+
+  openPhotoZoom(src, title, caption, date) {
+    const modal = document.getElementById('modalPhotoZoom');
+    const img = document.getElementById('photoZoomImage');
+    const titleEl = document.getElementById('photoZoomTitle');
+    const captionEl = document.getElementById('photoZoomCaption');
+    const dateEl = document.getElementById('photoZoomDate');
+
+    if (!modal || !img) return;
+    img.src = src;
+    if (titleEl) titleEl.textContent = title || 'Momento da Rotina';
+    if (captionEl) captionEl.textContent = caption || '';
+    if (dateEl) dateEl.textContent = date ? `📅 ${date}` : '';
+    modal.classList.add('active');
+  },
 
   isMobileDevice() {
     return (
@@ -2820,7 +3728,10 @@ const AppUI = {
     ProvidenteNewsManager.init();
     PWAManager.init();
     NotificationManager.init();
+    PomodoroManager.init();
+    if (typeof NotesManager !== 'undefined') NotesManager.init();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
+
 
     this.bindEvents();
     this.initNavigation();
@@ -2906,7 +3817,7 @@ const AppUI = {
   initNavigation() {
     const handleRoute = () => {
       const hash = window.location.hash.replace('#', '') || 'inicio';
-      const validTabs = ['inicio', 'rotina', 'encomendas', 'relatorios', 'amigos', 'perfil', 'configuracoes'];
+      const validTabs = ['inicio', 'rotina', 'encomendas', 'notas', 'relatorios', 'amigos', 'perfil', 'configuracoes'];
       this.switchTab(validTabs.includes(hash) ? hash : 'inicio');
     };
 
@@ -2946,6 +3857,7 @@ const AppUI = {
     if (tabName === 'inicio') this.renderHomeOverview();
     if (tabName === 'rotina') this.renderDailyRoutine();
     if (tabName === 'encomendas') { this.renderTasks(); this.renderEvents(); }
+    if (tabName === 'notas') { if (typeof NotesManager !== 'undefined') NotesManager.render(); }
     if (tabName === 'relatorios') { ReportEngine.renderReportPreview(); MemoriesManager.render(); }
     if (tabName === 'amigos') {
       FriendsManager.render();
@@ -3030,6 +3942,14 @@ const AppUI = {
           if (errEl) { errEl.textContent = '⚠️ O ID Express precisa ter pelo menos 2 caracteres!'; errEl.style.display = 'block'; }
           return;
         }
+        if (!location || !isValidSpCity(location)) {
+          if (errEl) {
+            errEl.textContent = '⚠️ Selecione uma cidade existente de São Paulo na lista!';
+            errEl.style.display = 'block';
+          }
+          this.showToast('⚠️ Por favor, escolha uma cidade válida da lista de municípios de SP!');
+          return;
+        }
         if (!/^[0-9]{6}$/.test(pin)) {
           this.showToast('❌ O EEX-PASS deve ter exatamente 6 dígitos numéricos!');
           return;
@@ -3096,8 +4016,9 @@ const AppUI = {
     const formPinLogin = document.getElementById('formPinLogin');
     const btnCancelPinLogin = document.getElementById('btnCancelPinLogin');
     if (formPinLogin) {
-      formPinLogin.addEventListener('submit', (e) => {
+      formPinLogin.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const pin = (document.getElementById('pinInput').value || '').trim();
         const errEl = document.getElementById('pinError');
         const user = AuthManager.getCurrentUser();
@@ -3124,8 +4045,12 @@ const AppUI = {
           if (typeof FirebaseService !== 'undefined' && user.uid) {
             FirebaseService.startRealtimeSync(user.uid);
           }
+          if (typeof EEXPlusManager !== 'undefined') {
+            await EEXPlusManager.init();
+          }
 
           this.renderAll();
+
           this.showToast(`🔓 EEX-PASS confirmado! Acesso liberado, ${user.name}! 🚀`);
         } else {
           if (errEl) errEl.textContent = '❌ EEX-PASS incorreto. Tente novamente.';
@@ -3276,6 +4201,12 @@ const AppUI = {
     document.addEventListener('click', (e) => {
       if (e.target.closest('.action-new-habit')) {
         if (!AuthManager.isLoggedIn()) return;
+        if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.canAddHabit()) {
+          this.showToast(`🔒 Limite de ${EEXPlusManager.HABIT_LIMIT_FREE} rotinas atingido! Assine o EEX+ para ter rotinas ilimitadas ✨`);
+          const modal = document.getElementById('modalEEXPlus');
+          if (modal) modal.classList.add('active');
+          return;
+        }
         const habitTitleEl = document.getElementById('habitTitle');
         if (habitTitleEl) habitTitleEl.value = '';
         // Reseta todos os dias como ativos por padrão
@@ -3302,7 +4233,14 @@ const AppUI = {
         });
 
         if (title) {
+          // Limite de hábitos: 12 para free, ilimitado para EEX+
+          if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.canAddHabit()) {
+            modalHabit.classList.remove('active');
+            AppUI.showToast(`🔒 Limite de ${EEXPlusManager.HABIT_LIMIT_FREE} hábitos atingido! Assine o EEX+ para hábitos ilimitados ✨`);
+            return;
+          }
           await HabitManager.addHabit(title, cat, selectedDays.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6]);
+
           modalHabit.classList.remove('active');
           this.renderDailyRoutine();
           this.renderHomeOverview();
@@ -3394,9 +4332,276 @@ const AppUI = {
     document.querySelectorAll('.theme-pick-card').forEach(card => {
       card.addEventListener('click', () => {
         const themeId = card.dataset.themeId;
+        const themeObj = ThemeManager.themes[themeId];
+        if (themeObj && themeObj.premium && (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium())) {
+          this.showToast(`🔒 O tema ${themeObj.name} é exclusivo do Elgaly Express+! ✨`);
+          const modal = document.getElementById('modalEEXPlus');
+          if (modal) modal.classList.add('active');
+          return;
+        }
         if (themeId) ThemeManager.setTheme(themeId, true);
       });
     });
+
+    // ---- RELÓGIO POMODORO EEX+ ----
+    const modalPomodoro = document.getElementById('modalPomodoro');
+    const openPomodoro = () => {
+      if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
+        this.showToast('🔒 O Relógio Pomodoro é exclusivo do Elgaly Express+! ✨');
+        openEexPlus();
+        return;
+      }
+      if (modalPomodoro) {
+        modalPomodoro.classList.add('active');
+        PomodoroManager._renderUI();
+      }
+    };
+
+    const btnNavPomodoro = document.getElementById('btnNavPomodoro');
+    if (btnNavPomodoro) {
+      btnNavPomodoro.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPomodoro();
+      });
+    }
+
+    const btnDrawerPomodoro = document.getElementById('btnDrawerPomodoro');
+    if (btnDrawerPomodoro) {
+      btnDrawerPomodoro.addEventListener('click', () => {
+        if (typeof this.closeMobileDrawer === 'function') this.closeMobileDrawer();
+        openPomodoro();
+      });
+    }
+
+    // Balão flutuante do Pomodoro em segundo plano
+    const pomodoroFloatingWidget = document.getElementById('pomodoroFloatingWidget');
+    if (pomodoroFloatingWidget) {
+      pomodoroFloatingWidget.addEventListener('click', () => {
+        openPomodoro();
+      });
+    }
+
+    const btnPomodoroClose = document.getElementById('btnPomodoroClose');
+    if (btnPomodoroClose && modalPomodoro) {
+      btnPomodoroClose.addEventListener('click', () => {
+        modalPomodoro.classList.remove('active');
+        PomodoroManager._renderUI();
+      });
+    }
+    if (modalPomodoro) {
+      modalPomodoro.addEventListener('click', (e) => {
+        if (e.target === modalPomodoro) {
+          modalPomodoro.classList.remove('active');
+          PomodoroManager._renderUI();
+        }
+      });
+    }
+
+    const btnPomodoroStart = document.getElementById('btnPomodoroStart');
+    if (btnPomodoroStart) btnPomodoroStart.addEventListener('click', () => PomodoroManager.start());
+
+    const btnPomodoroPause = document.getElementById('btnPomodoroPause');
+    if (btnPomodoroPause) btnPomodoroPause.addEventListener('click', () => PomodoroManager.pause());
+
+    const btnPomodoroReset = document.getElementById('btnPomodoroReset');
+    if (btnPomodoroReset) btnPomodoroReset.addEventListener('click', () => PomodoroManager.reset());
+
+    const btnPomodoroSkip = document.getElementById('btnPomodoroSkip');
+    if (btnPomodoroSkip) btnPomodoroSkip.addEventListener('click', () => PomodoroManager.skip());
+
+    // ---- ELGALY EXPRESS+ (EEX+) MODAL & ATIVAÇÃO ----
+    const modalEEXPlus = document.getElementById('modalEEXPlus');
+    const openEexPlus = () => {
+      if (modalEEXPlus) modalEEXPlus.classList.add('active');
+    };
+    const btnHeaderEexPlus = document.getElementById('btnHeaderEexPlus');
+    if (btnHeaderEexPlus) btnHeaderEexPlus.addEventListener('click', openEexPlus);
+
+    const btnDrawerEexPlus = document.getElementById('btnDrawerEexPlus');
+    if (btnDrawerEexPlus) {
+      btnDrawerEexPlus.addEventListener('click', () => {
+        if (typeof this.closeMobileDrawer === 'function') this.closeMobileDrawer();
+        openEexPlus();
+      });
+    }
+
+    const btnOpenPlansModal = document.getElementById('btnOpenPlansModal');
+    if (btnOpenPlansModal) btnOpenPlansModal.addEventListener('click', openEexPlus);
+
+    const btnEexPlusClose = document.getElementById('btnEexPlusClose');
+    if (btnEexPlusClose && modalEEXPlus) {
+      btnEexPlusClose.addEventListener('click', () => modalEEXPlus.classList.remove('active'));
+    }
+    if (modalEEXPlus) {
+      modalEEXPlus.addEventListener('click', (e) => {
+        if (e.target === modalEEXPlus) modalEEXPlus.classList.remove('active');
+      });
+    }
+
+    // Botões de compra dos planos dentro do modal
+    document.querySelectorAll('.btn-plan-purchase').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const plan = btn.dataset.plan;
+        const checkoutBox = document.getElementById('eexplusCheckoutBox');
+        const checkoutTitle = document.getElementById('checkoutPlanTitle');
+        const whatsappBtn = document.getElementById('btnWhatsappCheckout');
+        const user = AuthManager.getCurrentUser();
+        const userNick = user ? (user.eexEmail || user.name) : 'meu-id';
+
+        if (checkoutBox) checkoutBox.style.display = 'block';
+        if (checkoutTitle) {
+          checkoutTitle.textContent = (plan === 'mensal')
+            ? '💳 Assinatura Plano Mensal (R$ 4,99)'
+            : '⭐ Acesso 4 Meses / Vitalício (R$ 19,99)';
+        }
+        if (whatsappBtn) {
+          const planName = (plan === 'mensal') ? 'Plano Mensal (R$ 4,99)' : 'Acesso 4 Meses (R$ 19,99)';
+          const text = encodeURIComponent(`Olá! Gostaria de assinar o Elgaly Express+ [${planName}] para o ID Express: ${userNick}`);
+          whatsappBtn.href = `https://wa.me/?text=${text}`;
+        }
+        if (checkoutBox && typeof checkoutBox.scrollIntoView === 'function') {
+          checkoutBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+
+    const btnCloseCheckoutBox = document.getElementById('btnCloseCheckoutBox');
+    if (btnCloseCheckoutBox) {
+      btnCloseCheckoutBox.addEventListener('click', () => {
+        const checkoutBox = document.getElementById('eexplusCheckoutBox');
+        if (checkoutBox) checkoutBox.style.display = 'none';
+      });
+    }
+
+    const btnCopyPixKey = document.getElementById('btnCopyPixKey');
+    if (btnCopyPixKey) {
+      btnCopyPixKey.addEventListener('click', () => {
+        navigator.clipboard.writeText('pagamentos@elgaly.express').then(() => {
+          this.showToast('📋 Chave Pix copiada com sucesso!');
+        }).catch(() => {
+          this.showToast('📋 Chave: pagamentos@elgaly.express');
+        });
+      });
+    }
+
+    // Alternador de modo de teste EEX+ (local instantâneo)
+    const handleToggleTestMode = () => {
+      const isNowPrem = EEXPlusManager.toggleTestMode();
+      this.renderAll();
+      if (isNowPrem) {
+        if (typeof confetti === 'function') confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        this.showToast('🧪 Modo de Teste: EEX+ ATIVADO com sucesso! Aproveite todos os recursos VIP ✨');
+      } else {
+        this.showToast('🧪 Modo de Teste: EEX+ DESATIVADO (retornou para Versão Gratuita).');
+      }
+    };
+
+    const btnToggleEexPlusTestMode = document.getElementById('btnToggleEexPlusTestMode');
+    if (btnToggleEexPlusTestMode) {
+      btnToggleEexPlusTestMode.addEventListener('click', handleToggleTestMode);
+    }
+
+    const btnModalToggleTestMode = document.getElementById('btnModalToggleTestMode');
+    if (btnModalToggleTestMode) {
+      btnModalToggleTestMode.addEventListener('click', handleToggleTestMode);
+    }
+
+    // Função compartilhada para ativar código EEX+
+    const handleActivateCode = async (codeInputEl) => {
+      if (!codeInputEl) return;
+      const code = codeInputEl.value.trim();
+      if (!code) {
+        this.showToast('⚠️ Digite o código de ativação do EEX+!');
+        return;
+      }
+      this.showToast('⏳ Validando código EEX+...');
+      const res = await EEXPlusManager.activate(code);
+      if (res.ok) {
+        codeInputEl.value = '';
+        if (modalEEXPlus) modalEEXPlus.classList.remove('active');
+        this.renderAll();
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+        }
+        this.showToast(`🎉 Parabéns! Elgaly Express+ (${res.plan === 'lifetime' ? '4 Meses / Vitalício' : 'Mensal'}) ativado com sucesso! 🚀`);
+      } else {
+        this.showToast(`❌ ${res.msg}`);
+      }
+    };
+
+    const btnActivateEexPlus = document.getElementById('btnActivateEexPlus');
+    if (btnActivateEexPlus) {
+      btnActivateEexPlus.addEventListener('click', () => {
+        handleActivateCode(document.getElementById('inputEexPlusCode'));
+      });
+    }
+
+    const btnModalActivateEexPlus = document.getElementById('btnModalActivateEexPlus');
+    if (btnModalActivateEexPlus) {
+      btnModalActivateEexPlus.addEventListener('click', () => {
+        handleActivateCode(document.getElementById('inputModalEexPlusCode'));
+      });
+    }
+
+    // ---- MODO NOTURNO (EEX+) ----
+    const btnToggleNightMode = document.getElementById('btnToggleNightMode');
+    const badgeNightStatus = document.getElementById('badgeNightStatus');
+    const updateNightBadge = () => {
+      if (!badgeNightStatus) return;
+      const isNight = document.documentElement.classList.contains('theme-night');
+      badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
+      badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
+      badgeNightStatus.style.color = isNight ? '#000' : '#475569';
+    };
+    if (btnToggleNightMode) {
+      btnToggleNightMode.addEventListener('click', () => {
+        if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
+          this.showToast('🔒 O Ciclo Noturno Automático é exclusivo do EEX+! ✨');
+          openEexPlus();
+          return;
+        }
+        const current = document.documentElement.classList.contains('theme-night');
+        EEXPlusManager.applyNightMode(!current);
+        updateNightBadge();
+        this.showToast(!current ? '🌙 Conforto ocular noturno ativado!' : '☀️ Conforto noturno desativado!');
+      });
+      updateNightBadge();
+    }
+
+    // ---- RELATÓRIOS: DIAS PERSONALIZADOS (EEX+) ----
+    const btnCustomDaysReport = document.getElementById('btnCustomDaysReport');
+    const customDaysBox = document.getElementById('customDaysBox');
+    const inputCustomDays = document.getElementById('inputCustomDays');
+    const btnApplyCustomDays = document.getElementById('btnApplyCustomDays');
+
+    if (btnCustomDaysReport) {
+      btnCustomDaysReport.addEventListener('click', () => {
+        if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
+          this.showToast('🔒 Período personalizado de relatório é exclusivo do EEX+! ✨');
+          openEexPlus();
+          return;
+        }
+        if (customDaysBox) {
+          const isHidden = customDaysBox.style.display === 'none' || !customDaysBox.style.display;
+          customDaysBox.style.display = isHidden ? 'flex' : 'none';
+        }
+      });
+    }
+
+    if (btnApplyCustomDays && inputCustomDays) {
+      btnApplyCustomDays.addEventListener('click', () => {
+        const days = parseInt(inputCustomDays.value, 10);
+        if (isNaN(days) || days < 1 || days > 365) {
+          this.showToast('⚠️ Escolha um período entre 1 e 365 dias.');
+          return;
+        }
+        ReportEngine.setTimeframe(days);
+        document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+        if (btnCustomDaysReport) btnCustomDaysReport.classList.add('active');
+        this.showToast(`📊 Relatório gerado para os últimos ${days} dias!`);
+      });
+    }
+
 
     // 14. Configurações: Atualizar PIN
     const formChangePin = document.getElementById('formChangePin');
@@ -3434,11 +4639,16 @@ const AppUI = {
       formChangeLocation.addEventListener('submit', async (e) => {
         e.preventDefault();
         const loc = (document.getElementById('cfgLocation').value || '').trim();
-        if (loc) {
-          await AuthManager.updateUserProfile({ location: loc });
-          this.renderAll();
-          this.showToast(`📍 Setor atualizado para ${loc}!`);
+        if (!loc || !isValidSpCity(loc)) {
+          this.showToast('⚠️ Por favor, selecione uma cidade existente da lista de São Paulo!');
+          return;
         }
+        await AuthManager.updateUserProfile({ location: loc });
+        this.renderAll();
+        if (typeof WeatherManager !== 'undefined') {
+          WeatherManager.fetchWeatherForCity(loc);
+        }
+        this.showToast(`📍 Setor atualizado para ${loc}!`);
       });
     }
 
@@ -3473,6 +4683,9 @@ const AppUI = {
 
     document.querySelectorAll('.timeframe-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (btn.dataset.days === 'custom') return;
+        const box = document.getElementById('customDaysBox');
+        if (box) box.style.display = 'none';
         ReportEngine.setTimeframe(btn.dataset.days);
       });
     });
@@ -3544,62 +4757,157 @@ const AppUI = {
       });
     }
 
+    // 20. Adesivos Livres no Momento Bacana
     document.querySelectorAll('.moment-sticker-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.moment-sticker-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this._selectedMomentSticker = btn.dataset.sticker;
-        const stickerOverlay = document.getElementById('momentStickerOverlay');
-        if (stickerOverlay) {
-          if (this._selectedMomentSticker === 'midnight') stickerOverlay.src = 'images/midnight.png';
-          else if (this._selectedMomentSticker === 'fire') stickerOverlay.src = 'images/fireon.png';
-          else stickerOverlay.src = 'images/brave.png';
+        const stk = btn.dataset.sticker;
+        if (stk) {
+          // Adiciona sticker centralizado com leve variação para não sobrepor exatamente
+          const offset = (Math.random() * 20) - 10;
+          this.addStickerToMoment(stk, 50 + offset, 50 + offset);
+          this.showToast('✨ Adesivo adicionado! Arraste para posicionar onde quiser.');
         }
       });
     });
+
+    const btnClearStickers = document.getElementById('btnClearStickers');
+    if (btnClearStickers) {
+      btnClearStickers.addEventListener('click', () => {
+        this._placedStickers = [];
+        this.renderPlacedStickers();
+        this.showToast('🗑️ Adesivos removidos da prévia.');
+      });
+    }
 
     if (btnSaveMoment && modalMomentCapture) {
       btnSaveMoment.addEventListener('click', async () => {
         const caption = (document.getElementById('momentCaptionInput').value || '').trim();
         const habitTitle = this._currentMomentHabit ? this._currentMomentHabit.title : 'Rotina Concluída';
-        const stickerChoice = this._selectedMomentSticker || 'brave';
 
-        // Renderiza no Canvas para embutir o adesivo na imagem
+        // Renderiza no Canvas para embutir todos os adesivos na imagem
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const baseImg = new Image();
 
-        baseImg.onload = () => {
+        baseImg.onload = async () => {
           const maxDim = 800;
           const scale = Math.min(maxDim / baseImg.width, maxDim / baseImg.height, 1);
           canvas.width = Math.round(baseImg.width * scale);
           canvas.height = Math.round(baseImg.height * scale);
           ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
-          // Carrega e desenha o adesivo no canto inferior direito
-          const stickerImg = new Image();
-          stickerImg.onload = async () => {
-            const stickerSize = Math.round(canvas.width * 0.28);
-            ctx.drawImage(stickerImg, canvas.width - stickerSize - 16, canvas.height - stickerSize - 16, stickerSize, stickerSize);
-            const finalPhoto = canvas.toDataURL('image/jpeg', 0.85);
+          const placed = [...(this._placedStickers || [])];
+          if (placed.length === 0) {
+            placed.push({ src: 'images/brave.png', xPct: 65, yPct: 65, type: 'brave' });
+          }
 
-            await MemoriesManager.addMemory({
-              habitTitle: habitTitle,
-              photo: finalPhoto,
-              caption: caption || 'Momento bacana da rotina!',
-              sticker: stickerChoice
-            });
+          const loadImg = (src) => new Promise((resolve) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = () => resolve(null);
+            im.src = src;
+          });
 
-            modalMomentCapture.classList.remove('active');
-            AppUI.showToast('📸 Momento bacana registrado com sucesso no relatório!');
-          };
+          for (const item of placed) {
+            const stkImg = await loadImg(item.src);
+            if (stkImg) {
+              const stickerW = Math.round(canvas.width * 0.22);
+              const stickerH = stickerW;
+              const posX = Math.round((item.xPct / 100) * (canvas.width - stickerW));
+              const posY = Math.round((item.yPct / 100) * (canvas.height - stickerH));
+              ctx.drawImage(stkImg, Math.max(0, posX), Math.max(0, posY), stickerW, stickerH);
+            }
+          }
 
-          if (stickerChoice === 'midnight') stickerImg.src = 'images/midnight.png';
-          else if (stickerChoice === 'fire') stickerImg.src = 'images/fireon.png';
-          else stickerImg.src = 'images/brave.png';
+          const finalPhoto = canvas.toDataURL('image/jpeg', 0.85);
+
+          await MemoriesManager.addMemory({
+            habitTitle: habitTitle,
+            photo: finalPhoto,
+            caption: caption || 'Momento bacana da rotina!',
+            sticker: placed[0]?.type || 'brave'
+          });
+
+          modalMomentCapture.classList.remove('active');
+          AppUI.showToast('📸 Momento bacana registrado com sucesso no relatório!');
         };
 
         baseImg.src = this._momentPhotoBase64 || 'images/widgetbackground.png';
+      });
+    }
+
+    // 21. Eventos do Bloquinho de Notas EEX
+    const btnAddNote = document.getElementById('btnAddNote');
+    if (btnAddNote) {
+      btnAddNote.addEventListener('click', () => {
+        const title = (document.getElementById('noteTitleInput')?.value || '').trim();
+        const content = (document.getElementById('noteContentInput')?.value || '').trim();
+        const pinned = !!document.getElementById('notePinCheckbox')?.checked;
+        const color = this._selectedNoteColor || 'yellow';
+
+        if (!content && !title) {
+          this.showToast('⚠️ Escreva algo para salvar a sua anotação!');
+          return;
+        }
+
+        const ok = NotesManager.addNote({ title, content, color, pinned });
+        if (ok) {
+          const tInput = document.getElementById('noteTitleInput');
+          const cInput = document.getElementById('noteContentInput');
+          const pCheck = document.getElementById('notePinCheckbox');
+          if (tInput) tInput.value = '';
+          if (cInput) cInput.value = '';
+          if (pCheck) pCheck.checked = false;
+          this.showToast('📝 Anotação salva com sucesso no Bloquinho!');
+        }
+      });
+    }
+
+    document.querySelectorAll('.note-color-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.note-color-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this._selectedNoteColor = btn.dataset.color || 'yellow';
+      });
+    });
+
+    const noteSearchInput = document.getElementById('noteSearchInput');
+    if (noteSearchInput) {
+      noteSearchInput.addEventListener('input', (e) => {
+        NotesManager.render(e.target.value.trim());
+      });
+    }
+
+    // 22. Modal de Zoom da Foto (Grande Ângulo)
+    const modalPhotoZoom = document.getElementById('modalPhotoZoom');
+    const modalPhotoZoomClose = document.getElementById('modalPhotoZoomClose');
+    if (modalPhotoZoomClose && modalPhotoZoom) {
+      modalPhotoZoomClose.addEventListener('click', () => {
+        modalPhotoZoom.classList.remove('active');
+      });
+      modalPhotoZoom.addEventListener('click', (e) => {
+        if (e.target === modalPhotoZoom) modalPhotoZoom.classList.remove('active');
+      });
+    }
+
+    // Delegação global para fotos clicáveis (abrir zoom)
+    document.addEventListener('click', (e) => {
+      const targetImg = e.target.closest('.memory-polaroid-img, .friend-polaroid-img');
+      if (targetImg && targetImg.src && !targetImg.classList.contains('memory-polaroid-sticker') && !targetImg.classList.contains('friend-polaroid-sticker')) {
+        const parentCard = targetImg.closest('.memory-polaroid-item, .friend-polaroid-card');
+        const caption = parentCard?.querySelector('.memory-polaroid-caption, .friend-polaroid-caption')?.textContent || targetImg.alt || '';
+        const title = parentCard?.querySelector('.memory-polaroid-habit')?.textContent || 'Momento da Rotina EEX';
+        const date = parentCard?.querySelector('.memory-polaroid-date')?.textContent || '';
+        this.openPhotoZoom(targetImg.src, title, caption, date);
+      }
+    });
+
+    // Botão de Detalhes no painel de assinante ativo EEX+
+    const btnSettingsManagePlan = document.getElementById('btnSettingsManagePlan');
+    if (btnSettingsManagePlan) {
+      btnSettingsManagePlan.addEventListener('click', () => {
+        const modal = document.getElementById('modalEEXPlus');
+        if (modal) modal.classList.add('active');
       });
     }
 
@@ -4026,17 +5334,19 @@ const AppUI = {
       });
     }
 
-    // 32. Configurações: Toggle Saudação Magafus (VIP)
+    // 32. Configurações: Toggle Saudação (VIP / Providente)
     const btnToggleMagaficGreeting = document.getElementById('btnToggleMagaficGreeting');
     if (btnToggleMagaficGreeting) {
       btnToggleMagaficGreeting.addEventListener('click', () => {
+        const user = AuthManager.getCurrentUser();
+        const isVip = AppUI.isMagafusVIP(user);
         const isDisabled = localStorage.getItem('eex_magafus_greeting_disabled') === 'true';
         if (isDisabled) {
           localStorage.removeItem('eex_magafus_greeting_disabled');
-          AppUI.showToast('💜 Saudação do Coração Magáfico ao entrar ativada!');
+          AppUI.showToast(isVip ? '💜 Saudação do Coração Magáfico ao entrar ativada!' : '👑 Saudação da C.E.O. Providente ativada!');
         } else {
           localStorage.setItem('eex_magafus_greeting_disabled', 'true');
-          AppUI.showToast('💜 Saudação ao entrar desativada.');
+          AppUI.showToast(isVip ? '💜 Saudação do Coração Magáfico desativada.' : '👑 Saudação da C.E.O. Providente desativada.');
         }
         AppUI.renderConfiguracoes();
       });
@@ -4105,9 +5415,11 @@ const AppUI = {
     this.renderEvents();
     this.renderProfileView();
     this.renderConfiguracoes();
+    this.renderEexPlusStatus();
     ReportEngine.renderReportPreview();
     NotificationManager.scheduleAll();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
+
 
     const user = AuthManager.getCurrentUser();
     if (user) {
@@ -4187,7 +5499,16 @@ const AppUI = {
     }
 
     if (greetingSubtitle) {
-      greetingSubtitle.textContent = `Terminal de despacho conectado em ${user.location}. ${user.isGoogle ? 'Sincronizado na Nuvem (Firebase) ☁️' : 'Perfil Local EEX 💾'}`;
+      const safeCity = (typeof WeatherManager !== 'undefined') ? WeatherManager.getValidCity(user.location) : (user.location || 'São Paulo - SP');
+      const cached = (typeof WeatherManager !== 'undefined') ? WeatherManager.getCachedWeather() : null;
+      if (cached && (cached.city === safeCity.replace(/ - SP/i, '').trim() || cached.displayCity)) {
+        greetingSubtitle.innerHTML = `${cached.icon || '⛅'} <strong>${cached.temp}°C • ${cached.label}</strong> em ${cached.displayCity}. Terminal conectado na nuvem ☁️`;
+      } else {
+        greetingSubtitle.innerHTML = `🌤️ Carregando clima em <strong>${safeCity}</strong>... Terminal conectado na nuvem ☁️`;
+      }
+      if (typeof WeatherManager !== 'undefined') {
+        WeatherManager.fetchWeatherForCity(safeCity);
+      }
     }
 
     const pendingTasks = tasks.filter(t => !t.completed).length;
@@ -4251,6 +5572,23 @@ const AppUI = {
     const container = document.getElementById('dailyHabitsGrid');
     const progressBar = document.getElementById('dailyProgressFill');
     const progressText = document.getElementById('dailyProgressText');
+    const routineLimitBadge = document.getElementById('routineLimitBadge');
+
+    const user = AuthManager.getCurrentUser();
+    if (typeof WeatherManager !== 'undefined' && user?.location) {
+      WeatherManager.fetchWeatherForCity(user.location);
+    }
+
+    if (routineLimitBadge) {
+      const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
+      if (isPrem) {
+        routineLimitBadge.innerHTML = `Rotinas: <strong>${habits.length} (Ilimitado EEX+ ✨)</strong>`;
+        routineLimitBadge.classList.add('eexplus-unlimited');
+      } else {
+        routineLimitBadge.innerHTML = `Rotinas: <strong>${habits.length}/12 utilizadas</strong>`;
+        routineLimitBadge.classList.remove('eexplus-unlimited');
+      }
+    }
 
     if (!container) return;
 
@@ -4385,23 +5723,21 @@ const AppUI = {
     this._currentMomentHabit = habit;
     this._selectedMomentSticker = 'brave';
     this._momentPhotoBase64 = null;
+    this._placedStickers = [];
 
     const modal = document.getElementById('modalMomentCapture');
     const preview = document.getElementById('momentPhotoPreview');
     const placeholder = document.getElementById('momentPlaceholder');
     const captionInput = document.getElementById('momentCaptionInput');
-    const stickerOverlay = document.getElementById('momentStickerOverlay');
     const fileInput = document.getElementById('momentFileInput');
 
     if (preview) { preview.src = ''; preview.style.display = 'none'; }
     if (placeholder) placeholder.style.display = 'flex';
     if (captionInput) captionInput.value = '';
     if (fileInput) fileInput.value = '';
-    if (stickerOverlay) stickerOverlay.src = 'images/brave.png';
 
-    document.querySelectorAll('.moment-sticker-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.sticker === 'brave');
-    });
+    // Adiciona 1 sticker Brave inicial no canto
+    this.addStickerToMoment('brave', 60, 60);
 
     if (modal) modal.classList.add('active');
   },
@@ -4574,32 +5910,136 @@ const AppUI = {
       }
     }
 
-    // Saudação do Coração Magáfico (visível para VIPs)
+    // Saudação ao Entrar (Coração Magáfico para VIPs / C.E.O. Providente para demais usuários)
     const cardGreeting = document.getElementById('cardSettingsMagaficGreeting');
     if (cardGreeting) {
-      if (this.isMagafusVIP(user)) {
-        cardGreeting.style.display = 'block';
-        const greetingStatus = document.getElementById('cfgMagaficGreetingStatus');
-        const btnToggleGreeting = document.getElementById('btnToggleMagaficGreeting');
-        const isDisabled = localStorage.getItem('eex_magafus_greeting_disabled') === 'true';
-        if (greetingStatus && btnToggleGreeting) {
-          if (isDisabled) {
-            greetingStatus.textContent = 'Desativada';
-            greetingStatus.style.color = '#6b7280';
-            btnToggleGreeting.textContent = 'Ativar';
-            btnToggleGreeting.classList.remove('btn-secondary');
-          } else {
-            greetingStatus.textContent = 'Ativada';
-            greetingStatus.style.color = '#16a34a';
-            btnToggleGreeting.textContent = 'Desativar';
-            btnToggleGreeting.classList.add('btn-secondary');
-          }
+      cardGreeting.style.display = 'block';
+      const isVIP = this.isMagafusVIP(user);
+      const titleEl = cardGreeting.querySelector('h3');
+      const descEl = cardGreeting.querySelector('p');
+      if (titleEl) titleEl.textContent = isVIP ? '💜 Coração Magáfico' : '👑 Saudação da Providente';
+      if (descEl) descEl.textContent = isVIP 
+        ? 'Exibe o Coraçãozinho Magáfico com som e mensagem de carinho toda vez que você entrar.'
+        : 'Exibe a saudação da C.E.O. Providente com efeito sonoro especial ao iniciar seu turno.';
+
+      const greetingStatus = document.getElementById('cfgMagaficGreetingStatus');
+      const btnToggleGreeting = document.getElementById('btnToggleMagaficGreeting');
+      const isDisabled = localStorage.getItem('eex_magafus_greeting_disabled') === 'true';
+      if (greetingStatus && btnToggleGreeting) {
+        if (isDisabled) {
+          greetingStatus.textContent = 'Desativada';
+          greetingStatus.style.color = '#6b7280';
+          btnToggleGreeting.textContent = 'Ativar';
+          btnToggleGreeting.classList.remove('btn-secondary');
+        } else {
+          greetingStatus.textContent = 'Ativada';
+          greetingStatus.style.color = '#16a34a';
+          btnToggleGreeting.textContent = 'Desativar';
+          btnToggleGreeting.classList.add('btn-secondary');
         }
-      } else {
-        cardGreeting.style.display = 'none';
       }
     }
   },
+
+  renderEexPlusStatus() {
+    const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
+    const planLabel = isPrem ? EEXPlusManager.getPlanLabel() : null;
+
+    // Botão Pomodoro na Navbar e no Drawer: SÓ aparece se o usuário for assinante EEX+!
+    const btnNavPomodoro = document.getElementById('btnNavPomodoro');
+    const btnDrawerPomodoro = document.getElementById('btnDrawerPomodoro');
+    if (btnNavPomodoro) btnNavPomodoro.style.display = isPrem ? 'inline-flex' : 'none';
+    if (btnDrawerPomodoro) btnDrawerPomodoro.style.display = isPrem ? 'flex' : 'none';
+
+    // Se o usuário não for premium, esconde também o balãozinho flutuante e pausa o timer
+    const floatingWidget = document.getElementById('pomodoroFloatingWidget');
+    if (floatingWidget && !isPrem) {
+      floatingWidget.style.display = 'none';
+      if (typeof PomodoroManager !== 'undefined' && PomodoroManager._running) {
+        PomodoroManager.pause();
+      }
+    }
+
+    // Botão no Header
+    const btnHeaderEexPlus = document.getElementById('btnHeaderEexPlus');
+    const headerText = document.getElementById('headerEexPlusText');
+    if (btnHeaderEexPlus) {
+      btnHeaderEexPlus.classList.toggle('is-active', isPrem);
+      btnHeaderEexPlus.classList.toggle('eexplus-lustroso', !isPrem);
+      if (headerText) headerText.textContent = isPrem ? 'EEX+ ✨' : 'EEX+';
+    }
+
+    // Botão de relatório personalizado: efeito lustroso para free
+    const btnCustomDaysReport = document.getElementById('btnCustomDaysReport');
+    if (btnCustomDaysReport) {
+      btnCustomDaysReport.classList.toggle('eexplus-lustroso', !isPrem);
+    }
+
+    // Badge em Configurações
+    const statusBadge = document.getElementById('settingsEexPlusStatusBadge');
+    if (statusBadge) {
+      if (isPrem) {
+        statusBadge.textContent = `ASSINANTE ATIVO ✨ (${planLabel})`;
+        statusBadge.style.background = '#10b981';
+        statusBadge.style.color = '#ffffff';
+      } else {
+        statusBadge.textContent = 'EM BREVE 🚀';
+        statusBadge.style.background = '#f59e0b';
+        statusBadge.style.color = '#000000';
+      }
+    }
+
+    // Destrava ou trava os cards de tema e adiciona efeito lustroso para não-assinantes
+    document.querySelectorAll('.theme-pick-card').forEach(card => {
+      const themeId = card.dataset.themeId;
+      const themeObj = ThemeManager.themes[themeId];
+      if (themeObj && themeObj.premium) {
+        card.classList.toggle('theme-locked', !isPrem);
+        card.classList.toggle('eexplus-lustroso', !isPrem);
+        const lockBadge = card.querySelector('.theme-lock-badge');
+        if (lockBadge) lockBadge.style.display = isPrem ? 'none' : 'inline-block';
+      }
+    });
+
+    // Atualiza badge de limite de hábitos na rotina
+    const routineLimitBadge = document.getElementById('routineLimitBadge');
+    if (routineLimitBadge) {
+      const habitCount = (typeof HabitManager !== 'undefined') ? HabitManager.habits.length : 0;
+      if (isPrem) {
+        routineLimitBadge.innerHTML = `Rotinas: <strong>${habitCount} (Ilimitado EEX+ ✨)</strong>`;
+        routineLimitBadge.classList.add('eexplus-unlimited');
+      } else {
+        routineLimitBadge.innerHTML = `Rotinas: <strong>${habitCount}/12 utilizadas</strong>`;
+        routineLimitBadge.classList.remove('eexplus-unlimited');
+      }
+    }
+
+    // Alterna visualização em Configurações: esconde formulário de código/planos quando já for assinante
+    const eexplusActiveSubscriberBox = document.getElementById('eexplusActiveSubscriberBox');
+    const eexplusNonSubscriberActions = document.getElementById('eexplusNonSubscriberActions');
+    if (eexplusActiveSubscriberBox) eexplusActiveSubscriberBox.style.display = isPrem ? 'flex' : 'none';
+    if (eexplusNonSubscriberActions) eexplusNonSubscriberActions.style.display = isPrem ? 'none' : 'flex';
+
+    // Alterna visualização no Modal EEX+: esconde planos e código quando já for assinante
+    const modalEexPlusActiveSection = document.getElementById('modalEexPlusActiveSection');
+    const modalEexPlusGuestSection = document.getElementById('modalEexPlusGuestSection');
+    const modalActivePlanDesc = document.getElementById('modalActivePlanDesc');
+    if (modalEexPlusActiveSection) modalEexPlusActiveSection.style.display = isPrem ? 'block' : 'none';
+    if (modalEexPlusGuestSection) modalEexPlusGuestSection.style.display = isPrem ? 'none' : 'block';
+    if (modalActivePlanDesc && isPrem) {
+      modalActivePlanDesc.textContent = `Plano Ativo: ${planLabel}. Seu terminal está com todos os privilégios VIP dimensional liberados!`;
+    }
+
+    // Badge noturno
+    const badgeNightStatus = document.getElementById('badgeNightStatus');
+    if (badgeNightStatus) {
+      const isNight = document.documentElement.classList.contains('theme-night');
+      badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
+      badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
+      badgeNightStatus.style.color = isNight ? '#000' : '#475569';
+    }
+  },
+
 
   renderTasks() {
     const container = document.getElementById('tasksGrid');
@@ -4828,7 +6268,7 @@ const AppUI = {
 
     // 10 Tiers a cada 10 patentes até o Nível 100 (O Olho de Providente)
     const tiers = [
-      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-bronze', stripText: '★ EEX • EEX • EEX ★' },
+      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-copper', stripText: '★ EEX RECRUTA ★' },
       { min: 10, max: 19,  title: 'Mensageiro de Asfalto Cósmico ⚡', color: '#06b6d4', tierName: 'Cobre Veloz', stripClass: 'holo-copper', stripText: '⚡ EEX SPEED ⚡' },
       { min: 20, max: 29,  title: 'Piloto de Salto Dimensional 🚀', color: '#3b82f6', tierName: 'Prata Prismática', stripClass: 'holo-silver', stripText: '🚀 EEX DIMENSIONAL 🚀' },
       { min: 30, max: 39,  title: 'Especialista de Carga Estelar 🌌', color: '#6366f1', tierName: 'Aço Meteórico', stripClass: 'holo-steel', stripText: '🌌 EEX STELLAR 🌌' },
@@ -4848,27 +6288,39 @@ const AppUI = {
     const progressInLevel = level >= 100 ? 100 : (totalXp - currentLevelBaseXp);
     const progressPercent = level >= 100 ? 100 : Math.min(100, Math.max(0, Math.round((progressInLevel / 100) * 100)));
 
+    // Exclusividade EEX+: Tarja arco-íris holográfica com "★ EEX+ • EEX+ • EEX+ ★"
+    const isEexPlus = (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium());
+    const finalStripClass = isEexPlus ? 'holo-eexplus' : currentTier.stripClass;
+    const finalStripText  = isEexPlus ? '★ EEX+ • EEX+ • EEX+ ★' : currentTier.stripText;
+
     return {
       totalXp,
       level,
       rankTitle: currentTier.title,
       rankColor: currentTier.color,
       tierName: currentTier.tierName,
-      stripClass: currentTier.stripClass,
-      stripText: currentTier.stripText,
+      stripClass: finalStripClass,
+      stripText: finalStripText,
+      isEexPlus,
       nextLevelXp,
       progressPercent
     };
   },
 
   getAchievements(stats = {}) {
-    const streak = stats.streak || 0;
-    const completedTasks = stats.completedTasks || 0;
-    const friendsCount = stats.friendsCount || 0;
-    const memoriesCount = stats.memoriesCount || 0;
-    const sosActive = !!stats.sosActive;
-    const radioStatus = !!stats.radioStatus;
-    const shells = stats.shells || 0;
+
+    const streak            = stats.streak            || 0;
+    const completedTasks    = stats.completedTasks    || 0;
+    const friendsCount      = stats.friendsCount      || 0;
+    const memoriesCount     = stats.memoriesCount     || 0;
+    const sosActive         = !!stats.sosActive;
+    const radioStatus       = !!stats.radioStatus;
+    const shells            = stats.shells            || 0;
+    // "100% Express" — desbloqueado permanentemente ao ativar EEX+ uma vez
+    const user              = AuthManager.getCurrentUser();
+    const unlockedEexPlus   = (user && Array.isArray(user.unlockedAchievements))
+      ? user.unlockedAchievements.includes('express-total')
+      : false;
 
     return [
       {
@@ -4933,9 +6385,18 @@ const AppUI = {
         title: 'Frequência Aberta',
         desc: 'Transmitiu aviso de status no Rádio Comunicador',
         unlocked: radioStatus
+      },
+      {
+        id: 'express-total',
+        icon: '✨',
+        title: '100% Express',
+        desc: 'Ativou o EEX+ uma vez — Agente de Elite da Frota!',
+        unlocked: unlockedEexPlus,
+        exclusive: true // marca visual EEX+
       }
     ];
   },
+
 
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
@@ -4997,7 +6458,7 @@ const AppUI = {
         </div>
 
         <!-- SUPER CRACHÁ MASTER (ANOS 2000) -->
-        <div class="grand-badge-card">
+        <div class="grand-badge-card ${career.isEexPlus ? 'passport-eexplus' : ''}">
           <div class="grand-badge-header">
             <div class="grand-badge-brand">
               <img src="images/elgalylogo.png" alt="Logo" class="badge-logo-mini">
@@ -5330,35 +6791,62 @@ const AppUI = {
   },
 
   triggerMagafusLoginGreeting(user) {
-    if (!user || !this.isMagafusVIP(user)) return;
+    if (!user) return;
     if (this._magafusGreetingDone) return;
     this._magafusGreetingDone = true;
 
-    // Se for kotundashed e desativou nas configurações:
-    const isKotun = (user.nickname === 'kotundashed' || (user.eexEmail && user.eexEmail.includes('kotundashed')));
-    if (isKotun && localStorage.getItem('eex_magafus_greeting_disabled') === 'true') {
+    // Se o usuário desativou a saudação nas configurações:
+    if (localStorage.getItem('eex_magafus_greeting_disabled') === 'true') {
       return;
     }
 
     const overlay = document.getElementById('magaficLoginGreeting');
     const msgEl = document.getElementById('magaficGreetingText');
+    const titleEl = document.getElementById('magaficGreetingTitle');
     const imgEl = document.getElementById('magaficGreetingImg');
     if (!overlay) return;
 
-    if (msgEl) {
-      if (isKotun) {
-        msgEl.textContent = 'Oi, João! Que bom te ver por aqui hoje! 💜✨';
-      } else {
-        msgEl.textContent = 'Oi, Magafus! Que bom te ver por aqui hoje! 💜✨';
-      }
-    }
+    const isVIP = this.isMagafusVIP(user);
+    const isKotun = (user.nickname === 'kotundashed' || (user.eexEmail && user.eexEmail.includes('kotundashed')));
 
-    // Toca som do selo
-    try {
-      const audio = new Audio('images/magaficseal.mp3');
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    } catch (err) {}
+    if (isVIP) {
+      if (titleEl) titleEl.textContent = '💜 Coração Magáfico';
+      if (imgEl) imgEl.src = 'images/magaficseal.png';
+      if (msgEl) {
+        if (isKotun) {
+          msgEl.textContent = 'Oi, João! Que bom te ver por aqui hoje! 💜✨';
+        } else {
+          msgEl.textContent = 'Oi, Magafus! Que bom te ver por aqui hoje! 💜✨';
+        }
+      }
+
+      // Toca som do selo magáfico
+      try {
+        const audio = new Audio('images/magaficseal.mp3');
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } catch (err) {}
+    } else {
+      // Saudação da Providente para usuários comuns!
+      const hora = new Date().getHours();
+      let momento = 'Bom dia';
+      if (hora >= 12 && hora < 18) momento = 'Boa tarde';
+      else if (hora >= 18 || hora < 5) momento = 'Boa noite';
+
+      const userName = user.name || user.nickname || 'Agente';
+      if (titleEl) titleEl.textContent = '👑 C.E.O. Providente';
+      if (imgEl) imgEl.src = 'images/happy_provident.png';
+      if (msgEl) {
+        msgEl.textContent = `${momento}, ${userName}!`;
+      }
+
+      // Toca som crostnotification
+      try {
+        const audio = new Audio('crostnotification-sound.mp3');
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } catch (err) {}
+    }
 
     // Animação de dança
     if (imgEl) {

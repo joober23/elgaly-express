@@ -176,7 +176,7 @@ const FirebaseService = {
           nickname: defaultNick,
           eexEmail: defaultEexEmail,
           avatar: firebaseUser.photoURL || 'images/elgalylogo.png',
-          location: 'Nova Amerit - NA (Nova Arcanis)',
+          location: 'São Paulo - SP',
           email: email,
           isGoogle: true,
           onboardingDone: false,
@@ -211,6 +211,11 @@ const FirebaseService = {
           console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');
         }
 
+        // Sanitiza localização antiga/fictícia para São Paulo - SP
+        if (!userData.location || (typeof isValidSpCity === 'function' && !isValidSpCity(userData.location)) || /nova amerit|nova arcanis|elgaly edge/i.test(userData.location || '')) {
+          userData.location = 'São Paulo - SP';
+        }
+
         AuthManager.currentUser = userData;
         AuthManager.saveCurrent();
 
@@ -232,8 +237,10 @@ const FirebaseService = {
         if (sessionVerified) {
           AuthManager.isEexPassVerified = true;
           this.startRealtimeSync(firebaseUser.uid);
+          if (typeof EEXPlusManager !== 'undefined') EEXPlusManager.init();
           AppUI.renderAll();
           AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.name}!`);
+
           // Inicializa FCM para notificacoes push
           setTimeout(() => this.initFCM(), 2000);
 
@@ -631,7 +638,7 @@ const FirebaseService = {
         nickname: (data.nickname || '').toLowerCase().trim(),
         eexEmail: data.eexEmail || 'agente.express.com',
         avatar: this.getSafeAvatar(data.avatar, data),
-        location: data.location || 'Nova Amerit - NA',
+        location: data.location || 'São Paulo - SP',
         streak: data.streak || 0,
         allDoneToday: !!data.allDoneToday,
         pendingToday: data.pendingToday || 0,

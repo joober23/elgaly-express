@@ -16,7 +16,9 @@ const filesToCopy = [
   'firebase-messaging-sw.js',
   'magaficseal.png',
   'magaficseal.mp3',
+  'crostnotification-sound.mp3',
   'shellcoin.png',
+  'elgalyexpressplus_logo.png',
   'version.json'
 ];
 

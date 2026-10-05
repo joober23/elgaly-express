@@ -222,9 +222,20 @@ const ReportEngine = {
   renderReportPreview() {
     var data = this.getAnalyticsData();
 
+    var isCustom = [7, 15, 30].indexOf(ReportEngine.currentTimeframe) === -1;
+    var customBox = document.getElementById('customDaysBox');
+    if (customBox) {
+      customBox.style.display = isCustom ? 'flex' : 'none';
+    }
+
     document.querySelectorAll('.timeframe-btn').forEach(function(btn) {
-      btn.classList.toggle('active', parseInt(btn.dataset.days, 10) === ReportEngine.currentTimeframe);
+      if (btn.dataset.days === 'custom') {
+        btn.classList.toggle('active', isCustom);
+      } else {
+        btn.classList.toggle('active', parseInt(btn.dataset.days, 10) === ReportEngine.currentTimeframe);
+      }
     });
+
 
     var rankStamp = document.getElementById('reportRankStamp');
     var rankTitle = document.getElementById('reportRankTitle');
