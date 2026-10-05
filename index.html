@@ -78,6 +78,11 @@
         <span>🍅 Relógio Pomodoro</span>
       </button>
 
+      <button type="button" class="drawer-nav-btn" id="btnDrawerLoja" style="width: 100%; text-align: left; background: var(--yellow-bright); color: var(--black); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: 900; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <span>🏪 Loja EEX</span>
+        <span style="font-size:0.75rem; background: var(--purple-dark); color: #fff; padding: 2px 8px; border-radius: 8px;">NOVO</span>
+      </button>
+
       <button type="button" class="drawer-nav-btn" id="btnDrawerEexPlus" style="width: 100%; text-align: left; background: linear-gradient(135deg, #fce7f3, #fed7aa); color: #be185d; border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: 900; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
         <span>⭐ Elgaly Express+</span>
         <span style="font-size:0.75rem; background: #e62b7e; color: #fff; padding: 2px 8px; border-radius: 8px;">PREMIUM</span>
@@ -121,7 +126,7 @@
       <!-- Área de Autenticação / Perfil + Tema + Gazeta Providente -->
       <div class="header-actions-wrapper" style="display: flex; align-items: center; gap: 8px;">
         <!-- Saldo de Conchas EEX (Moeda de Recompensa) -->
-        <div class="header-shells-pill" id="headerShellsPill" title="Seu saldo de Conchas EEX! Conclua rotinas e encomendas para ganhar conchinhas!">
+        <div class="header-shells-pill" id="headerShellsPill" title="Seu saldo de Conchas EEX! Clique para abrir a Loja EEX!">
           <img src="images/shellcoin.png" alt="Conchas" class="shell-coin-icon">
           <span class="shell-coin-count" id="headerShellsCount">0</span>
         </div>
@@ -152,6 +157,7 @@
         <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
         <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
         <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
+        <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
         <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
         <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
         <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil</a>
@@ -788,6 +794,7 @@
                     <strong class="theme-name">🎸 Roxo NuMetálico</strong>
                     <span class="theme-tagline">Noturno & Distorcido</span>
                   </div>
+                  <span class="theme-lock-badge" id="badgeLockRoxo">65 🐚</span>
                   <span class="theme-check-pill">ATIVO</span>
                 </button>
 
@@ -802,10 +809,26 @@
                     <strong class="theme-name">🌿 Verde Magáfico</strong>
                     <span class="theme-tagline">Musgo & Magafus 💜</span>
                   </div>
+                  <span class="theme-lock-badge" id="badgeLockVerde">255 🐚</span>
                   <span class="theme-check-pill">ATIVO</span>
                 </button>
 
-                <!-- Tema 4: Azul Arcânico (EEX+) -->
+                <!-- Tema 4: Vermelho Culposo -->
+                <button type="button" class="theme-pick-card" data-theme-id="vermelho-culposo" id="btnThemeVermelho">
+                  <div class="theme-swatch swatch-vermelho">
+                    <span class="swatch-stripe s1" style="background:#ba4c4c;"></span>
+                    <span class="swatch-stripe s2" style="background:#faf5eb;"></span>
+                    <span class="swatch-stripe s3" style="background:#211111;"></span>
+                  </div>
+                  <div class="theme-card-info">
+                    <strong class="theme-name">🏮 Vermelho Culposo</strong>
+                    <span class="theme-tagline">Pastel & Bege Retrô</span>
+                  </div>
+                  <span class="theme-lock-badge" id="badgeLockVermelho">95 🐚</span>
+                  <span class="theme-check-pill">ATIVO</span>
+                </button>
+
+                <!-- Tema 5: Azul Arcânico (EEX+) -->
                 <button type="button" class="theme-pick-card theme-locked" data-theme-id="azul-arcanico" id="btnThemeAzul">
                   <div class="theme-swatch swatch-azul">
                     <span class="swatch-stripe s1" style="background:#1e3a8a;"></span>
@@ -820,7 +843,7 @@
                   <span class="theme-check-pill">ATIVO</span>
                 </button>
 
-                <!-- Tema 5: Ouro Providêntico (EEX+) -->
+                <!-- Tema 6: Ouro Providêntico (EEX+) -->
                 <button type="button" class="theme-pick-card theme-locked" data-theme-id="ouro-providentico" id="btnThemeOuro">
                   <div class="theme-swatch swatch-ouro">
                     <span class="swatch-stripe s1" style="background:#4d370b;"></span>
@@ -1376,6 +1399,10 @@
     <a href="#pomodoro" class="bottom-nav-item" id="btnBottomPomodoro" data-tab="pomodoro">
       <span class="bottom-nav-icon">🍅</span>
       <span class="bottom-nav-label">Pomodoro</span>
+    </a>
+    <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
+      <span class="bottom-nav-icon">🏪</span>
+      <span class="bottom-nav-label">Loja EEX</span>
     </a>
     <a href="#relatorios" class="bottom-nav-item" data-tab="relatorios">
       <span class="bottom-nav-icon">📊</span>
@@ -1974,6 +2001,72 @@
       <span class="pomodoro-floating-time" id="pomodoroFloatingTime">25:00</span>
       <span class="pomodoro-floating-label" id="pomodoroFloatingPhase">Foco</span>
       <span class="pomodoro-floating-hint">↑ clique para abrir</span>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DA LOJA EEX (BAZAR DO CORREIO)
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalLojaEEX">
+    <div class="modal-box loja-modal-box">
+      <!-- Cabeçalho da Loja -->
+      <div class="loja-modal-header">
+        <div class="loja-modal-title-group">
+          <div class="loja-header-badge">🏪 BAZAR DO CORREIO</div>
+          <h2 class="loja-modal-title">LOJA EEX</h2>
+          <p class="loja-modal-subtitle">Gaste suas conchas em personalizações exclusivas para seu terminal!</p>
+        </div>
+        
+        <div class="loja-header-actions">
+          <div class="loja-shells-pill" id="lojaModalShellsPill" title="Seu saldo de conchas">
+            <img src="images/shellcoin.png" alt="Conchas" class="shell-coin-icon">
+            <span id="lojaModalShellsCount">0</span> Conchas
+          </div>
+          <button type="button" class="modal-close" id="btnLojaClose" aria-label="Fechar Loja">&times;</button>
+        </div>
+      </div>
+
+      <!-- Corpo da Loja: Menu na esquerda (de cima pra baixo) + Conteúdo na direita -->
+      <div class="loja-modal-body">
+        <!-- Menu Lateral Esquerdo com Categorias Verticais -->
+        <aside class="loja-sidebar">
+          <div class="loja-sidebar-label">CATEGORIAS</div>
+          <button type="button" class="loja-category-btn active" data-category="temas">
+            <span class="loja-cat-icon">🎨</span>
+            <span class="loja-cat-text">Temas</span>
+          </button>
+          <button type="button" class="loja-category-btn disabled" data-category="selos" title="Em breve!">
+            <span class="loja-cat-icon">🏷️</span>
+            <span class="loja-cat-text">Selos</span>
+            <span class="loja-cat-badge">EM BREVE</span>
+          </button>
+          <button type="button" class="loja-category-btn disabled" data-category="embalagens" title="Em breve!">
+            <span class="loja-cat-icon">📦</span>
+            <span class="loja-cat-text">Embalagens</span>
+            <span class="loja-cat-badge">EM BREVE</span>
+          </button>
+          <button type="button" class="loja-category-btn disabled" data-category="molduras" title="Em breve!">
+            <span class="loja-cat-icon">✨</span>
+            <span class="loja-cat-text">Molduras</span>
+            <span class="loja-cat-badge">EM BREVE</span>
+          </button>
+        </aside>
+
+        <!-- Área de Conteúdo da Categoria Selecionada -->
+        <section class="loja-content-area" id="lojaContentArea">
+          <!-- Grade de Temas -->
+          <div class="loja-category-view" id="lojaViewTemas">
+            <div class="loja-section-header">
+              <h3>🎨 Temas da Frota Express</h3>
+              <p>Personalize as cores do aplicativo. Compre uma vez com conchas e use quando quiser!</p>
+            </div>
+            
+            <div class="loja-items-grid" id="lojaThemesGrid">
+              <!-- Renderizado dinamicamente via LojaEEXManager.renderThemes() -->
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 

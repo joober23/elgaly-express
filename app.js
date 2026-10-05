@@ -852,10 +852,54 @@ const ShellsManager = {
     return await this.addShells(finalAmount, reason);
   },
 
+  async spendShells(amount, reason = '') {
+    if (!amount || amount <= 0) return false;
+    const current = this.getBalance();
+    if (current < amount) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast(`🐚 Conchas insuficientes! Você possui ${current} conchas e precisa de ${amount}.`);
+      }
+      return false;
+    }
+    const updated = current - amount;
+    localStorage.setItem(this.getStorageKey(), updated.toString());
+
+    const user = AuthManager.getCurrentUser();
+    if (user) {
+      user.shells = updated;
+      AuthManager.currentUser = user;
+      AuthManager.saveCurrent();
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.uid) {
+        try {
+          await FirebaseService.saveProfileToCloud({ shells: updated });
+        } catch (e) {
+          console.warn('Erro ao atualizar saldo de conchas no Firestore:', e);
+        }
+      }
+    }
+
+    this.render();
+    if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.render();
+    const pill = document.getElementById('headerShellsPill');
+    if (pill) {
+      pill.classList.remove('shell-bump');
+      void pill.offsetWidth;
+      pill.classList.add('shell-bump');
+    }
+    if (reason && typeof AppUI !== 'undefined') {
+      AppUI.showToast(`🐚 -${amount} Conchas: ${reason}`);
+    }
+    return true;
+  },
+
   render() {
     const countEl = document.getElementById('headerShellsCount');
     if (countEl) {
       countEl.textContent = this.getBalance().toLocaleString('pt-BR');
+    }
+    const lojaCountEl = document.getElementById('lojaModalShellsCount');
+    if (lojaCountEl) {
+      lojaCountEl.textContent = this.getBalance().toLocaleString('pt-BR');
     }
   },
 
@@ -2420,9 +2464,12 @@ const ProvidenteNewsManager = {
 
 // ==========================================================================
 // GERENCIADOR DE TEMAS DA FROTA (ThemeManager)
-// 1. Rosa Express (Clássico Chiclete)
-// 2. Roxo NuMetálico (Noturno & Pesado anos 2000)
-// 3. Verde Magáfico (Musgo Vintage especial com recados da Magafus 💜)
+// 1. Rosa Express (Clássico Chiclete - Grátis)
+// 2. Roxo NuMetálico (65 Conchas)
+// 3. Verde Magáfico (255 Conchas - Grátis para pedrinho.express.com)
+// 4. Vermelho Culposo (95 Conchas - Vermelho Pastel & Bege Clarinho)
+// 5. Azul Arcânico (EEX+)
+// 6. Ouro Providêntico (EEX+)
 // ==========================================================================
 const ThemeManager = {
   current: 'rosa-express',
@@ -2433,6 +2480,7 @@ const ThemeManager = {
       name: 'Rosa Express',
       icon: '🌸',
       premium: false,
+      price: 0,
       quotes: [
         'Esse tema ficou demais! 🌸',
         'O clássico despacho postal de Nova Amerit em tons de chiclete cósmico!',
@@ -2444,6 +2492,7 @@ const ThemeManager = {
       name: 'Roxo NuMetálico',
       icon: '🎸',
       premium: false,
+      price: 65,
       quotes: [
         'Pesado, sombrio e distorcido! 🎸⚡ Sintonizado na frequência dos anos 2000!',
         'Para quem pilota rotas noturnas ouvindo guitarras pesadas! 🤘🌙',
@@ -2455,10 +2504,23 @@ const ThemeManager = {
       name: 'Verde Magáfico',
       icon: '🌿',
       premium: false,
+      price: 255,
       quotes: [
         'A Magafus ama essa cor! 💜',
         'Direto do refúgio botânico dimensional de Nova Arcanis! A Magafus aprova! 💜🌿',
         'Verde musgo de respeito! A Magafus mandou avisar que seu bom gosto é nota 10! 💜'
+      ]
+    },
+    'vermelho-culposo': {
+      id: 'vermelho-culposo',
+      name: 'Vermelho Culposo',
+      icon: '🏮',
+      premium: false,
+      price: 95,
+      quotes: [
+        'Vermelho suave com toque de pergaminho antigo! 🏮📜',
+        'Estética retrô acolhedora com tons bege e rubi pastel!',
+        'Para agentes de coração caloroso e despacho impecável! ☕📮'
       ]
     },
     'azul-arcanico': {
@@ -2466,6 +2528,7 @@ const ThemeManager = {
       name: 'Azul Arcânico',
       icon: '🌌',
       premium: true,
+      price: 0,
       quotes: [
         'Das profundezas de Nova Arcanis, o azul dimensional te envolve! 🌌',
         'Azul profundo com centelhas de laranja — a cor do portal interdimensional! ✨',
@@ -2477,6 +2540,7 @@ const ThemeManager = {
       name: 'Ouro Providêntico',
       icon: '👑',
       premium: true,
+      price: 0,
       quotes: [
         'A C.E.O. Providente aprova pessoalmente este tema! 👑',
         'Ouro, elegância e poder — o tema da diretora executiva de Nova Amerit!',
@@ -2485,28 +2549,144 @@ const ThemeManager = {
     }
   },
 
+  isPedrinho(user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    if (!user) return false;
+    const nick = (user.nickname || '').toLowerCase().trim();
+    const eex = (user.eexEmail || '').toLowerCase().trim();
+    const email = (user.email || '').toLowerCase().trim();
+    return nick === 'pedrinho' || eex.includes('pedrinho') || email.includes('pedrinho');
+  },
+
+  getPurchasedThemes(user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    const uid = user ? (user.id || user.uid) : 'default';
+    let local = [];
+    try {
+      local = JSON.parse(localStorage.getItem(`elgaly_purchased_themes_${uid}`) || '[]');
+    } catch { local = []; }
+    if (user && Array.isArray(user.purchasedThemes)) {
+      return Array.from(new Set([...local, ...user.purchasedThemes]));
+    }
+    return local;
+  },
+
+  savePurchasedThemes(list, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    const uid = user ? (user.id || user.uid) : 'default';
+    localStorage.setItem(`elgaly_purchased_themes_${uid}`, JSON.stringify(list));
+    if (user) {
+      user.purchasedThemes = list;
+      if (typeof AuthManager !== 'undefined') {
+        AuthManager.currentUser = user;
+        AuthManager.saveCurrent();
+      }
+    }
+  },
+
+  syncPurchasedThemes(cloudList) {
+    if (!Array.isArray(cloudList)) return;
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const current = this.getPurchasedThemes(user);
+    const merged = Array.from(new Set([...current, ...cloudList]));
+    this.savePurchasedThemes(merged, user);
+    if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.render();
+    if (typeof AppUI !== 'undefined') AppUI.renderConfiguracoes();
+  },
+
+  isThemeUnlocked(themeId, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    if (!themeId || themeId === 'rosa-express') return true;
+
+    // Temas EEX+
+    if (themeId === 'azul-arcanico' || themeId === 'ouro-providentico') {
+      return typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
+    }
+
+    // Exceção pedrinho.express.com para Verde Magáfico (liberado sem pagar)
+    if (themeId === 'verde-magafico' && this.isPedrinho(user)) {
+      return true;
+    }
+
+    // Verifica temas comprados com conchas
+    const purchased = this.getPurchasedThemes(user);
+    return purchased.includes(themeId);
+  },
+
+  async purchaseTheme(themeId) {
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    if (!user) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('Faça login para adquirir itens na Loja EEX!');
+      return false;
+    }
+    const theme = this.themes[themeId];
+    if (!theme) return false;
+
+    if (this.isThemeUnlocked(themeId, user)) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast(`Você já possui o tema ${theme.name}!`);
+      this.setTheme(themeId, true);
+      return true;
+    }
+
+    const price = theme.price || 0;
+    const balance = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
+    if (balance < price) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast(`🐚 Conchas insuficientes! Você tem ${balance} conchas e precisa de ${price} conchas.`);
+      }
+      return false;
+    }
+
+    const success = await ShellsManager.spendShells(price, `Compra do tema ${theme.name}`);
+    if (!success) return false;
+
+    const purchased = this.getPurchasedThemes(user);
+    if (!purchased.includes(themeId)) {
+      purchased.push(themeId);
+    }
+    this.savePurchasedThemes(purchased, user);
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.uid) {
+      try {
+        await FirebaseService.saveProfileToCloud({ purchasedThemes: purchased });
+      } catch (e) {
+        console.warn('Erro ao salvar tema comprado no Firestore:', e);
+      }
+    }
+
+    this.setTheme(themeId, true);
+    if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.render();
+    if (typeof AppUI !== 'undefined') AppUI.renderConfiguracoes();
+
+    if (typeof AppUI !== 'undefined') {
+      AppUI.showToast(`🎉 Tema ${theme.name} desbloqueado e ativado com sucesso!`);
+    }
+    return true;
+  },
+
   init() {
     let saved = localStorage.getItem('elgaly_theme') || 'rosa-express';
     if (saved === 'light') saved = 'rosa-express';
     if (saved === 'dark')  saved = 'roxo-numetalico';
     if (!this.themes[saved]) saved = 'rosa-express';
-    // Se tema premium mas sem EEX+, volta pro padrão
-    if (this.themes[saved].premium && typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
+    // Se tema não for desbloqueado pelo usuário, volta imediatamente pro padrão: Rosa Express
+    if (!this.isThemeUnlocked(saved)) {
       saved = 'rosa-express';
     }
     this.setTheme(saved, false);
   },
 
   cycle() {
-    // Ciclo apenas entre temas free
-    const order = ['rosa-express', 'roxo-numetalico', 'verde-magafico'];
-    const nextIdx = (order.indexOf(this.current) + 1) % order.length;
-    this.setTheme(order[nextIdx], true);
+    const all = ['rosa-express', 'roxo-numetalico', 'verde-magafico', 'vermelho-culposo', 'azul-arcanico', 'ouro-providentico'];
+    const unlocked = all.filter(t => this.isThemeUnlocked(t));
+    if (unlocked.length === 0) unlocked.push('rosa-express');
+    const nextIdx = (unlocked.indexOf(this.current) + 1) % unlocked.length;
+    this.setTheme(unlocked[nextIdx], true);
   },
 
 
   setTheme(themeId, showToastNotification = false, syncCloud = true) {
     if (!this.themes[themeId]) themeId = 'rosa-express';
+    // Se o tema estiver bloqueado, volta para rosa-express
+    if (!this.isThemeUnlocked(themeId)) {
+      themeId = 'rosa-express';
+    }
     this.current = themeId;
     const themeObj = this.themes[themeId];
 
@@ -2572,6 +2752,249 @@ const ThemeManager = {
     box.classList.remove('quote-pop');
     void box.offsetWidth;
     box.classList.add('quote-pop');
+  }
+};
+
+// ==========================================================================
+// GERENCIADOR DA LOJA EEX (LojaEEXManager — Bazar do Correio)
+// Menu popup, categorias verticais à esquerda, compra de itens com conchas
+// ==========================================================================
+const LojaEEXManager = {
+  currentCategory: 'temas',
+
+  init() {
+    this.bindEvents();
+    this.render();
+  },
+
+  open(category = 'temas') {
+    this.currentCategory = category;
+    const modal = document.getElementById('modalLojaEEX');
+    if (modal) {
+      modal.classList.add('active');
+      this.render();
+    }
+  },
+
+  close() {
+    const modal = document.getElementById('modalLojaEEX');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+  },
+
+  bindEvents() {
+    // Fechar botão
+    const btnClose = document.getElementById('btnLojaClose');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.close());
+    }
+
+    // Fechar clicando no backdrop
+    const modal = document.getElementById('modalLojaEEX');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) this.close();
+      });
+    }
+
+    // Botões de categorias na barra lateral esquerda (organizados de cima para baixo)
+    document.querySelectorAll('.loja-category-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) {
+          const cat = btn.dataset.category || '';
+          if (typeof AppUI !== 'undefined') {
+            AppUI.showToast(`⏳ Categoria "${cat.toUpperCase()}" estará disponível em breve!`);
+          }
+          return;
+        }
+        const cat = btn.dataset.category;
+        if (cat) {
+          this.currentCategory = cat;
+          document.querySelectorAll('.loja-category-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.category === cat);
+          });
+          this.render();
+        }
+      });
+    });
+
+    // Cliques em ações de itens da loja
+    const grid = document.getElementById('lojaThemesGrid');
+    if (grid) {
+      grid.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-loja-action');
+        if (!btn || btn.disabled) return;
+
+        const action = btn.dataset.action;
+        const themeId = btn.dataset.themeId;
+
+        if (action === 'eexplus') {
+          this.close();
+          const modalEex = document.getElementById('modalEEXPlus');
+          if (modalEex) modalEex.classList.add('active');
+          return;
+        }
+
+        if (action === 'equip') {
+          if (themeId) {
+            ThemeManager.setTheme(themeId, true);
+            this.render();
+            if (typeof AppUI !== 'undefined') AppUI.renderConfiguracoes();
+          }
+          return;
+        }
+
+        if (action === 'buy') {
+          if (themeId) {
+            const success = await ThemeManager.purchaseTheme(themeId);
+            if (success) {
+              this.render();
+            }
+          }
+        }
+      });
+    }
+  },
+
+  render() {
+    // Atualiza saldo no modal da loja
+    const shellsCount = document.getElementById('lojaModalShellsCount');
+    if (shellsCount && typeof ShellsManager !== 'undefined') {
+      shellsCount.textContent = ShellsManager.getBalance().toLocaleString('pt-BR');
+    }
+
+    this.renderThemes();
+  },
+
+  renderThemes() {
+    const grid = document.getElementById('lojaThemesGrid');
+    if (!grid) return;
+
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const balance = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
+    const isPedrinho = ThemeManager.isPedrinho(user);
+
+    const storeThemes = [
+      {
+        id: 'rosa-express',
+        name: 'Rosa Express',
+        icon: '🌸',
+        tagline: 'Tema Padrão Oficial',
+        desc: 'O clássico despacho postal chiclete de Nova Amerit. Grátis para todos os agentes.',
+        type: 'free',
+        price: 0,
+        swatchClass: 'swatch-rosa'
+      },
+      {
+        id: 'roxo-numetalico',
+        name: 'Roxo NuMetálico',
+        icon: '🎸',
+        tagline: 'Noturno & Anos 2000',
+        desc: 'Guitarras pesadas, frequências sombrias e modo noturno imersivo de alta intensidade.',
+        type: 'shells',
+        price: 65,
+        swatchClass: 'swatch-roxo'
+      },
+      {
+        id: 'vermelho-culposo',
+        name: 'Vermelho Culposo',
+        icon: '🏮',
+        tagline: 'Pastel & Bege Retrô',
+        desc: 'Vermelho pastel acolhedor com detalhes elegantes em bege clarinho no lugar do branco.',
+        type: 'shells',
+        price: 95,
+        swatchClass: 'swatch-vermelho'
+      },
+      {
+        id: 'verde-magafico',
+        name: 'Verde Magáfico',
+        icon: '🌿',
+        tagline: 'Musgo & Magafus 💜',
+        desc: 'Inspirado nos refúgios botânicos de Nova Arcanis e aprovado com honras pela Magafus.',
+        type: 'shells',
+        price: 255,
+        swatchClass: 'swatch-verde'
+      },
+      {
+        id: 'azul-arcanico',
+        name: 'Azul Arcânico',
+        icon: '🌌',
+        tagline: 'Portal Interdimensional',
+        desc: 'Azul dimensional profundo com centelhas de laranja cósmico. Exclusivo EEX+.',
+        type: 'premium',
+        price: 0,
+        swatchClass: 'swatch-azul'
+      },
+      {
+        id: 'ouro-providentico',
+        name: 'Ouro Providêntico',
+        icon: '👑',
+        tagline: 'Gabinete da C.E.O.',
+        desc: 'Ouro, nobreza e distinção máxima da diretoria executiva de Nova Amerit. Exclusivo EEX+.',
+        type: 'premium',
+        price: 0,
+        swatchClass: 'swatch-ouro'
+      }
+    ];
+
+    grid.innerHTML = storeThemes.map(t => {
+      const isEquipped = ThemeManager.current === t.id;
+      const isUnlocked = ThemeManager.isThemeUnlocked(t.id, user);
+
+      let priceHtml = '';
+      let actionBtnHtml = '';
+      let badgeHtml = '';
+
+      if (t.id === 'verde-magafico' && isPedrinho) {
+        badgeHtml = '<span class="loja-badge-vip">💜 CORTESIA VIP PEDRINHO</span>';
+      }
+
+      if (t.type === 'free') {
+        priceHtml = '<span class="loja-item-price free">Grátis</span>';
+      } else if (t.type === 'premium') {
+        priceHtml = '<span class="loja-item-price eexplus">✨ Exclusivo EEX+</span>';
+      } else {
+        if (t.id === 'verde-magafico' && isPedrinho) {
+          priceHtml = '<span class="loja-item-price free">Liberado (VIP)</span>';
+        } else {
+          priceHtml = `<span class="loja-item-price shells">🐚 ${t.price} Conchas</span>`;
+        }
+      }
+
+      if (isEquipped) {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action disabled" disabled style="background:#16a34a;color:#ffffff;border-color:var(--black);cursor:default;">✓ Equipado</button>`;
+      } else if (isUnlocked) {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="equip" data-theme-id="${t.id}" style="background:var(--yellow-bright);color:var(--black);">⚡ Equipar</button>`;
+      } else if (t.type === 'premium') {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="eexplus" style="background:linear-gradient(135deg, #ec4899, #f59e0b);color:#fff;">⭐ Ver no EEX+</button>`;
+      } else {
+        const canAfford = balance >= t.price;
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="buy" data-theme-id="${t.id}" ${canAfford ? '' : 'style="opacity:0.75;"'}>🛒 Comprar (${t.price} 🐚)</button>`;
+      }
+
+      return `
+        <div class="loja-item-card ${isEquipped ? 'item-equipped' : ''} ${isUnlocked ? 'item-owned' : ''}">
+          <div class="loja-item-top">
+            <div class="theme-swatch ${t.swatchClass}">
+              <span class="swatch-stripe s1"></span>
+              <span class="swatch-stripe s2"></span>
+              <span class="swatch-stripe s3"></span>
+            </div>
+            <div class="loja-item-meta">
+              <strong class="loja-item-name">${t.icon} ${t.name}</strong>
+              <span class="loja-item-tagline">${t.tagline}</span>
+            </div>
+          </div>
+          ${badgeHtml}
+          <p class="loja-item-desc">${t.desc}</p>
+          <div class="loja-item-footer">
+            ${priceHtml}
+            ${actionBtnHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 };
 
@@ -3789,7 +4212,7 @@ const AppUI = {
     PomodoroManager.init();
     if (typeof NotesManager !== 'undefined') NotesManager.init();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
-
+    if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -3888,6 +4311,11 @@ const AppUI = {
         if (tab === 'pomodoro') {
           e.preventDefault();
           openPomodoro();
+          return;
+        }
+        if (tab === 'loja') {
+          e.preventDefault();
+          if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.open('temas');
           return;
         }
         if (tab) {
@@ -4402,12 +4830,25 @@ const AppUI = {
       card.addEventListener('click', () => {
         const themeId = card.dataset.themeId;
         const themeObj = ThemeManager.themes[themeId];
-        if (themeObj && themeObj.premium && (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium())) {
+        if (!themeObj) return;
+
+        // Se tema EEX+ e não for premium
+        if (themeObj.premium && (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium())) {
           this.showToast(`🔒 O tema ${themeObj.name} é exclusivo do Elgaly Express+! ✨`);
           const modal = document.getElementById('modalEEXPlus');
           if (modal) modal.classList.add('active');
           return;
         }
+
+        // Se tema pago com conchas e não estiver desbloqueado
+        if (!ThemeManager.isThemeUnlocked(themeId)) {
+          this.showToast(`🔒 O tema ${themeObj.name} é desbloqueado na Loja EEX por ${themeObj.price} Conchas! 🐚`);
+          if (typeof LojaEEXManager !== 'undefined') {
+            LojaEEXManager.open('temas');
+          }
+          return;
+        }
+
         if (themeId) ThemeManager.setTheme(themeId, true);
       });
     });
@@ -4447,6 +4888,44 @@ const AppUI = {
       btnBottomPomodoro.addEventListener('click', (e) => {
         e.preventDefault();
         openPomodoro();
+      });
+    }
+
+    // ---- LOJA EEX (BAZAR DO CORREIO) ----
+    const openLoja = () => {
+      if (typeof LojaEEXManager !== 'undefined') {
+        LojaEEXManager.open('temas');
+      }
+    };
+
+    const headerShellsPill = document.getElementById('headerShellsPill');
+    if (headerShellsPill) {
+      headerShellsPill.addEventListener('click', () => {
+        openLoja();
+      });
+    }
+
+    const btnNavLoja = document.getElementById('btnNavLoja');
+    if (btnNavLoja) {
+      btnNavLoja.addEventListener('click', (e) => {
+        e.preventDefault();
+        openLoja();
+      });
+    }
+
+    const btnDrawerLoja = document.getElementById('btnDrawerLoja');
+    if (btnDrawerLoja) {
+      btnDrawerLoja.addEventListener('click', () => {
+        if (typeof this.closeMobileDrawer === 'function') this.closeMobileDrawer();
+        openLoja();
+      });
+    }
+
+    const btnBottomLoja = document.getElementById('btnBottomLoja');
+    if (btnBottomLoja) {
+      btnBottomLoja.addEventListener('click', (e) => {
+        e.preventDefault();
+        openLoja();
       });
     }
 
@@ -5434,17 +5913,6 @@ const AppUI = {
         AppUI.renderConfiguracoes();
       });
     }
-
-    // 32. Saldo de Conchas EEX (Clique no Pill)
-    const headerShellsPill = document.getElementById('headerShellsPill');
-    if (headerShellsPill) {
-      headerShellsPill.addEventListener('click', () => {
-        const count = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
-        const todayEarned = typeof ShellsManager !== 'undefined' ? ShellsManager.getTodayEarned() : 0;
-        const cap = typeof ShellsManager !== 'undefined' ? ShellsManager.DAILY_CAP : 350;
-        AppUI.showToast(`🐚 Saldo: ${count.toLocaleString('pt-BR')} Conchas! (Hoje você coletou ${todayEarned}/${cap} conchas) 🌊✨`);
-      });
-    }
   },
 
   updateCurrentDateDisplay() {
@@ -6085,15 +6553,20 @@ const AppUI = {
       }
     }
 
-    // Destrava ou trava os cards de tema e adiciona efeito lustroso para não-assinantes
+    // Destrava ou trava os cards de tema (Loja EEX ou EEX+)
     document.querySelectorAll('.theme-pick-card').forEach(card => {
       const themeId = card.dataset.themeId;
       const themeObj = ThemeManager.themes[themeId];
-      if (themeObj && themeObj.premium) {
-        card.classList.toggle('theme-locked', !isPrem);
+      if (!themeObj) return;
+
+      const isUnlocked = ThemeManager.isThemeUnlocked(themeId);
+      card.classList.toggle('theme-locked', !isUnlocked);
+      if (themeObj.premium) {
         card.classList.toggle('eexplus-lustroso', !isPrem);
-        const lockBadge = card.querySelector('.theme-lock-badge');
-        if (lockBadge) lockBadge.style.display = isPrem ? 'none' : 'inline-block';
+      }
+      const lockBadge = card.querySelector('.theme-lock-badge');
+      if (lockBadge) {
+        lockBadge.style.display = isUnlocked ? 'none' : 'inline-block';
       }
     });
 

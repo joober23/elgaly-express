@@ -201,8 +201,14 @@ const FirebaseService = {
               this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
             }
             userData = { ...userData, ...cloudProfile };
+            if (cloudProfile.purchasedThemes && typeof ThemeManager !== 'undefined') {
+              ThemeManager.syncPurchasedThemes(cloudProfile.purchasedThemes);
+            }
             if (cloudProfile.preferredTheme && typeof ThemeManager !== 'undefined') {
-              ThemeManager.setTheme(cloudProfile.preferredTheme, false, false);
+              const targetTheme = ThemeManager.isThemeUnlocked(cloudProfile.preferredTheme, userData)
+                ? cloudProfile.preferredTheme
+                : 'rosa-express';
+              ThemeManager.setTheme(targetTheme, false, false);
             }
           } else {
             this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
@@ -516,9 +522,15 @@ const FirebaseService = {
     this.unsubscribeProfile = userDoc.collection('system').doc('profile').onSnapshot(doc => {
       if (doc.exists) {
         const data = doc.data();
+        if (data && data.purchasedThemes && typeof ThemeManager !== 'undefined') {
+          ThemeManager.syncPurchasedThemes(data.purchasedThemes);
+        }
         if (data && data.preferredTheme && typeof ThemeManager !== 'undefined') {
-          if (ThemeManager.current !== data.preferredTheme) {
-            ThemeManager.setTheme(data.preferredTheme, false, false);
+          const targetTheme = ThemeManager.isThemeUnlocked(data.preferredTheme)
+            ? data.preferredTheme
+            : 'rosa-express';
+          if (ThemeManager.current !== targetTheme) {
+            ThemeManager.setTheme(targetTheme, false, false);
           }
         }
       }

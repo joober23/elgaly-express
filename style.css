@@ -6220,6 +6220,11 @@ nav.desktop-nav a.nav-link.active {
 .swatch-verde .s2 { background: #4d8534; }
 .swatch-verde .s3 { background: #8a2be2; }
 
+/* Swatch Vermelho Culposo */
+.swatch-vermelho .s1 { background: #ba4c4c; }
+.swatch-vermelho .s2 { background: #faf5eb; }
+.swatch-vermelho .s3 { background: #211111; }
+
 .theme-card-info {
   display: flex;
   flex-direction: column;
@@ -8105,6 +8110,530 @@ html.theme-night::after {
   color: #4b5563;
   margin-top: 4px;
 }
+
+/* ==========================================================================
+   4. TEMA NOVO: VERMELHO CULPOSO (Vermelho Pastel & Bege Clarinho)
+   ========================================================================== */
+[data-theme="vermelho-culposo"] {
+  --bg-color: #ba4c4c;
+  --card-bg: #f4ecdf;
+  --card-bg-light: #faf5eb;
+  --purple-main: #8c3232;
+  --purple-dark: #331515;
+  --magenta-bright: #d9534f;
+  --black: #211111;
+  --white: #faf5eb;
+  --yellow-bright: #f5c842;
+  --text-muted: #73514f;
+}
+
+[data-theme="vermelho-culposo"] body {
+  background-color: var(--bg-color);
+  background-image: radial-gradient(#963535 18%, transparent 19%), radial-gradient(#963535 18%, transparent 19%);
+  color: var(--purple-dark);
+}
+
+[data-theme="vermelho-culposo"] header {
+  background: #822b2b;
+  border-bottom: 4px solid var(--black);
+}
+
+[data-theme="vermelho-culposo"] .mobile-drawer {
+  background: #471a1a;
+  color: #faf5eb;
+}
+
+[data-theme="vermelho-culposo"] .drawer-nav-link {
+  background: #faf5eb;
+  color: #331515;
+  border-color: var(--black);
+}
+
+[data-theme="vermelho-culposo"] .drawer-nav-link.active {
+  background: #f5c842;
+  color: #211111;
+}
+
+[data-theme="vermelho-culposo"] nav.desktop-nav {
+  background: #f4ecdf;
+  border-color: #211111;
+  box-shadow: 4px 4px 0px #211111;
+}
+
+[data-theme="vermelho-culposo"] nav.desktop-nav a.nav-link {
+  background: #ba4c4c;
+  color: #faf5eb;
+  border-color: #211111;
+  box-shadow: 2.5px 2.5px 0px #211111;
+}
+
+[data-theme="vermelho-culposo"] nav.desktop-nav a.nav-link:hover {
+  background: #cf5c5c;
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px #211111;
+}
+
+[data-theme="vermelho-culposo"] nav.desktop-nav a.nav-link.active {
+  background: #f5c842;
+  color: #211111;
+  border-color: #211111;
+  box-shadow: 3.5px 3.5px 0px #211111;
+}
+
+[data-theme="vermelho-culposo"] .hero {
+  background: #f4ecdf;
+  border-color: var(--black);
+  box-shadow: 6px 6px 0px var(--black);
+}
+
+[data-theme="vermelho-culposo"] .quick-stat-card {
+  background: #faf5eb;
+  border-color: var(--black);
+}
+
+[data-theme="vermelho-culposo"] .card,
+[data-theme="vermelho-culposo"] .settings-card,
+[data-theme="vermelho-culposo"] .modal-box {
+  background: #f4ecdf;
+  border-color: #211111;
+}
+
+[data-theme="vermelho-culposo"] input,
+[data-theme="vermelho-culposo"] select,
+[data-theme="vermelho-culposo"] textarea {
+  background: #faf5eb !important;
+  border-color: #211111 !important;
+  color: #211111 !important;
+}
+
+[data-theme="vermelho-culposo"] .bottom-nav-bar {
+  background: #faf5eb;
+  border-top: 3px solid #211111;
+}
+
+[data-theme="vermelho-culposo"] .bottom-nav-item {
+  color: #331515;
+}
+
+[data-theme="vermelho-culposo"] .bottom-nav-item.active {
+  background: #f5c842;
+  color: #211111;
+}
+
+/* ==========================================================================
+   LOJA EEX — BAZAR DO CORREIO (MODAL POPUP COM CATEGORIAS VERTICAIS À ESQUERDA)
+   ========================================================================== */
+.loja-modal-box {
+  max-width: 860px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+  background: var(--card-bg, #ffe4f0) !important;
+  border: 4px solid var(--black) !important;
+  border-radius: 20px !important;
+  box-shadow: 10px 10px 0px var(--black) !important;
+}
+
+.loja-modal-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-bottom: 3.5px solid var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.loja-modal-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loja-header-badge {
+  display: inline-block;
+  font-family: var(--font-main);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #b45309;
+}
+
+.loja-modal-title {
+  font-family: var(--font-display, 'Darumadrop One', cursive), var(--font-main);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--black);
+  line-height: 1;
+  margin: 0;
+}
+
+.loja-modal-subtitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #78350f;
+  margin: 0;
+}
+
+.loja-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loja-shells-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--yellow-bright, #ffeb3b);
+  border: 2px solid var(--black);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--black);
+  box-shadow: 2px 2px 0 var(--black);
+}
+
+.loja-shells-pill img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.loja-modal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+/* Menu lateral esquerdo vertical de cima para baixo */
+.loja-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: var(--card-bg, #ffe4f0);
+  border-right: 3.5px solid var(--black);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.loja-sidebar-label {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--purple-dark);
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.loja-category-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--black);
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 var(--black);
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.loja-category-btn:hover:not(.disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0 var(--black);
+  background: var(--yellow-bright);
+}
+
+.loja-category-btn.active {
+  background: var(--yellow-bright);
+  border-color: var(--black);
+  box-shadow: 3.5px 3.5px 0 var(--black);
+  transform: translate(-1px, -1px);
+}
+
+.loja-category-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #64748b;
+  box-shadow: none;
+}
+
+.loja-cat-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.loja-cat-text {
+  flex: 1;
+}
+
+.loja-cat-badge {
+  font-size: 0.58rem;
+  font-weight: 900;
+  background: #64748b;
+  color: #ffffff;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Área de conteúdo da categoria */
+.loja-content-area {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--card-bg-light, #ffffff);
+}
+
+.loja-section-header {
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed var(--purple-main);
+}
+
+.loja-section-header h3 {
+  font-family: var(--font-main);
+  font-size: 1.25rem;
+  color: var(--purple-dark);
+  margin-bottom: 4px;
+}
+
+.loja-section-header p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.loja-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.loja-item-card {
+  background: var(--card-bg, #ffe4f0);
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 4px 4px 0 var(--black);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.loja-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0 var(--black);
+}
+
+.loja-item-card.item-equipped {
+  border-color: #16a34a;
+  box-shadow: 4px 4px 0 #16a34a;
+}
+
+.loja-item-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loja-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loja-item-name {
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  color: var(--purple-dark);
+  line-height: 1.2;
+}
+
+.loja-item-tagline {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.loja-item-desc {
+  font-size: 0.8rem;
+  color: var(--black);
+  line-height: 1.35;
+  flex: 1;
+}
+
+.loja-badge-vip {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 900;
+  background: #a855f7;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--black);
+  align-self: flex-start;
+}
+
+.loja-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1.5px dashed var(--black);
+}
+
+.loja-item-price {
+  font-family: var(--font-main);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.loja-item-price.free {
+  color: #16a34a;
+}
+
+.loja-item-price.shells {
+  color: #d97706;
+}
+
+.loja-item-price.eexplus {
+  color: #e62b7e;
+}
+
+.btn-loja-action {
+  font-size: 0.82rem !important;
+  padding: 6px 12px !important;
+  font-family: var(--font-main) !important;
+}
+
+/* Adaptações Dark / NuMetálico para a Loja */
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-box {
+  background: #1a062c !important;
+  border-color: var(--black) !important;
+  box-shadow: 10px 10px 0px var(--magenta-bright) !important;
+  color: #ffffff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-header {
+  background: #2b0b46 !important;
+  border-bottom-color: #581c87 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-title {
+  color: #fde047 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-subtitle {
+  color: #f3e8ff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-sidebar {
+  background: #230d38 !important;
+  border-right-color: #581c87 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-sidebar-label {
+  color: #f3e8ff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-category-btn {
+  background: #341552 !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-category-btn.active {
+  background: #fde047 !important;
+  color: #12071f !important;
+  border-color: var(--black) !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-content-area {
+  background: #12071f !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-item-card {
+  background: #230d38 !important;
+  border-color: #581c87 !important;
+  color: #ffffff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-item-name {
+  color: #fde047 !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-item-desc {
+  color: #e9d5ff !important;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-header .modal-close {
+  color: #f3e8ff !important;
+}
+
+/* Responsividade Mobile para a Loja EEX */
+@media (max-width: 600px) {
+  .loja-modal-box {
+    width: 96%;
+    max-height: 90vh;
+  }
+
+  .loja-modal-header {
+    padding: 12px 14px;
+  }
+
+  .loja-modal-title {
+    font-size: 1.4rem;
+  }
+
+  .loja-sidebar {
+    width: 105px;
+    padding: 10px 6px;
+    gap: 6px;
+  }
+
+  .loja-category-btn {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+
+  .loja-cat-badge {
+    font-size: 0.5rem;
+  }
+
+  .loja-content-area {
+    padding: 12px 10px;
+  }
+
+  .loja-items-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
 
 
 
