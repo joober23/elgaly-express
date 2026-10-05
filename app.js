@@ -713,7 +713,7 @@ const EEXPlusManager = {
 // ==========================================================================
 const ShellsManager = {
 
-  DAILY_CAP: 350,
+  WEEKLY_CAP: 350,
 
   getStorageKey() {
     const user = AuthManager.getCurrentUser();
@@ -742,11 +742,25 @@ const ShellsManager = {
     return new Date().toLocaleDateString('en-CA');
   },
 
-  getTodayEarned() {
+  getWeekKey() {
+    const d = new Date();
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  },
+
+  getWeekEarned() {
     const audit = this.getAuditData();
-    const today = this.getTodayKey();
-    if (audit.lastDate !== today) return 0;
-    return audit.todayTotal || 0;
+    const currentWeek = this.getWeekKey();
+    if (audit.lastWeek !== currentWeek) return 0;
+    return audit.weekTotal || 0;
+  },
+
+  getTodayEarned() {
+    return this.getWeekEarned();
   },
 
   getBalance() {
@@ -784,22 +798,27 @@ const ShellsManager = {
   },
 
   /**
-   * Sistema Anti-Farm: Proteção contra spam de conchas
-   * - Impede ganhar conchas desmarcando e remarcando itens
+   * Sistema Anti-Farm: Proteção contra spam e exploits de conchas
+   * - Limite SEMANAL de 350 conchas (WEEKLY_CAP)
    * - Tarefas/Eventos: 1x por item (permanente)
    * - Hábitos: 1x por dia por hábito
-   * - Limite diário de segurança (DAILY_CAP)
    * - Anti-spam rate-limit de 400ms
    */
   async rewardWithProtection(sourceId, type, amount, reason = '') {
     if (!sourceId) return 0;
     const audit = this.getAuditData();
     const today = this.getTodayKey();
+    const currentWeek = this.getWeekKey();
 
-    // Reset diário se virou o dia
+    // Reset semanal se mudou a semana (segunda-feira ou novo ciclo)
+    if (audit.lastWeek !== currentWeek) {
+      audit.lastWeek = currentWeek;
+      audit.weekTotal = 0;
+    }
+
+    // Reset diário de hábitos para evitar repetir mesmo hábito no mesmo dia
     if (audit.lastDate !== today) {
       audit.lastDate = today;
-      audit.todayTotal = 0;
       audit.rewardedHabitsToday = [];
     }
     if (!Array.isArray(audit.rewardedItems)) audit.rewardedItems = [];
@@ -808,20 +827,20 @@ const ShellsManager = {
     // 1. Verificação de hábito já recompensado hoje
     if (type === 'habit') {
       if (audit.rewardedHabitsToday.includes(sourceId)) {
-        AppUI.showToast('🐚 Hábito já recompensado hoje! Volte amanhã para mais conchas! ✨');
+        AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Hábito já recompensado hoje! Volte amanhã para mais conchas! ✨');
         return 0;
       }
     } else {
       // 2. Verificação de tarefa ou evento já recompensado
       if (audit.rewardedItems.includes(sourceId)) {
-        AppUI.showToast('🐚 Essa entrega já foi recompensada! Sem trapaça com a C.E.O.! 😼📦');
+        AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Essa entrega já foi recompensada! Sem trapaça com a C.E.O.! 😼📦');
         return 0;
       }
     }
 
-    // 3. Verificação de limite diário de conchas
-    if (audit.todayTotal >= this.DAILY_CAP) {
-      AppUI.showToast('🐚 Limite diário de conchas atingido (350/dia)! Descanse suas patinhas, agente! 🐾');
+    // 3. Verificação de limite SEMANAL de conchas (350/semana)
+    if (audit.weekTotal >= this.WEEKLY_CAP) {
+      AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Limite semanal de conchas atingido (350/semana)! Descanse suas patinhas, agente! 🐾');
       return 0;
     }
 
@@ -831,15 +850,15 @@ const ShellsManager = {
       return 0;
     }
 
-    // Ajusta valor caso atinja o teto diário
+    // Ajusta valor caso atinja o teto semanal
     let finalAmount = amount;
-    if (audit.todayTotal + finalAmount > this.DAILY_CAP) {
-      finalAmount = this.DAILY_CAP - audit.todayTotal;
+    if (audit.weekTotal + finalAmount > this.WEEKLY_CAP) {
+      finalAmount = this.WEEKLY_CAP - audit.weekTotal;
     }
     if (finalAmount <= 0) return 0;
 
     // Registra a recompensa na auditoria
-    audit.todayTotal += finalAmount;
+    audit.weekTotal += finalAmount;
     audit.lastRewardTimestamp = now;
 
     if (type === 'habit') {
@@ -857,7 +876,7 @@ const ShellsManager = {
     const current = this.getBalance();
     if (current < amount) {
       if (typeof AppUI !== 'undefined') {
-        AppUI.showToast(`🐚 Conchas insuficientes! Você possui ${current} conchas e precisa de ${amount}.`);
+        AppUI.showToast(`<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Conchas insuficientes! Você possui ${current} conchas e precisa de ${amount}.`);
       }
       return false;
     }
@@ -887,7 +906,7 @@ const ShellsManager = {
       pill.classList.add('shell-bump');
     }
     if (reason && typeof AppUI !== 'undefined') {
-      AppUI.showToast(`🐚 -${amount} Conchas: ${reason}`);
+      AppUI.showToast(`<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> -${amount} Conchas: ${reason}`);
     }
     return true;
   },
@@ -910,7 +929,7 @@ const ShellsManager = {
       void pill.offsetWidth;
       pill.classList.add('shell-bump');
     }
-    AppUI.showToast(`🐚 +${amount} Conchas! ${reason}`.trim());
+    AppUI.showToast(`<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> +${amount} Conchas! ${reason}`.trim());
   }
 };
 
@@ -2958,7 +2977,7 @@ const LojaEEXManager = {
         if (t.id === 'verde-magafico' && isPedrinho) {
           priceHtml = '<span class="loja-item-price free">Liberado (VIP)</span>';
         } else {
-          priceHtml = `<span class="loja-item-price shells">🐚 ${t.price} Conchas</span>`;
+          priceHtml = `<span class="loja-item-price shells"><img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> ${t.price} Conchas</span>`;
         }
       }
 
@@ -2970,7 +2989,7 @@ const LojaEEXManager = {
         actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="eexplus" style="background:linear-gradient(135deg, #ec4899, #f59e0b);color:#fff;">⭐ Ver no EEX+</button>`;
       } else {
         const canAfford = balance >= t.price;
-        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="buy" data-theme-id="${t.id}" ${canAfford ? '' : 'style="opacity:0.75;"'}>🛒 Comprar (${t.price} 🐚)</button>`;
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="buy" data-theme-id="${t.id}" ${canAfford ? '' : 'style="opacity:0.75;"'}>🛒 Comprar (${t.price} <img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas">)</button>`;
       }
 
       return `
@@ -6553,20 +6572,20 @@ const AppUI = {
       }
     }
 
-    // Destrava ou trava os cards de tema (Loja EEX ou EEX+)
+    // Exibe apenas os temas que o usuário possui/desbloqueou (temas não adquiridos ficam ocultos das configurações)
     document.querySelectorAll('.theme-pick-card').forEach(card => {
       const themeId = card.dataset.themeId;
       const themeObj = ThemeManager.themes[themeId];
       if (!themeObj) return;
 
       const isUnlocked = ThemeManager.isThemeUnlocked(themeId);
-      card.classList.toggle('theme-locked', !isUnlocked);
-      if (themeObj.premium) {
-        card.classList.toggle('eexplus-lustroso', !isPrem);
-      }
-      const lockBadge = card.querySelector('.theme-lock-badge');
-      if (lockBadge) {
-        lockBadge.style.display = isUnlocked ? 'none' : 'inline-block';
+      if (!isUnlocked) {
+        card.style.display = 'none';
+      } else {
+        card.style.display = 'flex';
+        card.classList.remove('theme-locked', 'eexplus-lustroso');
+        const lockBadge = card.querySelector('.theme-lock-badge');
+        if (lockBadge) lockBadge.style.display = 'none';
       }
     });
 
@@ -6967,7 +6986,7 @@ const AppUI = {
       },
       {
         id: 'lembre-se',
-        icon: '🐚',
+        icon: '<img src="images/shellcoin.png" class="achievement-shell-img" alt="Conchas">',
         title: 'Lembre-se',
         desc: 'Colete 55 conchas',
         unlocked: unlockedList.includes('lembre-se') || shells >= 55
@@ -7573,7 +7592,7 @@ const AppUI = {
       toast.className = 'eex-toast';
       document.body.appendChild(toast);
     }
-    toast.textContent = msg;
+    toast.innerHTML = msg;
     toast.classList.add('show');
 
     clearTimeout(this._toastTimer);

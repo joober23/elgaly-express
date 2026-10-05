@@ -6845,6 +6845,25 @@ nav.desktop-nav a.nav-link.active {
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
 }
 
+.shell-coin-inline {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: -3px;
+  margin: 0 2px;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25));
+}
+
+.achievement-shell-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(2px 2px 0 var(--black, #11220e));
+}
+
 .shell-coin-count {
   display: inline-block;
   letter-spacing: 0.5px;
