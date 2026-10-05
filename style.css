@@ -1785,7 +1785,7 @@ footer {
   }
 
   .btn-mobile-menu {
-    display: inline-flex;
+    display: none !important;
   }
 
   .header-top-bar {
@@ -2874,14 +2874,9 @@ footer {
     padding-bottom: max(96px, calc(86px + env(safe-area-inset-bottom)));
   }
 
-  /* Menu hambúrguer visível no mobile */
+  /* Esconde o menu hambúrguer no mobile a pedido do usuário */
   .btn-mobile-menu {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 10px;
-    font-size: 1.25rem;
-    flex-shrink: 0;
+    display: none !important;
   }
 
   /* Balão flutuante do Pomodoro posicionado acima da bottom bar no celular */

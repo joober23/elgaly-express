@@ -5489,7 +5489,7 @@ const AppUI = {
     if (authGateway) authGateway.style.display = 'none';
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
-    if (btnMobileMenu) btnMobileMenu.style.removeProperty('display');
+    if (btnMobileMenu) btnMobileMenu.style.display = 'none';
     if (bottomNavBar) bottomNavBar.style.removeProperty('display');
 
     this.renderHeaderProfile();
