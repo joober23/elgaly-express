@@ -411,7 +411,7 @@ const EEXPlusManager = {
   // Retorna label bonitinho para UI
   getPlanLabel() {
     if (!this.isPremium()) return null;
-    if (this._premium.plan === 'lifetime') return 'Vitalício ♾️';
+    if (this._premium.plan === 'lifetime') return 'Modo Teste VIP 🧪';
     const exp = this.getExpiresAt();
     if (!exp) return 'Mensal';
     return 'Mensal (até ' + exp.toLocaleDateString('pt-BR') + ')';
@@ -467,6 +467,11 @@ const EEXPlusManager = {
   },
 
   toggleTestMode() {
+    const currentUser = AuthManager.getCurrentUser();
+    if (!currentUser || !AuthManager.isMagafusVIP(currentUser)) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Modo de teste restrito aos desenvolvedores.');
+      return false;
+    }
     if (this.isPremium()) {
       this._saveStatus(null);
       return false;
@@ -6028,6 +6033,14 @@ const AppUI = {
     if (modalEexPlusGuestSection) modalEexPlusGuestSection.style.display = isPrem ? 'none' : 'block';
     if (modalActivePlanDesc && isPrem) {
       modalActivePlanDesc.textContent = `Plano Ativo: ${planLabel}. Seu terminal está com todos os privilégios VIP dimensional liberados!`;
+    }
+
+    // Botão de teste EEX+: visível APENAS para os desenvolvedores / VIPs (Kotun & Magafus)
+    const btnToggleEexPlusTestMode = document.getElementById('btnToggleEexPlusTestMode');
+    if (btnToggleEexPlusTestMode && btnToggleEexPlusTestMode.parentElement) {
+      const user = AuthManager.getCurrentUser();
+      const isDevVip = user && AuthManager.isMagafusVIP(user);
+      btnToggleEexPlusTestMode.parentElement.style.display = isDevVip ? 'block' : 'none';
     }
 
     // Badge noturno
