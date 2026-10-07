@@ -1035,18 +1035,23 @@
           </div>
 
           <!-- CARD DE CRÉDITOS / SOBRE: BATERIA VOADORA -->
-          <div class="settings-card settings-about-card" id="settingsCardAbout" style="margin-top: 24px; text-align: center; padding: 28px 20px;">
+          <div class="settings-card settings-about-card" id="settingsCardAbout" style="margin-top: 24px; text-align: center; padding: 32px 20px;">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-              <img src="flyingbattery.png" alt="Bateria Voadora" style="width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.4));">
-              <div>
-                <h3 style="margin: 0; font-size: 1.35rem; color: var(--purple-dark); font-family: var(--font-display, 'Darumadrop One', cursive); letter-spacing: 0.5px;">BATERIA VOADORA</h3>
-                <p style="margin: 4px 0 0; font-size: 0.9rem; font-weight: 700; color: var(--magenta-bright);">Desenvolvimento & Criação Original</p>
-              </div>
+              <img src="flyingbattery.png" alt="Bateria Voadora" class="flyingbattery-logo">
+              <p style="margin: 4px 0 0; font-size: 0.95rem; font-weight: 700; color: var(--magenta-bright);">Desenvolvimento & Criação Original</p>
               <p style="margin: 4px 0 0; font-size: 0.88rem; color: var(--purple-dark); max-width: 480px; line-height: 1.5; font-weight: 600;">
                 O <strong>Elgaly Express</strong> é um sistema dimensional de rotinas, encomendas e foco criado com carinho pela <strong>Bateria Voadora</strong>.
               </p>
-              <div style="font-size: 0.78rem; font-weight: 700; opacity: 0.75; margin-top: 6px; color: var(--purple-dark);">
-                © 1998 – 2026 Bateria Voadora • Todos os direitos reservados.
+              <a href="https://www.instagram.com/un.dashed" target="_blank" rel="noopener noreferrer" class="bateria-insta-pill" title="Instagram @un.dashed">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                <span>@un.dashed</span>
+              </a>
+              <div style="font-size: 0.78rem; font-weight: 700; opacity: 0.75; margin-top: 8px; color: var(--purple-dark);">
+                © 2023 – 2026 Bateria Voadora • Todos os direitos reservados.
               </div>
             </div>
           </div>
@@ -1090,10 +1095,26 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label>🎨 Banner do Crachá (Capa):</label>
+          <div class="avatar-upload-wrap" style="align-items: center;">
+            <div class="avatar-preview-box" id="editBannerPreviewBox" style="width: 100px; height: 50px; border-radius: 8px; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center;">
+              <img id="editBannerPreview" src="" alt="Banner" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+              <span id="editBannerPlaceholder" style="font-size: 0.72rem; font-weight: 700; color: #6b7280; text-align: center;">Padrão</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex: 1; align-items: center;">
+              <input type="file" id="editBannerInput" class="file-input-comic" accept="image/*" style="flex: 1;">
+              <button type="button" class="btn-comic btn-secondary" id="btnRemoveBanner" style="padding: 6px 12px; font-size: 0.78rem; display: none;">✕ Remover</button>
+            </div>
+          </div>
+        </div>
+
         <button type="submit" class="btn-comic" style="margin-top: 10px;">
           Salvar Alterações
         </button>
       </form>
+      <!-- Input oculto para troca rápida de banner diretamente pelo crachá -->
+      <input type="file" id="quickBannerInput" accept="image/*" style="display: none;">
     </div>
   </div>
 

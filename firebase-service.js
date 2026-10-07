@@ -614,6 +614,7 @@ const FirebaseService = {
       }
       if (profile.location) publicData.location = profile.location;
       if (profile.avatar) publicData.avatar = this.getSafeAvatar(profile.avatar);
+      if (profile.banner !== undefined) publicData.banner = profile.banner;
 
       this.db.collection('public_profiles').doc(uid).set(publicData, { merge: true }).catch(err => {
         console.warn('Erro ao atualizar public_profiles em saveProfileToCloud:', err);
@@ -759,6 +760,10 @@ const FirebaseService = {
         unlockedAchievements: Array.isArray(data.unlockedAchievements) ? data.unlockedAchievements : [],
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
+
+      if (data.banner !== undefined) {
+        payload.banner = data.banner || '';
+      }
 
       if (data.todayHabits && Array.isArray(data.todayHabits)) {
         payload.todayHabits = data.todayHabits;

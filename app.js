@@ -151,6 +151,7 @@ const AuthManager = {
         name: this.currentUser.name,
         location: this.currentUser.location,
         avatar: this.currentUser.avatar,
+        banner: this.currentUser.banner || '',
         eexEmail: this.currentUser.eexEmail,
         nickname: this.currentUser.nickname,
         bonusXp: this.currentUser.bonusXp || 0,
@@ -1527,6 +1528,7 @@ const FriendsManager = {
         nickname: user.nickname,
         eexEmail: user.eexEmail,
         avatar: user.avatar,
+        banner: user.banner || '',
         location: user.location,
         streak: stats.streak,
         allDoneToday: stats.allDone,
@@ -1853,6 +1855,9 @@ const FriendsManager = {
           <div class="friend-badge-header">
             <span class="badge-tag">REDE EEX // CREDENCIAL OPERACIONAL</span>
           </div>
+          ${friend.banner ? `
+            <div class="friend-badge-banner" style="background-image: url('${friend.banner}');"></div>
+          ` : ''}
           <div class="friend-badge-body">
             <div class="friend-badge-photo-wrap">
               <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-badge-photo">
@@ -4125,6 +4130,7 @@ const AppUI = {
   lastScrollTop: 0,
   uploadedAvatarBase64: null,
   editAvatarBase64: null,
+  editBannerBase64: null,
   onboardingAvatarBase64: null,
   _pendingBadgeLogin: null,
   _placedStickers: [],
@@ -4539,6 +4545,59 @@ const AppUI = {
       });
     }
 
+    // 1.1 Upload de Banner na Edição do Perfil
+    const editBannerInput = document.getElementById('editBannerInput');
+    const editBannerPreview = document.getElementById('editBannerPreview');
+    const editBannerPlaceholder = document.getElementById('editBannerPlaceholder');
+    const btnRemoveBanner = document.getElementById('btnRemoveBanner');
+    if (editBannerInput) {
+      editBannerInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const compressed = await compressImageFile(file, 900, 300, 0.8);
+          if (compressed) {
+            this.editBannerBase64 = compressed;
+            if (editBannerPreview) {
+              editBannerPreview.src = this.editBannerBase64;
+              editBannerPreview.style.display = 'block';
+            }
+            if (editBannerPlaceholder) editBannerPlaceholder.style.display = 'none';
+            if (btnRemoveBanner) btnRemoveBanner.style.display = 'inline-block';
+          }
+        }
+      });
+    }
+
+    if (btnRemoveBanner) {
+      btnRemoveBanner.addEventListener('click', () => {
+        this.editBannerBase64 = '';
+        if (editBannerPreview) {
+          editBannerPreview.src = '';
+          editBannerPreview.style.display = 'none';
+        }
+        if (editBannerPlaceholder) editBannerPlaceholder.style.display = 'block';
+        if (editBannerInput) editBannerInput.value = '';
+        btnRemoveBanner.style.display = 'none';
+      });
+    }
+
+    // 1.2 Troca rápida de banner diretamente pelo crachá
+    const quickBannerInput = document.getElementById('quickBannerInput');
+    if (quickBannerInput) {
+      quickBannerInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const compressed = await compressImageFile(file, 900, 300, 0.8);
+          if (compressed) {
+            await AuthManager.updateUserProfile({ banner: compressed });
+            this.renderProfileView();
+            this.showToast('🎨 Banner do crachá atualizado com sucesso!');
+          }
+        }
+        quickBannerInput.value = '';
+      });
+    }
+
     // 2. Botão de Login Google (via Firebase)
     const btnsGoogle = document.querySelectorAll('.action-google-login');
     btnsGoogle.forEach(btn => {
@@ -4763,6 +4822,9 @@ const AppUI = {
         };
         if (this.editAvatarBase64) {
           updateData.avatar = this.editAvatarBase64;
+        }
+        if (this.editBannerBase64 !== null) {
+          updateData.banner = this.editBannerBase64;
         }
 
         await AuthManager.updateUserProfile(updateData);
@@ -7286,6 +7348,15 @@ const AppUI = {
             <div class="badge-clearance-stamp">OFICIAL</div>
           </div>
 
+          <!-- BANNER DO CRACHÁ (PERSONALIZAÇÃO VISUAL) -->
+          <div class="grand-badge-banner-wrap">
+            <div class="grand-badge-banner ${user.banner ? '' : 'banner-default'}" id="grandBadgeBanner" style="${user.banner ? `background-image: url('${user.banner}');` : ''}">
+              <button type="button" class="btn-change-banner-badge" id="btnQuickEditBanner" title="Trocar Banner do Crachá">
+                📷 Trocar Banner
+              </button>
+            </div>
+          </div>
+
           <div class="grand-badge-body">
             <div class="grand-badge-photo-column">
               <div class="grand-badge-photo-box">
@@ -7452,6 +7523,14 @@ const AppUI = {
     if (btnEdit) btnEdit.addEventListener('click', () => this.openEditProfileModal());
     if (btnQuickPhoto) btnQuickPhoto.addEventListener('click', () => this.openEditProfileModal());
 
+    const btnQuickBanner = document.getElementById('btnQuickEditBanner');
+    if (btnQuickBanner) {
+      btnQuickBanner.addEventListener('click', () => {
+        const qi = document.getElementById('quickBannerInput');
+        if (qi) qi.click();
+      });
+    }
+
     const btnCopy = document.getElementById('btnCopyProfileNick');
     if (btnCopy) {
       btnCopy.addEventListener('click', async () => {
@@ -7568,6 +7647,28 @@ const AppUI = {
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
     if (avatarPreview) avatarPreview.src = user.avatar || 'images/elgalylogo.png';
     this.editAvatarBase64 = null;
+    this.editBannerBase64 = null;
+
+    const bannerPreview = document.getElementById('editBannerPreview');
+    const bannerPlaceholder = document.getElementById('editBannerPlaceholder');
+    const btnRemoveBanner = document.getElementById('btnRemoveBanner');
+    const editBannerInput = document.getElementById('editBannerInput');
+    if (editBannerInput) editBannerInput.value = '';
+    if (user.banner) {
+      if (bannerPreview) {
+        bannerPreview.src = user.banner;
+        bannerPreview.style.display = 'block';
+      }
+      if (bannerPlaceholder) bannerPlaceholder.style.display = 'none';
+      if (btnRemoveBanner) btnRemoveBanner.style.display = 'inline-block';
+    } else {
+      if (bannerPreview) {
+        bannerPreview.src = '';
+        bannerPreview.style.display = 'none';
+      }
+      if (bannerPlaceholder) bannerPlaceholder.style.display = 'block';
+      if (btnRemoveBanner) btnRemoveBanner.style.display = 'none';
+    }
 
     if (modal) modal.classList.add('active');
   },
