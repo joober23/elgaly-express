@@ -7040,19 +7040,30 @@ const AppUI = {
         `;
       }
 
+      const packagingIcons = {
+        baixa: '<img src="images/embalagem_segura.png" alt="Segura" class="task-package-icon" onerror="this.onerror=null; this.src=\'embalagem_segura.png\';">',
+        alta: '<img src="images/embalagem_atencao.png" alt="Atenção" class="task-package-icon" onerror="this.onerror=null; this.src=\'embalagem_atencao.png\';">',
+        cosmica: '<img src="images/embalagem_cosmica.png" alt="Cósmica" class="task-package-icon" onerror="this.onerror=null; this.src=\'embalagem_cosmica.png\';">'
+      };
+
       const priorityLabels = {
-        baixa: 'Baixa',
-        media: 'Média',
-        alta: 'Alta',
+        baixa: 'Segura (Baixa)',
+        media: 'Padrão (Média)',
+        alta: 'Atenção (Alta)',
         cosmica: 'Cósmica ⚡'
       };
+
+      const packIconHtml = packagingIcons[task.priority] || '';
 
       card.innerHTML = `
         <div class="task-card-header">
           <span class="task-tracking-code">${task.code || 'ELG-000'}</span>
           <div class="task-badges">
             <span class="task-badge ${task.category}">${task.category === 'faculdade' ? 'Faculdade' : (task.category === 'trabalho' ? '💼 Trabalho' : 'Pessoal')}</span>
-            <span class="task-badge priority-${task.priority}">${priorityLabels[task.priority] || task.priority}</span>
+            <span class="task-badge priority-${task.priority}">
+              ${packIconHtml}
+              ${priorityLabels[task.priority] || task.priority}
+            </span>
           </div>
         </div>
 
