@@ -175,23 +175,64 @@
   <main class="container">
 
     <!-- ==========================================================================
-         PORTÃO DE ACESSO OBRIGATÓRIO (EXIBIDO QUANDO NÃO ESTIVER LOGADO)
+         PORTÃO DE ACESSO OBRIGATÓRIO (REDE EEX - NOVO LOGIN DESPACHO)
          ========================================================================== -->
     <div class="auth-gateway-container" id="authGateway" style="display: none;">
-      <div class="auth-gateway-header">
-        <img src="images/elgalylogo.png" alt="Elgaly Express" style="width:72px;height:72px;object-fit:contain;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;">
-        <h2>REDE EEX</h2>
-        <p>Identifique-se para acessar o sistema de despacho e rotinas.</p>
+      
+      <!-- Lado Esquerdo / Arte Visual Ilustrada (Desktop: Midnight Box / Mobile: Brave & Drizzle Box) -->
+      <div class="auth-box-showcase">
+        <picture class="auth-box-picture">
+          <source media="(max-width: 768px)" srcset="images/brave_e_drizzle_box.png">
+          <img src="images/midnight_box.png" alt="Elgaly Express Caixa de Entrega" class="auth-box-art-img" onerror="this.onerror=null; this.src='midnight_box.png';">
+        </picture>
+        <div class="auth-box-overlay-badge">
+          <span class="auth-badge-status">📦 SISTEMA DE DESPACHO EEX</span>
+        </div>
       </div>
 
-      <!-- Login principal: apenas Google -->
-      <div class="auth-main-login">
-        <button type="button" class="btn-google-login-action action-google-login" style="width:100%;justify-content:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15z"/></svg>
-          Entrar com Conta Google
-        </button>
-        <div class="auth-hint">Sincronização automática entre dispositivos via Firebase.</div>
+      <!-- Lado Direito: Formulário e Acesso à REDE EEX -->
+      <div class="auth-form-side">
+        <!-- Logotipo da Elgaly Express no topo do formulário -->
+        <div class="auth-form-brand">
+          <img src="images/elgalylogo.png" alt="Elgaly Express" class="auth-form-logo" onerror="this.onerror=null; this.src='images/elgalylogo.png';">
+        </div>
+
+        <div class="auth-gateway-header">
+          <div class="auth-channel-tag">⚡ TERMINAL OFICIAL</div>
+          <h2>REDE EEX</h2>
+          <p class="auth-subhead">Gerencie suas rotinas, encomendas e tarefas com velocidade e precisão em toda a ilha de Elgaly Edge!</p>
+        </div>
+
+        <!-- Badges decorativos com as novas embalagens especiais -->
+        <div class="auth-packaging-pills">
+          <div class="auth-pack-pill" title="Embalagem Segura: Rotinas e Hábitos">
+            <img src="images/embalagem_segura.png" alt="Segura" class="auth-pack-icon" onerror="this.onerror=null; this.src='embalagem_segura.png';">
+            <span>Segura</span>
+          </div>
+          <div class="auth-pack-pill" title="Embalagem Atenção: Prazos e Encomendas">
+            <img src="images/embalagem_atencao.png" alt="Atenção" class="auth-pack-icon" onerror="this.onerror=null; this.src='embalagem_atencao.png';">
+            <span>Atenção</span>
+          </div>
+          <div class="auth-pack-pill" title="Embalagem Cósmica: Eventos e Prioridades Máximas">
+            <img src="images/embalagem_cosmica.png" alt="Cósmica" class="auth-pack-icon" onerror="this.onerror=null; this.src='embalagem_cosmica.png';">
+            <span>Cósmica</span>
+          </div>
+        </div>
+
+        <!-- Ação de Login Principal com Google -->
+        <div class="auth-main-login">
+          <button type="button" class="btn-google-login-action action-google-login">
+            <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15z"/></svg>
+            Entrar com Conta Google
+          </button>
+          <div class="auth-hint">Sincronização em tempo real entre web e mobile via Firebase.</div>
+        </div>
+
+        <div class="auth-footer-tag">
+          <small>🛡️ Acesso protegido por chave EEX-PASS de 6 dígitos</small>
+        </div>
       </div>
+
     </div>
 
 

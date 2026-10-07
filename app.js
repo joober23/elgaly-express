@@ -6172,13 +6172,16 @@ const AppUI = {
     const desktopNav = document.querySelector('nav.desktop-nav');
     const btnMobileMenu = document.getElementById('btnMobileMenu');
     const bottomNavBar = document.getElementById('bottomNavBar');
+    const mainHeader = document.querySelector('header');
 
     if (!isLoggedIn || !isVerified) {
       // Bloqueia acesso ao app e exibe portal de login se não estiver logado
       if (!isLoggedIn) {
-        if (authGateway) authGateway.style.display = 'block';
+        if (authGateway) authGateway.style.display = 'flex';
+        if (mainHeader) mainHeader.style.display = 'none';
       } else {
         if (authGateway) authGateway.style.display = 'none';
+        if (mainHeader) mainHeader.style.removeProperty('display');
       }
       if (appViewsContainer) appViewsContainer.style.display = 'none';
       if (desktopNav) desktopNav.style.display = 'none';
@@ -6193,6 +6196,7 @@ const AppUI = {
 
     // Usuário logado e verificado com EEX-PASS: libera a navegação e views
     if (authGateway) authGateway.style.display = 'none';
+    if (mainHeader) mainHeader.style.removeProperty('display');
     if (appViewsContainer) appViewsContainer.style.display = 'block';
     if (desktopNav && window.innerWidth > 768) desktopNav.style.display = 'flex';
     if (btnMobileMenu) btnMobileMenu.style.display = 'none';

@@ -20,6 +20,11 @@ const filesToCopy = [
   'shellcoin.png',
   'elgalyexpressplus_logo.png',
   'flyingbattery.png',
+  'midnight_box.png',
+  'brave_e_drizzle_box.png',
+  'embalagem_segura.png',
+  'embalagem_atencao.png',
+  'embalagem_cosmica.png',
   'version.json'
 ];
 
