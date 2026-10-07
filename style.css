@@ -8853,7 +8853,7 @@ html.theme-night::after {
   box-shadow: 12px 12px 0px var(--black);
   max-width: 960px;
   width: 95%;
-  margin: 30px auto;
+  margin: min(10vh, 80px) auto 40px auto;
   overflow: hidden;
   position: relative;
 }
@@ -9065,58 +9065,6 @@ html.theme-night::after {
   align-items: center;
 }
 
-/* ==========================================================================
-   RODAPÉ OFICIAL DA BATERIA VOADORA
-   ========================================================================== */
-.app-official-footer {
-  width: 100%;
-  margin-top: 40px;
-  padding: 34px 20px 40px;
-  background: #140622;
-  border-top: 5px solid var(--black);
-  text-align: center;
-  box-shadow: 0 -4px 0 rgba(0, 0, 0, 0.25);
-  position: relative;
-  z-index: 10;
-}
-
-.footer-inner-content {
-  max-width: 600px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.footer-logo-wrap {
-  display: flex;
-  justify-content: center;
-}
-
-.footer-flyingbattery-img {
-  width: 220px;
-  max-width: 80%;
-  height: auto;
-  object-fit: contain;
-  filter: brightness(1) drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.6)) !important;
-  cursor: pointer;
-}
-
-.footer-tagline {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--magenta-bright);
-  margin: 0;
-}
-
-.footer-copyright {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #c4b5fd;
-  opacity: 0.85;
-  margin-top: 4px;
-}
 
 /* ==========================================================================
    RESPONSIVIDADE DA TELA DE LOGIN (MOBILE)
@@ -9125,7 +9073,7 @@ html.theme-night::after {
   .auth-gateway-container {
     flex-direction: column !important;
     max-width: 480px;
-    margin: 20px auto 40px;
+    margin: min(5vh, 30px) auto 40px auto;
     border-radius: 22px;
   }
 
