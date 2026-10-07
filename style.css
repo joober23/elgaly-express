@@ -8844,7 +8844,7 @@ html.theme-night::after {
    NOVA TELA DE LOGIN REDE EEX (DESPACHO DIMENSIONAL #140622)
    ========================================================================== */
 .auth-gateway-container {
-  display: flex !important;
+  display: flex;
   flex-direction: row;
   align-items: stretch;
   background-color: #140622 !important;
