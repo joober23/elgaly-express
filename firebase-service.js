@@ -239,6 +239,9 @@ const FirebaseService = {
         }
 
         // Onboarding já feito — verifica se o EEX-PASS já foi validado nesta sessão
+        // Garante que o crachá público esteja sincronizado no Firestore
+        this.updatePublicProfile(userData).catch(() => {});
+
         const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + userData.uid) === 'true';
         if (sessionVerified) {
           AuthManager.isEexPassVerified = true;
@@ -590,6 +593,32 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('system').doc('profile').set(profile, { merge: true });
+
+    // Sincroniza dados públicos do crachá na coleção global public_profiles
+    if (profile.nickname || profile.eexEmail || profile.name) {
+      const publicData = {
+        uid: uid,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (profile.name) {
+        publicData.name = profile.name;
+        publicData.nameLower = profile.name.toLowerCase().trim();
+      }
+      if (profile.nickname) {
+        publicData.nickname = profile.nickname.toLowerCase().trim().replace(/@.*$/, '').replace(/\.express(\.com)?$/, '');
+      }
+      if (profile.eexEmail) {
+        publicData.eexEmail = profile.eexEmail.toLowerCase().trim();
+      } else if (publicData.nickname) {
+        publicData.eexEmail = `${publicData.nickname}.express.com`;
+      }
+      if (profile.location) publicData.location = profile.location;
+      if (profile.avatar) publicData.avatar = this.getSafeAvatar(profile.avatar);
+
+      this.db.collection('public_profiles').doc(uid).set(publicData, { merge: true }).catch(err => {
+        console.warn('Erro ao atualizar public_profiles em saveProfileToCloud:', err);
+      });
+    }
   },
 
   async saveTaskToCloud(task) {
@@ -701,16 +730,25 @@ const FirebaseService = {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     const uid = this.auth.currentUser.uid;
     try {
+      const name = data.name || 'Agente Express';
+      let cleanNick = (data.nickname || '').toLowerCase().trim().replace(/@.*$/, '').replace(/\.express(\.com)?$/, '');
+      if (!cleanNick && data.eexEmail) {
+        cleanNick = data.eexEmail.toLowerCase().trim().replace(/@.*$/, '').replace(/\.express(\.com)?$/, '');
+      }
+      if (!cleanNick) cleanNick = 'agente';
+      const fullEex = `${cleanNick}.express.com`;
+
       const payload = {
         uid: uid,
-        name: data.name || 'Agente Express',
-        nickname: (data.nickname || '').toLowerCase().trim(),
-        eexEmail: data.eexEmail || 'agente.express.com',
+        name: name,
+        nameLower: name.toLowerCase().trim(),
+        nickname: cleanNick,
+        eexEmail: fullEex,
         avatar: this.getSafeAvatar(data.avatar, data),
         location: data.location || 'São Paulo - SP',
-        streak: data.streak || 0,
+        streak: typeof data.streak === 'number' ? data.streak : 0,
         allDoneToday: !!data.allDoneToday,
-        pendingToday: data.pendingToday || 0,
+        pendingToday: typeof data.pendingToday === 'number' ? data.pendingToday : 0,
         sosActive: !!data.sosActive,
         radioStatus: data.radioStatus || '',
         xp: typeof data.xp === 'number' ? data.xp : 0,
@@ -738,11 +776,9 @@ const FirebaseService = {
   async searchPublicUsers(query) {
     if (!this.db) return [];
     try {
-      let raw = (query || '').toLowerCase().trim();
-      // Remove @ inicial
-      raw = raw.replace(/^@+/, '');
-      // Remove .express.com se digitado ou colado
-      let cleanNick = raw.replace(/\.express\.com.*$/, '').replace(/@.*$/, '').trim();
+      const raw = (query || '').trim();
+      let cleanNick = raw.toLowerCase().replace(/^@+/, '').trim();
+      cleanNick = cleanNick.replace(/@.*$/, '').replace(/\.express(\.com)?$/, '').trim();
       cleanNick = cleanNick.replace(/[^a-z0-9_.-]/g, '');
 
       if (cleanNick.length < 2) return [];
@@ -750,19 +786,23 @@ const FirebaseService = {
       const myUid = this.auth?.currentUser?.uid;
       const resultsMap = new Map();
 
-      // 1. Busca por prefixo de nickname
-      const snapshot = await this.db.collection('public_profiles')
-        .where('nickname', '>=', cleanNick)
-        .where('nickname', '<=', cleanNick + '\uf8ff')
-        .limit(10)
-        .get();
+      // 1. Busca por prefixo de nickname (ex: "pedr" -> acha "pedrinho")
+      try {
+        const snapshot = await this.db.collection('public_profiles')
+          .where('nickname', '>=', cleanNick)
+          .where('nickname', '<=', cleanNick + '\uf8ff')
+          .limit(10)
+          .get();
 
-      snapshot.forEach(doc => {
-        const u = doc.data();
-        if (u.uid !== myUid) {
-          resultsMap.set(u.uid, u);
-        }
-      });
+        snapshot.forEach(doc => {
+          const u = doc.data();
+          if (u.uid !== myUid) {
+            resultsMap.set(u.uid, u);
+          }
+        });
+      } catch (errNick) {
+        console.warn('Erro na busca por nickname:', errNick);
+      }
 
       // 2. Busca exata por eexEmail (caso o nickname seja diferente)
       const expectedEex = `${cleanNick}.express.com`;
@@ -778,9 +818,39 @@ const FirebaseService = {
             resultsMap.set(u.uid, u);
           }
         });
-      } catch (errEmail) {
-        // Fallback silencioso
-      }
+      } catch (errEmail) {}
+
+      // 3. Busca por prefixo de eexEmail
+      try {
+        const eexPrefixSnap = await this.db.collection('public_profiles')
+          .where('eexEmail', '>=', cleanNick)
+          .where('eexEmail', '<=', cleanNick + '\uf8ff')
+          .limit(10)
+          .get();
+
+        eexPrefixSnap.forEach(doc => {
+          const u = doc.data();
+          if (u.uid !== myUid) {
+            resultsMap.set(u.uid, u);
+          }
+        });
+      } catch (errEexPrefix) {}
+
+      // 4. Busca por prefixo do nome de exibição em minúsculas
+      try {
+        const nameSnap = await this.db.collection('public_profiles')
+          .where('nameLower', '>=', cleanNick)
+          .where('nameLower', '<=', cleanNick + '\uf8ff')
+          .limit(5)
+          .get();
+
+        nameSnap.forEach(doc => {
+          const u = doc.data();
+          if (u.uid !== myUid) {
+            resultsMap.set(u.uid, u);
+          }
+        });
+      } catch (errName) {}
 
       return Array.from(resultsMap.values());
     } catch (e) {

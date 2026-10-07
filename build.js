@@ -19,6 +19,7 @@ const filesToCopy = [
   'crostnotification-sound.mp3',
   'shellcoin.png',
   'elgalyexpressplus_logo.png',
+  'flyingbattery.png',
   'version.json'
 ];
 

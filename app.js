@@ -1481,15 +1481,18 @@ const FriendsManager = {
     const user = AuthManager.getCurrentUser();
     if (!user || typeof FirebaseService === 'undefined') return;
     try {
-      const stats = HabitManager.getTodayStats();
-      const todayHabits = (HabitManager.habits || [])
-        .filter(h => HabitManager.isScheduledForToday(h))
-        .map(h => ({
-          id: h.id,
-          title: h.title,
-          category: h.category || 'geral',
-          done: HabitManager.isCompletedToday(h.id)
-        }));
+      const stats = (typeof HabitManager !== 'undefined' && HabitManager.getTodayStats)
+        ? HabitManager.getTodayStats()
+        : { streak: 0, allDone: false, pending: 0 };
+      const todayHabits = (typeof HabitManager !== 'undefined' && HabitManager.habits)
+        ? HabitManager.habits.filter(h => HabitManager.isScheduledForToday ? HabitManager.isScheduledForToday(h) : true)
+            .map(h => ({
+              id: h.id,
+              title: h.title,
+              category: h.category || 'geral',
+              done: HabitManager.isCompletedToday ? HabitManager.isCompletedToday(h.id) : false
+            }))
+        : [];
 
       const recentMemories = (MemoriesManager.memories || []).slice(0, 8).map(m => ({
         id: m.id,
@@ -4643,6 +4646,14 @@ const AppUI = {
             workMode: workMode,
             workModePrompted: true
           });
+          // CRÍTICO: Registra o crachá público no Firestore para a busca de amigos
+          await FirebaseService.updatePublicProfile({
+            name: user.name,
+            nickname: nickname,
+            eexEmail: eexEmail,
+            location: user.location,
+            avatar: avatar
+          });
         }
 
         const modal = document.getElementById('modalOnboarding');
@@ -4660,6 +4671,9 @@ const AppUI = {
         }
 
         this.renderAll();
+        if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+          FriendsManager.syncMyPublicProfile();
+        }
         this.showToast(`🚀 Bem-vindo à Rede EEX, ${eexEmail}!`);
       });
     }
@@ -4702,6 +4716,9 @@ const AppUI = {
           }
 
           this.renderAll();
+          if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+            FriendsManager.syncMyPublicProfile();
+          }
 
           this.showToast(`🔓 EEX-PASS confirmado! Acesso liberado, ${user.name}! 🚀`);
         } else {
@@ -5705,7 +5722,9 @@ const AppUI = {
       formSearchFriends.addEventListener('submit', async (e) => {
         e.preventDefault();
         const raw = inputSearchFriend.value.trim();
-        const cleanQuery = raw.replace(/^@+/, '').replace(/\.express\.com.*$/, '').trim();
+        let cleanQuery = raw.toLowerCase().replace(/^@+/, '').trim();
+        cleanQuery = cleanQuery.replace(/@.*$/, '').replace(/\.express(\.com)?$/, '').trim();
+        cleanQuery = cleanQuery.replace(/[^a-z0-9_.-]/g, '');
 
         if (cleanQuery.length < 2) {
           AppUI.showToast('Digite pelo menos 2 caracteres do ID Express ou apelido.');
@@ -5718,7 +5737,7 @@ const AppUI = {
           </div>
         `;
 
-        const found = await FirebaseService.searchPublicUsers(raw);
+        const found = await FirebaseService.searchPublicUsers(cleanQuery);
         if (found.length === 0) {
           resultsContainer.innerHTML = `
             <div style="text-align: center; padding: 24px; color: #6b7280; font-weight: 600;">
@@ -6136,6 +6155,9 @@ const AppUI = {
     if (user) {
       this.updateWorkModeUI(!!user.workMode);
       this.checkCeoWorkPrompt(user);
+      if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+        FriendsManager.syncMyPublicProfile();
+      }
       // Dispara a saudação da Providente/VIP apenas após o término do splash de 3s
       if (this._splashDone) {
         this.triggerMagafusLoginGreeting(user);
