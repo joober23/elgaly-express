@@ -3893,50 +3893,6 @@ const PWAManager = {
   }
 };
 
-// ==========================================================================
-// PORTÃO MOBILE — Exibe tela da Providente no navegador de celular
-// ==========================================================================
-const MobileGateManager = {
-  show() {
-    // Esconde splash e mostra a tela de download mobile
-    const splash = document.getElementById('eexSplashScreen');
-    if (splash) splash.classList.add('hidden');
-
-    const gate = document.getElementById('mobileGateScreen');
-    if (gate) {
-      gate.style.display = 'flex';
-    }
-
-    // Ao clicar em "Baixar APK", busca a última release no GitHub
-    const btnDl = document.getElementById('btnMobileGateDownload');
-    if (btnDl) {
-      btnDl.addEventListener('click', async () => {
-        btnDl.textContent = '⏳ Buscando versão mais recente...';
-        btnDl.disabled = true;
-        try {
-          const res = await fetch(
-            `https://api.github.com/repos/${EEX_GITHUB_REPO}/releases/latest`,
-            { headers: { 'Accept': 'application/vnd.github+json' } }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            const apkAsset = (data.assets || []).find(a =>
-              a.name && a.name.toLowerCase().endsWith('.apk')
-            );
-            const url = apkAsset ? apkAsset.browser_download_url : data.html_url;
-            window.open(url, '_blank');
-          } else {
-            window.open(`https://github.com/${EEX_GITHUB_REPO}/releases/latest`, '_blank');
-          }
-        } catch {
-          window.open(`https://github.com/${EEX_GITHUB_REPO}/releases/latest`, '_blank');
-        }
-        btnDl.textContent = '📲 Baixar App EEX';
-        btnDl.disabled = false;
-      });
-    }
-  }
-};
 
 // ==========================================================================
 // RELÓGIO POMODORO EEX+ (PomodoroManager)
@@ -4352,14 +4308,6 @@ const AppUI = {
   },
 
   init() {
-    // Detecta navegador mobile fora do app nativo — exibe tela de download
-    const isNative = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-    const isMobileBrowser = !isNative && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobileBrowser) {
-      MobileGateManager.show();
-      return; // Não inicializa o resto do app
-    }
-
     this.initSplash();
     this.initBottomNavScrollHint();
 
