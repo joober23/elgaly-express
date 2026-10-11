@@ -3414,6 +3414,27 @@ const NotesManager = {
     }
   },
 
+  updateNote(id, updatedFields) {
+    const note = this.notes.find(n => n.id === id);
+    if (!note) return false;
+    note.title = (updatedFields.title !== undefined ? updatedFields.title : note.title).trim();
+    note.content = (updatedFields.content !== undefined ? updatedFields.content : note.content).trim();
+    if (updatedFields.color) note.color = updatedFields.color;
+    if (updatedFields.pinned !== undefined) note.pinned = !!updatedFields.pinned;
+    note.updatedAt = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    if (note.pinned) {
+      this.notes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    }
+    this.save();
+    this.render();
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(note);
+    }
+    return true;
+  },
+
   deleteNote(id) {
     this.notes = this.notes.filter(n => n.id !== id);
     this.save();
@@ -3423,6 +3444,65 @@ const NotesManager = {
     if (typeof FirebaseService !== 'undefined' && FirebaseService.deleteNoteFromCloud) {
       FirebaseService.deleteNoteFromCloud(id);
     }
+  },
+
+  openNoteModal(id, startEditing = false) {
+    const note = this.notes.find(n => n.id === id);
+    if (!note) return;
+
+    const modal = document.getElementById('modalNoteView');
+    const contentBox = document.getElementById('noteModalContent');
+    const viewMode = document.getElementById('noteModalViewMode');
+    const editMode = document.getElementById('noteModalEditMode');
+    const pinBadge = document.getElementById('noteModalPinBadge');
+    if (!modal || !contentBox) return;
+
+    contentBox.className = `modal-content note-modal-box note-${note.color || 'yellow'}`;
+    if (pinBadge) pinBadge.style.display = note.pinned ? 'inline-block' : 'none';
+
+    // Preenche Modo Visualização
+    const titleEl = document.getElementById('noteModalViewTitle');
+    const bodyEl = document.getElementById('noteModalViewBody');
+    const dateEl = document.getElementById('noteModalViewDate');
+    if (titleEl) {
+      titleEl.textContent = note.title || 'Anotação sem Título';
+      titleEl.style.display = note.title ? 'block' : 'none';
+    }
+    if (bodyEl) bodyEl.textContent = note.content || '';
+    if (dateEl) dateEl.textContent = note.updatedAt ? `Atualizado em ${note.updatedAt}` : (note.createdAt ? `Criado em ${note.createdAt}` : '');
+
+    // Preenche Modo Edição
+    const editId = document.getElementById('noteModalEditId');
+    const editTitle = document.getElementById('noteModalEditTitle');
+    const editContent = document.getElementById('noteModalEditContent');
+    const editPin = document.getElementById('noteModalEditPinCheckbox');
+    if (editId) editId.value = note.id;
+    if (editTitle) editTitle.value = note.title || '';
+    if (editContent) editContent.value = note.content || '';
+    if (editPin) editPin.checked = !!note.pinned;
+
+    this._modalEditColor = note.color || 'yellow';
+    const colorPicker = document.getElementById('noteModalEditColorPicker');
+    if (colorPicker) {
+      colorPicker.querySelectorAll('.note-color-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.color === this._modalEditColor);
+      });
+    }
+
+    if (startEditing) {
+      if (viewMode) viewMode.style.display = 'none';
+      if (editMode) editMode.style.display = 'block';
+    } else {
+      if (viewMode) viewMode.style.display = 'block';
+      if (editMode) editMode.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+  },
+
+  closeNoteModal() {
+    const modal = document.getElementById('modalNoteView');
+    if (modal) modal.classList.remove('active');
   },
 
   render(searchTerm = '') {
@@ -3455,15 +3535,18 @@ const NotesManager = {
       const colorClass = `note-${note.color || 'yellow'}`;
       const pinIcon = note.pinned ? `<span class="note-card-pin" title="Nota Fixada">📌</span>` : '';
       return `
-        <div class="note-card ${colorClass}" data-note-id="${note.id}">
+        <div class="note-card ${colorClass}" data-note-id="${note.id}" title="Clique para expandir e editar esta nota">
           ${pinIcon}
-          <div>
+          <div class="note-card-body-click">
             ${note.title ? `<div class="note-card-title">${note.title}</div>` : ''}
             <div class="note-card-content">${note.content}</div>
           </div>
           <div class="note-card-footer">
             <span>${note.createdAt || ''}</span>
             <div class="note-card-actions">
+              <button type="button" class="note-action-btn action-edit-note" title="Editar nota">
+                ✏️
+              </button>
               <button type="button" class="note-action-btn action-pin-note" title="${note.pinned ? 'Desafixar' : 'Fixar no topo'}">
                 ${note.pinned ? '📌' : '📍'}
               </button>
@@ -3479,8 +3562,26 @@ const NotesManager = {
       `;
     }).join('');
 
+    // Clique no corpo do card expande o modal com a nota completa
+    grid.querySelectorAll('.note-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.note-card-actions') || e.target.closest('button')) return;
+        const id = card.dataset.noteId;
+        this.openNoteModal(id, false);
+      });
+    });
+
+    grid.querySelectorAll('.action-edit-note').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = e.target.closest('.note-card').dataset.noteId;
+        this.openNoteModal(id, true);
+      });
+    });
+
     grid.querySelectorAll('.action-pin-note').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = e.target.closest('.note-card').dataset.noteId;
         this.togglePin(id);
       });
@@ -3488,6 +3589,7 @@ const NotesManager = {
 
     grid.querySelectorAll('.action-copy-note').forEach(btn => {
       btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const card = e.target.closest('.note-card');
         const note = this.notes.find(n => n.id === card.dataset.noteId);
         if (note) {
@@ -3504,6 +3606,7 @@ const NotesManager = {
 
     grid.querySelectorAll('.action-delete-note').forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const id = e.target.closest('.note-card').dataset.noteId;
         this.deleteNote(id);
         AppUI.showToast('🗑️ Anotação removida.');
@@ -4296,15 +4399,10 @@ const AppUI = {
     nav.addEventListener('scroll', updateScrollHint, { passive: true });
     window.addEventListener('resize', updateScrollHint);
 
-    setTimeout(updateScrollHint, 300);
-
-    // Efeito sutil de demonstração (peek) para orientar o usuário no mobile
-    setTimeout(() => {
-      if (window.innerWidth <= 768 && nav.scrollLeft === 0 && nav.scrollWidth > nav.clientWidth) {
-        nav.scrollTo({ left: 36, behavior: 'smooth' });
-        setTimeout(() => nav.scrollTo({ left: 0, behavior: 'smooth' }), 550);
-      }
-    }, 3600);
+    // Avalia o scroll imediatamente e em intervalos rápidos para renderização fluida
+    updateScrollHint();
+    setTimeout(updateScrollHint, 100);
+    setTimeout(updateScrollHint, 500);
   },
 
   init() {
@@ -5619,6 +5717,87 @@ const AppUI = {
     if (noteSearchInput) {
       noteSearchInput.addEventListener('input', (e) => {
         NotesManager.render(e.target.value.trim());
+      });
+    }
+
+    // Modal de Visualização & Edição de Notas (modalNoteView)
+    const modalNoteView = document.getElementById('modalNoteView');
+    const modalNoteViewClose = document.getElementById('modalNoteViewClose');
+    if (modalNoteViewClose && modalNoteView) {
+      modalNoteViewClose.addEventListener('click', () => NotesManager.closeNoteModal());
+      modalNoteView.addEventListener('click', (e) => {
+        if (e.target === modalNoteView) NotesManager.closeNoteModal();
+      });
+    }
+
+    const btnNoteModalEdit = document.getElementById('btnNoteModalEdit');
+    if (btnNoteModalEdit) {
+      btnNoteModalEdit.addEventListener('click', () => {
+        const id = document.getElementById('noteModalEditId')?.value;
+        if (id) NotesManager.openNoteModal(id, true);
+      });
+    }
+
+    const btnNoteModalCancelEdit = document.getElementById('btnNoteModalCancelEdit');
+    if (btnNoteModalCancelEdit) {
+      btnNoteModalCancelEdit.addEventListener('click', () => {
+        const id = document.getElementById('noteModalEditId')?.value;
+        if (id) NotesManager.openNoteModal(id, false);
+      });
+    }
+
+    const btnNoteModalCopy = document.getElementById('btnNoteModalCopy');
+    if (btnNoteModalCopy) {
+      btnNoteModalCopy.addEventListener('click', async () => {
+        const id = document.getElementById('noteModalEditId')?.value;
+        const note = NotesManager.notes.find(n => n.id === id);
+        if (note) {
+          const text = (note.title ? note.title + '\n\n' : '') + note.content;
+          try {
+            await navigator.clipboard.writeText(text);
+            this.showToast('📋 Anotação copiada!');
+          } catch {
+            this.showToast('Nota copiada!');
+          }
+        }
+      });
+    }
+
+    // Color picker dentro do modal de edição
+    const noteModalEditColorPicker = document.getElementById('noteModalEditColorPicker');
+    if (noteModalEditColorPicker) {
+      noteModalEditColorPicker.querySelectorAll('.note-color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          noteModalEditColorPicker.querySelectorAll('.note-color-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          NotesManager._modalEditColor = btn.dataset.color || 'yellow';
+          const contentBox = document.getElementById('noteModalContent');
+          if (contentBox) {
+            contentBox.className = `modal-content note-modal-box note-${NotesManager._modalEditColor}`;
+          }
+        });
+      });
+    }
+
+    const btnNoteModalSaveEdit = document.getElementById('btnNoteModalSaveEdit');
+    if (btnNoteModalSaveEdit) {
+      btnNoteModalSaveEdit.addEventListener('click', () => {
+        const id = document.getElementById('noteModalEditId')?.value;
+        const title = document.getElementById('noteModalEditTitle')?.value || '';
+        const content = document.getElementById('noteModalEditContent')?.value || '';
+        const pinned = !!document.getElementById('noteModalEditPinCheckbox')?.checked;
+        const color = NotesManager._modalEditColor || 'yellow';
+
+        if (!content.trim() && !title.trim()) {
+          this.showToast('⚠️ A nota não pode ficar completamente vazia!');
+          return;
+        }
+
+        const ok = NotesManager.updateNote(id, { title, content, pinned, color });
+        if (ok) {
+          this.showToast('💾 Anotação atualizada com sucesso!');
+          NotesManager.openNoteModal(id, false);
+        }
       });
     }
 

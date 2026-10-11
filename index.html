@@ -142,10 +142,6 @@
           <span class="providente-icon">📰</span>
           <span class="providente-badge pulse-anim" id="providenteNewsBadge">NOVO</span>
         </button>
-
-        <a href="#perfil" class="header-user-badge" title="Meu Passaporte EEX">
-          <img src="images/elgalylogo.png" alt="Avatar" class="header-user-avatar">
-        </a>
       </div>
 
     </div>
@@ -1422,6 +1418,65 @@
         <div class="photo-zoom-title" id="photoZoomTitle">Momento da Rotina</div>
         <div class="photo-zoom-subtitle" id="photoZoomCaption">Legenda da foto</div>
         <small id="photoZoomDate" style="font-weight: 700; color: var(--purple-main); display: block; margin-top: 4px;"></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE VISUALIZAÇÃO E EDIÇÃO DE NOTAS / POST-IT
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalNoteView">
+    <div class="modal-content note-modal-box" id="noteModalContent">
+      <button class="modal-close" id="modalNoteViewClose" aria-label="Fechar">&times;</button>
+      <div class="note-modal-pin" id="noteModalPinBadge" style="display: none;">📌 Nota Fixada</div>
+      
+      <!-- Modo Visualização -->
+      <div id="noteModalViewMode">
+        <h2 id="noteModalViewTitle" class="note-modal-title"></h2>
+        <div id="noteModalViewBody" class="note-modal-body"></div>
+        <div class="note-modal-footer">
+          <small id="noteModalViewDate" class="note-modal-date"></small>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-comic btn-secondary" id="btnNoteModalEdit" style="padding: 6px 14px; font-size: 0.85rem;">✏️ Editar</button>
+            <button type="button" class="btn-comic" id="btnNoteModalCopy" style="padding: 6px 14px; font-size: 0.85rem;">📋 Copiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modo Edição -->
+      <div id="noteModalEditMode" style="display: none;">
+        <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: var(--purple-dark);">✏️ Editar Anotação</h3>
+        <input type="hidden" id="noteModalEditId">
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label style="font-weight: 800; font-size: 0.85rem; color: var(--purple-dark);">Título:</label>
+          <input type="text" id="noteModalEditTitle" placeholder="Título (opcional)" style="width: 100%; font-weight: 800;">
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-weight: 800; font-size: 0.85rem; color: var(--purple-dark);">Conteúdo:</label>
+          <textarea id="noteModalEditContent" rows="6" placeholder="Escreva a anotação..." style="width: 100%; resize: vertical; min-height: 120px; font-family: var(--font-main);"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 14px;">
+          <span style="font-size: 0.85rem; font-weight: 800; color: var(--purple-dark); display: block; margin-bottom: 6px;">Cor do Post-it:</span>
+          <div class="notes-color-picker" id="noteModalEditColorPicker">
+            <button type="button" class="note-color-btn active" data-color="yellow" style="background: #fef08a;" title="Amarelo"></button>
+            <button type="button" class="note-color-btn" data-color="pink" style="background: #fbcfe8;" title="Rosa"></button>
+            <button type="button" class="note-color-btn" data-color="blue" style="background: #bae6fd;" title="Azul"></button>
+            <button type="button" class="note-color-btn" data-color="green" style="background: #bbf7d0;" title="Verde"></button>
+            <button type="button" class="note-color-btn" data-color="purple" style="background: #e9d5ff;" title="Roxo"></button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 800; cursor: pointer; color: var(--purple-dark);">
+            <input type="checkbox" id="noteModalEditPinCheckbox" style="transform: scale(1.2);">
+            <span>📌 Fixar no Topo</span>
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-comic btn-secondary" id="btnNoteModalCancelEdit" style="padding: 6px 14px; font-size: 0.85rem;">Cancelar</button>
+            <button type="button" class="btn-comic" id="btnNoteModalSaveEdit" style="padding: 6px 16px; font-size: 0.85rem;">💾 Salvar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

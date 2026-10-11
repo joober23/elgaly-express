@@ -1780,6 +1780,12 @@ footer {
     align-items: center;
   }
 
+  /* No mobile, oculta a pílula do EEX+ e ícone de perfil no header para liberar espaço */
+  .btn-eex-plus-pill,
+  .header-user-badge {
+    display: none !important;
+  }
+
   .logo-wrapper {
     margin: 0;
   }
@@ -7958,20 +7964,31 @@ html.theme-night::after {
   position: relative !important;
   border: 3.5px solid var(--black, #11220e) !important;
   border-radius: 18px !important;
-  padding: 18px !important;
+  padding: 16px 16px 12px !important;
   box-shadow: 4px 4px 0px var(--black, #11220e) !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  min-height: 180px !important;
+  height: 220px !important;
+  min-height: 220px !important;
+  max-height: 220px !important;
+  cursor: pointer !important;
   transition: transform 0.15s, box-shadow 0.15s !important;
   font-family: var(--font-main) !important;
   color: #11220e !important;
+  overflow: hidden !important;
 }
 
 .note-card:hover {
   transform: translateY(-3px) rotate(-0.5deg) !important;
   box-shadow: 6px 6px 0px var(--black, #11220e) !important;
+}
+
+.note-card-body-click {
+  flex: 1 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .note-card.note-yellow { background: #fef08a !important; }
@@ -7987,41 +8004,118 @@ html.theme-night::after {
   transform: translateX(-50%) !important;
   font-size: 1.4rem !important;
   filter: drop-shadow(2px 2px 0 var(--black, #11220e)) !important;
+  z-index: 2 !important;
 }
 
 .note-card-title {
   font-weight: 900 !important;
-  font-size: 1.1rem !important;
+  font-size: 1.05rem !important;
   color: #11220e !important;
-  margin-top: 6px !important;
-  margin-bottom: 8px !important;
-  word-break: break-word !important;
+  margin-top: 2px !important;
+  margin-bottom: 6px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .note-card-content {
-  font-size: 0.95rem !important;
-  line-height: 1.5 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
   color: #1b2f15 !important;
   white-space: pre-wrap !important;
   word-break: break-word !important;
   flex: 1 !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 4 !important;
+  -webkit-box-orient: vertical !important;
+  text-overflow: ellipsis !important;
+  position: relative !important;
 }
 
 .note-card-footer {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  margin-top: 14px !important;
+  margin-top: 8px !important;
   padding-top: 8px !important;
   border-top: 1.5px dashed rgba(0,0,0,0.25) !important;
-  font-size: 0.75rem !important;
+  font-size: 0.72rem !important;
   font-weight: 800 !important;
   color: #4b5563 !important;
+  flex-shrink: 0 !important;
 }
 
 .note-card-actions {
   display: flex !important;
   gap: 6px !important;
+  align-items: center !important;
+}
+
+/* Modal de Visualização / Edição de Nota */
+.note-modal-box {
+  max-width: 520px !important;
+  border: 4px solid var(--black, #11220e) !important;
+  border-radius: 20px !important;
+  box-shadow: 8px 8px 0 var(--black, #11220e) !important;
+  padding: 24px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.note-modal-box.note-yellow { background: #fef08a !important; }
+.note-modal-box.note-pink   { background: #fbcfe8 !important; }
+.note-modal-box.note-blue   { background: #bae6fd !important; }
+.note-modal-box.note-green  { background: #bbf7d0 !important; }
+.note-modal-box.note-purple { background: #e9d5ff !important; }
+
+.note-modal-pin {
+  display: inline-block;
+  background: var(--black, #11220e);
+  color: var(--yellow-bright);
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.note-modal-title {
+  font-family: var(--font-main);
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #11220e;
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+
+.note-modal-body {
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #1b2f15;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 16px;
+}
+
+.note-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 2px dashed rgba(0, 0, 0, 0.25);
+  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.note-modal-date {
+  font-weight: 800;
+  color: #4b5563;
+  font-size: 0.78rem;
 }
 
 .note-action-btn {
