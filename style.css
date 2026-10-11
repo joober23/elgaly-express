@@ -9198,15 +9198,17 @@ html.theme-night::after {
 
 /* Botão Tudum na Navbar Desktop (À esquerda da divisória pontilhada) */
 .btn-nav-tudum {
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
   margin: 0 4px;
   background: #20052b !important;
   color: var(--white) !important;
-  border: 2px solid var(--black) !important;
+  border: 2.5px solid var(--black) !important;
   border-radius: 12px;
-  padding: 5px 8px;
+  padding: 6px 10px !important;
+  min-width: 44px;
+  height: 38px;
   box-shadow: 2.5px 2.5px 0px var(--black);
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -9220,15 +9222,16 @@ html.theme-night::after {
 }
 
 .btn-nav-tudum .tudum-nav-logo {
-  height: 22px;
+  height: 24px;
+  max-height: 24px;
   width: auto;
   object-fit: contain;
   vertical-align: middle;
-  display: block;
+  display: block !important;
 }
 
-.btn-nav-tudum .tudum-logo-on-dark { display: block; }
-.btn-nav-tudum .tudum-logo-on-light { display: none; }
+.btn-nav-tudum .tudum-logo-on-dark { display: block !important; }
+.btn-nav-tudum .tudum-logo-on-light { display: none !important; }
 
 /* Quando a Tudum abre, o botão da navbar some completamente para liberar espaço */
 body.tudum-open .btn-nav-tudum {
