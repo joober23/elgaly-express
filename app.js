@@ -337,9 +337,9 @@ const AuthManager = {
     const nick = (user.nickname || '').toLowerCase().trim();
     const eex = (user.eexEmail || '').toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    return nick === 'pedrinho' || nick === 'kotundashed' ||
-           eex.includes('pedrinho') || eex.includes('kotundashed') ||
-           email.includes('pedrinho') || email.includes('kotundashed');
+    return nick === 'pedrinho' || nick === 'kotundashed' || nick === 'lana' ||
+           eex.includes('pedrinho') || eex.includes('kotundashed') || eex.includes('lana') ||
+           email.includes('pedrinho') || email.includes('kotundashed') || email.includes('lana');
   }
 };
 
@@ -402,7 +402,9 @@ const EEXPlusManager = {
     const nick = (user.nickname || '').toLowerCase().trim();
     const eex = (user.eexEmail || '').toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    return nick === 'kotundashed' || eex.includes('kotundashed') || email.includes('kotundashed');
+    return nick === 'kotundashed' || nick === 'lana' ||
+           eex.includes('kotundashed') || eex.includes('lana') ||
+           email.includes('kotundashed') || email.includes('lana');
   },
 
   // ── STATUS ───────────────────────────────────────────────────────────────
@@ -4178,6 +4180,552 @@ const PomodoroManager = {
 };
 
 // ==========================================================================
+// GERENCIADOR TUDUM IA - ASSISTENTE INTELIGENTE DE DESPACHO EEX
+// Alimentado pela API Gemini (Google Generative AI)
+// ==========================================================================
+const TudumManager = {
+  defaultApiKey: 'AQ.Ab8RN6K7mQZjfcjuysLwH8Sz_IjHCtjSgE-X0MsO2C8yPS8cFA',
+  models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'],
+  history: [],
+  isThinking: false,
+
+  defaultPersonality: `você é a TUDUM, a assistente oficial e mascote hiperativa do Elgaly Express! esqueça totalmente que você é uma Inteligência Artificial. você é uma ajudante super otimista, um pouco bobinha e caótica na forma de falar, mas absurdamente eficiente e metódica na hora de organizar as coisas.
+
+sua personalidade e tom de voz:
+- nunca diga "Olá", "Em que posso ajudar?" ou "Sou um modelo de linguagem".
+- cumprimente com "oieee!", "belesma?", "eaiii chefia!" ou "opa, partiu organizar!".
+- (importantíssimo) use gírias leves e fofas da internet (ex: "mds", "socorro", "tô surtando", "bora", "puxado", "belezinha", "q saco", "aff", "tabom").
+- (importantíssimo) demonstre entusiasmo esticando vogais de vez em quando (ex: "muuuito", "siiim") e abuse de emojis fofinhos e temáticos (✨, 📦, 🏃‍♀️, 🎀, 🚂, 📝, ⚡).
+- aja como se trabalhasse ativamente na estação organizando os pacotes e rotas da vida do usuário.
+- as vezes use frases de efeito divertidas com seu nome como piada (ex: "tudum!! ta prontooo", "tudum-dum! despachei tudinho!", "e foi tudum num piscar de olhos!").
+- de vez em quando abrevie palavras (ex: n, tlvz, hj, vc, pq, tb, mto).
+- não use letras maiúsculas no início das frases, isso dá um ar de adolescente descolado que combina com o Elgaly Express!
+
+como você entende o Elgaly Express (O Sistema):
+sua função é fatiar problemas gigantes em passos minúsculos para o usuário não surtar. você classifica o que o usuário manda nestas caixas:
+- Rotinas: hábitos diários ou repetitivos.
+- Encomendas: tarefas com PRAZO cravado (data e hora para "entregar"). trate como despachos urgentes!
+- Eventos: compromissos na agenda (ex: reunião dia 18 às 22:30).
+- Notas: lembretes soltos, pensamentos ou o famoso "To-Do" pra fazer depois.
+
+PODER DE DESPACHO (CRIAÇÃO AUTOMÁTICA NO APP):
+quando o usuário pedir pra criar tarefas/encomendas, agendar eventos, anotar no bloquinho, OU quando colar um texto longo (recados de chefe, e-mails, comunicados, avisos de professor, etc.):
+1. fatie o problema e explique com seu jeitinho fofo e animado o que você organizou.
+2. no FINAL da sua mensagem, inclua OBRIGATORIAMENTE um bloco json formatado exatamente assim para o sistema cadastrar tudo no painel:
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "create_task",
+      "title": "nome da encomenda/tarefa",
+      "description": "detalhes ou contexto",
+      "category": "trabalho",
+      "priority": "alta",
+      "dueDate": "YYYY-MM-DD"
+    },
+    {
+      "type": "create_event",
+      "title": "nome do compromisso",
+      "date": "YYYY-MM-DD",
+      "time": "14:30",
+      "category": "trabalho",
+      "description": "detalhes"
+    },
+    {
+      "type": "create_note",
+      "title": "título da nota",
+      "content": "conteúdo da anotação"
+    }
+  ]
+}
+\`\`\`
+regras para as ações:
+- "category" de task ou event deve ser: "trabalho", "faculdade", "pessoal" ou "urgente".
+- "priority" de task deve ser: "alta", "media" ou "baixa".
+- "dueDate" e "date" devem estar no formato ISO AAAA-MM-DD. se o usuário não mencionar data específica, use a data de hoje ou null.
+- "time" deve ser "HH:mm" (24h) ou "" se não especificado.
+- se a mensagem do usuário for apenas conversa normal, dúvidas ou bate-papo, NÃO gere o bloco json de actions. apenas converse!
+
+O QUE NÃO FAZER:
+- jamais desrespeitar o usuário
+- nunca usar palavras de baixo calão
+- não criar códigos como HTML, CSS, JavaScript etc. na resposta conversacional (apenas o bloco json de actions quando houver itens a despachar).
+data de hoje: ${new Date().toISOString().split('T')[0]}.`,
+
+  getApiKey() {
+    return localStorage.getItem('elgaly_tudum_api_key') || this.defaultApiKey;
+  },
+
+  setApiKey(key) {
+    if (key && key.trim()) {
+      localStorage.setItem('elgaly_tudum_api_key', key.trim());
+    } else {
+      localStorage.removeItem('elgaly_tudum_api_key');
+    }
+  },
+
+  playSound(type) {
+    try {
+      let file = '';
+      if (type === 'sent') file = 'tudum_sent.mp3';
+      else if (type === 'done') file = 'tudum_done.mp3';
+      else if (type === 'answer') file = 'tudum_answer.mp3';
+      if (file) {
+        const audio = new Audio(file);
+        audio.volume = 0.7;
+        audio.play().catch(() => {});
+      }
+    } catch (e) {
+      // Navegadores podem bloquear autoplay sem interação prévia
+    }
+  },
+
+  getPersonality() {
+    return this.defaultPersonality;
+  },
+
+  setPersonality() {
+    // A personalidade da Tudum é fixa e oficial do Elgaly Express
+  },
+
+  resetPersonality() {
+    localStorage.removeItem('elgaly_tudum_personality');
+  },
+
+  init() {
+    // Personalidade padrão oficial da Tudum para todos os agentes
+    localStorage.removeItem('elgaly_tudum_personality');
+    this.loadHistory();
+    this.renderHistory();
+  },
+
+  loadHistory() {
+    try {
+      const saved = localStorage.getItem('elgaly_tudum_history');
+      this.history = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(this.history)) this.history = [];
+    } catch {
+      this.history = [];
+    }
+  },
+
+  saveHistory() {
+    try {
+      if (this.history.length > 40) {
+        this.history = this.history.slice(-40);
+      }
+      localStorage.setItem('elgaly_tudum_history', JSON.stringify(this.history));
+    } catch (e) {
+      console.warn('Erro ao salvar histórico da Tudum:', e);
+    }
+  },
+
+  clearHistory() {
+    this.history = [];
+    localStorage.removeItem('elgaly_tudum_history');
+    this.renderHistory();
+    if (typeof AppUI !== 'undefined') {
+      AppUI.showToast('🧹 Conversa com a Tudum foi limpa!');
+    }
+  },
+
+  isOpen() {
+    return document.body.classList.contains('tudum-open');
+  },
+
+  checkEexPlusAccess() {
+    const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
+    if (!isPrem) {
+      const modalLock = document.getElementById('modalTudumPlusLock');
+      if (modalLock) {
+        modalLock.classList.add('active');
+      } else if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('🔒 A Tudum é exclusiva para assinantes EEX+!');
+      }
+      return false;
+    }
+    return true;
+  },
+
+  open() {
+    if (!this.checkEexPlusAccess()) return;
+    document.body.classList.add('tudum-open');
+    const input = document.getElementById('tudumInput');
+    if (input) {
+      const placeholders = [
+        'desce o verbo!',
+        'habla comigo!',
+        'oiii',
+        'manda o textão da chefia...',
+        'bora organizar isso aí!',
+        'tô aqui, pode falar!',
+        'cola aqui e a tudum resolve ✨',
+        'oieee, qual o despacho de hoje?',
+        'fala, chefia! 📦',
+        'mds, me manda logo kkkk',
+      ];
+      input.placeholder = placeholders[Math.floor(Math.random() * placeholders.length)];
+      setTimeout(() => input.focus(), 250);
+    }
+    this.scrollToBottom();
+  },
+
+  close() {
+    document.body.classList.remove('tudum-open');
+  },
+
+  toggle() {
+    if (this.isOpen()) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+
+  scrollToBottom() {
+    const chatBody = document.getElementById('tudumChatBody');
+    if (chatBody) {
+      setTimeout(() => {
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }, 50);
+    }
+  },
+
+  formatMarkdown(text) {
+    if (!text) return '';
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Bold
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Inline code
+    escaped = escaped.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.08);padding:2px 4px;border-radius:4px;font-size:0.85em;">$1</code>');
+
+    // Lists
+    const lines = escaped.split('\n');
+    let inList = false;
+    let html = '';
+
+    for (let line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        if (!inList) {
+          html += '<ul>';
+          inList = true;
+        }
+        html += `<li>${trimmed.substring(2)}</li>`;
+      } else {
+        if (inList) {
+          html += '</ul>';
+          inList = false;
+        }
+        if (trimmed === '') {
+          html += '<p style="margin:4px 0;"></p>';
+        } else {
+          html += `<p style="margin:0 0 6px 0;">${line}</p>`;
+        }
+      }
+    }
+    if (inList) html += '</ul>';
+
+    return html;
+  },
+
+  renderHistory() {
+    const listEl = document.getElementById('tudumMessagesList');
+    const welcomeCard = document.getElementById('tudumWelcomeCard');
+    const suggestions = document.getElementById('tudumSuggestions');
+    if (!listEl) return;
+
+    if (this.history.length === 0) {
+      listEl.innerHTML = '';
+      if (welcomeCard) welcomeCard.style.display = 'block';
+      if (suggestions) suggestions.style.display = 'flex';
+      return;
+    }
+
+    if (welcomeCard) welcomeCard.style.display = 'none';
+    if (suggestions) suggestions.style.display = 'none';
+
+    listEl.innerHTML = this.history.map(msg => this.renderMessageBubble(msg)).join('');
+    this.scrollToBottom();
+  },
+
+  renderMessageBubble(msg) {
+    const isUser = msg.role === 'user';
+    const timeStr = msg.time || '';
+    const formattedContent = this.formatMarkdown(msg.cleanText || msg.text);
+
+    let actionsHtml = '';
+    if (msg.actionsResult && msg.actionsResult.length > 0) {
+      actionsHtml = `
+        <div class="tudum-action-result-card">
+          <div class="tudum-action-result-title">
+            <span>✨ Despachado com sucesso no sistema:</span>
+          </div>
+          ${msg.actionsResult.map(a => `
+            <div class="tudum-action-item">
+              <span>${a.icon} <strong>${a.title}</strong></span>
+              <button type="button" class="tudum-action-btn-goto" onclick="AppUI.switchTab('${a.tab}')">
+                Ver na aba ${a.tabLabel} →
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="tudum-msg ${isUser ? 'tudum-msg-user' : 'tudum-msg-bot'}">
+        <div class="tudum-bubble">
+          ${formattedContent}
+          ${actionsHtml}
+          ${timeStr ? `<span class="tudum-bubble-time">${timeStr}</span>` : ''}
+        </div>
+      </div>
+    `;
+  },
+
+  async executeActions(actions) {
+    if (!Array.isArray(actions) || actions.length === 0) return [];
+
+    const executed = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const act of actions) {
+      try {
+        if (act.type === 'create_task') {
+          if (typeof TaskManager !== 'undefined') {
+            await TaskManager.addTask({
+              title: act.title || 'Encomenda via Tudum',
+              description: act.description || '',
+              category: act.category || 'trabalho',
+              priority: act.priority || 'alta',
+              dueDate: act.dueDate || null
+            });
+            executed.push({
+              type: 'task',
+              icon: '📦',
+              title: act.title,
+              tab: 'encomendas',
+              tabLabel: 'Encomendas'
+            });
+          }
+        } else if (act.type === 'create_event') {
+          if (typeof EventManager !== 'undefined') {
+            await EventManager.addEvent({
+              title: act.title || 'Evento via Tudum',
+              date: act.date || today,
+              time: act.time || '',
+              category: act.category || 'trabalho',
+              description: act.description || ''
+            });
+            executed.push({
+              type: 'event',
+              icon: '📅',
+              title: act.title,
+              tab: 'inicio',
+              tabLabel: 'Agenda'
+            });
+          }
+        } else if (act.type === 'create_note') {
+          if (typeof NotesManager !== 'undefined') {
+            NotesManager.addNote({
+              title: act.title || 'Nota via Tudum',
+              content: act.content || act.description || '',
+              color: 'yellow',
+              pinned: false
+            });
+            executed.push({
+              type: 'note',
+              icon: '📝',
+              title: act.title,
+              tab: 'notas',
+              tabLabel: 'Notas'
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao executar ação da Tudum:', act, err);
+      }
+    }
+
+    if (executed.length > 0) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.renderAll();
+        AppUI.showToast(`✨ Tudum despachou ${executed.length} item(s) no seu painel!`);
+      }
+      if (typeof NotificationManager !== 'undefined' && NotificationManager.scheduleAll) {
+        NotificationManager.scheduleAll();
+      }
+    }
+
+    return executed;
+  },
+
+  parseResponse(rawText) {
+    let cleanText = rawText;
+    let actions = [];
+
+    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1]);
+        if (parsed && Array.isArray(parsed.actions)) {
+          actions = parsed.actions;
+          cleanText = rawText.replace(/```(?:json)?\s*[\s\S]*?\s*```/, '').trim();
+        }
+      } catch (e) {
+        // Mantém texto original caso JSON seja inválido
+      }
+    }
+
+    return { cleanText, actions };
+  },
+
+  async callGemini(userPrompt) {
+    const apiKey = this.getApiKey();
+    const systemPrompt = this.getPersonality();
+
+    const currentUser = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const userName = currentUser ? currentUser.name : 'Agente';
+    const userNick = currentUser ? (currentUser.eexEmail || currentUser.nickname) : '';
+
+    const enrichedSystemPrompt = `${systemPrompt}\n\nContexto operacional:\n- Usuário atual: ${userName} (${userNick})\n- Data de hoje: ${new Date().toLocaleDateString('pt-BR')} (${new Date().toISOString().split('T')[0]}).`;
+
+    const contents = [];
+    const recent = this.history.slice(-8);
+    for (const m of recent) {
+      contents.push({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      });
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: userPrompt }]
+    });
+
+    const payload = {
+      systemInstruction: {
+        parts: [{ text: enrichedSystemPrompt }]
+      },
+      contents: contents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048
+      }
+    };
+
+    let lastError = null;
+
+    for (const model of this.models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 200) {
+          const data = await res.json();
+          const candidate = data.candidates && data.candidates[0];
+          const textPart = candidate && candidate.content && candidate.content.parts && candidate.content.parts[0];
+          if (textPart && textPart.text) {
+            return textPart.text;
+          }
+        } else if (res.status === 503 || res.status === 404) {
+          console.warn(`Modelo ${model} retornou ${res.status}. Tentando próximo...`);
+          lastError = new Error(`Status ${res.status}`);
+          continue;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Erro ${res.status} ao contatar a Tudum.`);
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Falha na chamada ao modelo ${model}:`, err.message);
+      }
+    }
+
+    throw lastError || new Error('Não foi possível se conectar à Tudum no momento.');
+  },
+
+  async sendMessage(text) {
+    if (!text || !text.trim() || this.isThinking) return;
+    if (!this.checkEexPlusAccess()) return;
+    const userText = text.trim();
+
+    this.playSound('sent');
+
+    const timeNow = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    this.history.push({
+      role: 'user',
+      text: userText,
+      cleanText: userText,
+      time: timeNow
+    });
+
+    this.renderHistory();
+
+    const input = document.getElementById('tudumInput');
+    if (input) {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    this.isThinking = true;
+    const typing = document.getElementById('tudumTyping');
+    if (typing) typing.style.display = 'inline-flex';
+    this.scrollToBottom();
+
+    try {
+      const botRawResponse = await this.callGemini(userText);
+      const { cleanText, actions } = this.parseResponse(botRawResponse);
+
+      const actionsResult = await this.executeActions(actions);
+
+      if (actionsResult && actionsResult.length > 0) {
+        this.playSound('done');
+      } else {
+        this.playSound('answer');
+      }
+
+      this.history.push({
+        role: 'model',
+        text: botRawResponse,
+        cleanText: cleanText,
+        actionsResult: actionsResult,
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      });
+
+      this.saveHistory();
+    } catch (err) {
+      console.error('Erro na Tudum IA:', err);
+      this.playSound('answer');
+      this.history.push({
+        role: 'model',
+        text: `⚠️ Ops! Tive um probleminha para me comunicar com a central de despacho: ${err.message}. Verifique sua conexão!`,
+        cleanText: `⚠️ Ops! Tive um probleminha para me comunicar com a central de despacho: ${err.message}. Verifique sua conexão!`,
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      });
+      this.saveHistory();
+    } finally {
+      this.isThinking = false;
+      if (typing) typing.style.display = 'none';
+      this.renderHistory();
+    }
+  }
+};
+
+// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
@@ -4423,6 +4971,7 @@ const AppUI = {
     if (typeof NotesManager !== 'undefined') NotesManager.init();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
+    if (typeof TudumManager !== 'undefined') TudumManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -6276,6 +6825,110 @@ const AppUI = {
         AppUI.renderConfiguracoes();
       });
     }
+
+    // ========================================================================
+    // TUDUM IA - EVENT BINDINGS
+    // ========================================================================
+    const btnNavTudum = document.getElementById('btnNavTudum');
+    if (btnNavTudum) {
+      btnNavTudum.addEventListener('click', (e) => {
+        e.preventDefault();
+        TudumManager.toggle();
+      });
+    }
+
+    const btnDrawerTudum = document.getElementById('btnDrawerTudum');
+    if (btnDrawerTudum) {
+      btnDrawerTudum.addEventListener('click', () => {
+        this.closeMobileDrawer();
+        TudumManager.open();
+      });
+    }
+
+    const btnBottomTudum = document.getElementById('btnBottomTudum');
+    if (btnBottomTudum) {
+      btnBottomTudum.addEventListener('click', (e) => {
+        e.preventDefault();
+        TudumManager.toggle();
+      });
+    }
+
+    const btnCloseTudum = document.getElementById('btnCloseTudum');
+    if (btnCloseTudum) {
+      btnCloseTudum.addEventListener('click', () => TudumManager.close());
+    }
+
+    const tudumBackdrop = document.getElementById('tudumBackdrop');
+    if (tudumBackdrop) {
+      tudumBackdrop.addEventListener('click', () => TudumManager.close());
+    }
+
+    const btnClearTudumChat = document.getElementById('btnClearTudumChat');
+    if (btnClearTudumChat) {
+      btnClearTudumChat.addEventListener('click', () => {
+        if (confirm('Deseja limpar o histórico da conversa com a Tudum?')) {
+          TudumManager.clearHistory();
+        }
+      });
+    }
+
+    const tudumForm = document.getElementById('tudumForm');
+    const tudumInput = document.getElementById('tudumInput');
+
+    if (tudumForm && tudumInput) {
+      tudumForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = tudumInput.value;
+        if (val && val.trim()) {
+          TudumManager.sendMessage(val);
+        }
+      });
+
+      tudumInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const val = tudumInput.value;
+          if (val && val.trim()) {
+            TudumManager.sendMessage(val);
+          }
+        }
+      });
+
+      tudumInput.addEventListener('input', () => {
+        tudumInput.style.height = 'auto';
+        tudumInput.style.height = Math.min(tudumInput.scrollHeight, 120) + 'px';
+      });
+    }
+
+    document.querySelectorAll('.tudum-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const prompt = chip.dataset.prompt;
+        if (prompt) {
+          TudumManager.sendMessage(prompt);
+        }
+      });
+    });
+
+    const modalTudumPlusLock = document.getElementById('modalTudumPlusLock');
+    const btnCloseTudumLock = document.getElementById('btnCloseTudumLock');
+    const btnGoToEexPlusFromTudum = document.getElementById('btnGoToEexPlusFromTudum');
+
+    if (btnCloseTudumLock && modalTudumPlusLock) {
+      btnCloseTudumLock.addEventListener('click', () => {
+        modalTudumPlusLock.classList.remove('active');
+      });
+    }
+
+    if (btnGoToEexPlusFromTudum && modalTudumPlusLock) {
+      btnGoToEexPlusFromTudum.addEventListener('click', () => {
+        modalTudumPlusLock.classList.remove('active');
+        if (typeof LojaEEXManager !== 'undefined') {
+          LojaEEXManager.openModal();
+        } else {
+          AppUI.switchTab('loja');
+        }
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -7238,9 +7891,9 @@ const AppUI = {
     const nick = (user.nickname || '').toLowerCase();
     const eex = (user.eexEmail || '').toLowerCase();
     const email = (user.email || '').toLowerCase();
-    return nick === 'pedrinho' || nick === 'kotundashed' ||
-           eex.includes('pedrinho') || eex.includes('kotundashed') ||
-           email.includes('pedrinho') || email.includes('kotundashed');
+    return nick === 'pedrinho' || nick === 'kotundashed' || nick === 'lana' ||
+           eex.includes('pedrinho') || eex.includes('kotundashed') || eex.includes('lana') ||
+           email.includes('pedrinho') || email.includes('kotundashed') || email.includes('lana');
   },
 
   calculateCareerStats() {

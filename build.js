@@ -25,6 +25,11 @@ const filesToCopy = [
   'embalagem_segura.png',
   'embalagem_atencao.png',
   'embalagem_cosmica.png',
+  'tudum-claro.png',
+  'tudum-escuro.png',
+  'tudum_answer.mp3',
+  'tudum_done.mp3',
+  'tudum_sent.mp3',
   'version.json'
 ];
 
