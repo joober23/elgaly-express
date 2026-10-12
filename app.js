@@ -6933,6 +6933,32 @@ const AppUI = {
         }
       });
     }
+
+    // ========================================================================
+    // LANDING PAGE & LOGIN MODAL CONTROLS
+    // ========================================================================
+    document.querySelectorAll('.action-open-login').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const landingPage = document.getElementById('landingPage');
+        const authGateway = document.getElementById('authGateway');
+        if (landingPage) landingPage.style.display = 'none';
+        if (authGateway) authGateway.style.display = 'flex';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    const btnBackToLanding = document.getElementById('btnBackToLanding');
+    if (btnBackToLanding) {
+      btnBackToLanding.addEventListener('click', (e) => {
+        e.preventDefault();
+        const landingPage = document.getElementById('landingPage');
+        const authGateway = document.getElementById('authGateway');
+        if (authGateway) authGateway.style.display = 'none';
+        if (landingPage) landingPage.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
   },
 
   updateCurrentDateDisplay() {
@@ -6951,6 +6977,7 @@ const AppUI = {
   renderAll() {
     const isLoggedIn = AuthManager.isLoggedIn();
     const isVerified = AuthManager.isEexPassVerified;
+    const landingPage = document.getElementById('landingPage');
     const authGateway = document.getElementById('authGateway');
     const appViewsContainer = document.getElementById('appViewsContainer');
     const desktopNav = document.querySelector('nav.desktop-nav');
@@ -6959,11 +6986,18 @@ const AppUI = {
     const mainHeader = document.querySelector('header');
 
     if (!isLoggedIn || !isVerified) {
-      // Bloqueia acesso ao app e exibe portal de login se não estiver logado
+      // Visitante não logado: mostra a Landing Page de Apresentação
       if (!isLoggedIn) {
-        if (authGateway) authGateway.style.display = 'flex';
+        // Se o modal de login não estiver aberto explicitamente, mostra a landing page
+        const isLoginOpen = authGateway && authGateway.style.display === 'flex';
+        if (!isLoginOpen) {
+          if (landingPage) landingPage.style.display = 'block';
+          if (authGateway) authGateway.style.display = 'none';
+        }
         if (mainHeader) mainHeader.style.display = 'none';
       } else {
+        // Usuário logado mas aguardando EEX-PASS
+        if (landingPage) landingPage.style.display = 'none';
         if (authGateway) authGateway.style.display = 'none';
         if (mainHeader) mainHeader.style.removeProperty('display');
       }
@@ -6978,7 +7012,8 @@ const AppUI = {
       return;
     }
 
-    // Usuário logado e verificado com EEX-PASS: libera a navegação e views
+    // Usuário logado e verificado com EEX-PASS: esconde a landing e libera o app
+    if (landingPage) landingPage.style.display = 'none';
     if (authGateway) authGateway.style.display = 'none';
     if (mainHeader) mainHeader.style.removeProperty('display');
     if (appViewsContainer) appViewsContainer.style.display = 'block';

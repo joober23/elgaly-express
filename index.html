@@ -184,10 +184,155 @@
   <main class="container">
 
     <!-- ==========================================================================
-         PORTÃO DE ACESSO OBRIGATÓRIO (REDE EEX - NOVO LOGIN DESPACHO)
+         LANDING PAGE PÚBLICA (APRESENTAÇÃO DO ELGALY EXPRESS PARA VISITANTES)
+         ========================================================================== -->
+    <div class="landing-page-container" id="landingPage" style="display: none;">
+      
+      <!-- Barra Superior da Landing (Logotipo + Botão de Entrar) -->
+      <nav class="landing-nav-bar">
+        <div class="landing-nav-brand">
+          <img src="images/elgalylogo.png" alt="Elgaly Express" class="landing-nav-logo">
+          <span class="landing-nav-title">ELGALY EXPRESS</span>
+        </div>
+        <div class="landing-nav-actions">
+          <button type="button" class="btn-comic btn-landing-login action-open-login" id="btnLandingTopLogin">
+            🔑 Entrar na Rede EEX
+          </button>
+        </div>
+      </nav>
+
+      <!-- Hero Section Principal -->
+      <header class="landing-hero-section">
+        <div class="landing-hero-badge">
+          <span>🚂 A CENTRAL DE ROTINAS & DESPACHO DA ILHA DE ELGALY EDGE</span>
+        </div>
+        <h1 class="landing-hero-headline">
+          ORGANIZAÇÃO NÃO PRECISA<br>
+          <span class="text-highlight">SER UMA TORTURA.</span>
+        </h1>
+        <p class="landing-hero-subhead">
+          Fatie tarefas gigantes em encomendas com prazo, acompanhe suas rotinas diárias com streaks insanos e conte com a <strong>Tudum IA</strong> para organizar o caos da sua vida antes que você surte!
+        </p>
+
+        <div class="landing-hero-cta-group">
+          <button type="button" class="btn-comic btn-landing-cta action-open-login" id="btnLandingHeroCta">
+            🚀 Iniciar Expedição Grátis
+          </button>
+          <a href="#landing-features" class="btn-comic btn-secondary btn-landing-ghost">
+            ✨ Conhecer os Recursos
+          </a>
+        </div>
+
+        <!-- Arte Showcase da Caixa em Destaque -->
+        <div class="landing-hero-showcase">
+          <picture>
+            <source media="(max-width: 768px)" srcset="images/brave_e_drizzle_box.png">
+            <img src="images/midnight_box.png" alt="Caixa Elgaly Express" class="landing-box-art">
+          </picture>
+          <div class="landing-floating-pill pill-1">
+            <span>📦 +10.000 Despachos Feitos</span>
+          </div>
+          <div class="landing-floating-pill pill-2">
+            <span>⚡ Foco Extremo com Pomodoro</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Grade de Recursos / O que o site faz -->
+      <section class="landing-features-section" id="landing-features">
+        <div class="landing-section-header">
+          <span class="landing-section-tag">COMO FUNCIONA O SISTEMA</span>
+          <h2>TUDO QUE VOCÊ PRECISA PARA NUNCA MAIS ATRASAR NADA</h2>
+          <p>Esqueça listas de tarefas sem graça. Aqui você é um despachante oficial da vida real.</p>
+        </div>
+
+        <div class="landing-features-grid">
+          <!-- Card 1: Encomendas com Prazo -->
+          <div class="landing-card">
+            <div class="landing-card-icon">📦</div>
+            <h3>Despacho de Encomendas</h3>
+            <p>Cadastre tarefas urgentes com data e hora de entrega. Marque prioridades, embalagens cósmicas e nunca perca o prazo de entrega final!</p>
+          </div>
+
+          <!-- Card 2: Rotinas e Hábitos -->
+          <div class="landing-card">
+            <div class="landing-card-icon">☀️</div>
+            <h3>Rotinas & Streaks Diários</h3>
+            <p>Construa disciplina diária! Acompanhe sequências de dias cumpridos, ganhe Conchas EEX por cada rota concluída e veja sua evolução.</p>
+          </div>
+
+          <!-- Card 3: Tudum IA com Gemini -->
+          <div class="landing-card featured-card">
+            <div class="landing-card-badge">IA OFICIAL ✨</div>
+            <div class="landing-card-icon">🎀</div>
+            <h3>Tudum IA com Gemini</h3>
+            <p>A mascote hiperativa oficial do Elgaly! Cole textões do chefe ou da faculdade e a Tudum fatia tudo automaticamente em tarefas, eventos e notas na sua conta.</p>
+          </div>
+
+          <!-- Card 4: Agenda & Eventos -->
+          <div class="landing-card">
+            <div class="landing-card-icon">📅</div>
+            <h3>Agenda de Eventos</h3>
+            <p>Compromissos importantes com horário cravado. Sincronize com a ilha, receba avisos e mantenha sua rota em dia sem surpresas.</p>
+          </div>
+
+          <!-- Card 5: Loja EEX & Recompensas -->
+          <div class="landing-card">
+            <div class="landing-card-icon">🏪</div>
+            <h3>Loja EEX de Conchas</h3>
+            <p>Transforme produtividade em recompensas! Ganhe Conchas EEX ao completar suas tarefas e compre temas retrô, selos de despacho e cosméticos!</p>
+          </div>
+
+          <!-- Card 6: Conexão & Amigos -->
+          <div class="landing-card">
+            <div class="landing-card-icon">🤝</div>
+            <h3>Rede de Amigos & Despacho</h3>
+            <p>Conecte-se com outros agentes usando seu ID <code>.express.com</code>, compare seu nível de despacho e envie pacotes colaborativos.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Banner EEX+ Premium -->
+      <section class="landing-eexplus-banner">
+        <div class="landing-eexplus-content">
+          <div class="landing-eexplus-tag">ASSINATURA VIP</div>
+          <h2>ELGALY EXPRESS+ (EEX+)</h2>
+          <p>Desbloqueie acesso exclusivo à <strong>Tudum IA</strong>, temas raros, ciclo dia/noite em tempo real, limite ilimitado de rotinas e o prestigioso Crachá Holográfico!</p>
+          <button type="button" class="btn-comic btn-landing-cta action-open-login" style="background: var(--yellow-bright); color: var(--black);">
+            ⭐ Entrar e Assinar EEX+
+          </button>
+        </div>
+        <div class="landing-eexplus-visual">
+          <img src="elgalyexpressplus_logo.png" alt="EEX+ Logo" style="max-height: 90px; object-fit: contain;">
+        </div>
+      </section>
+
+      <!-- Rodapé da Landing Page -->
+      <footer class="landing-footer">
+        <div class="landing-footer-top">
+          <div class="landing-footer-brand">
+            <img src="images/elgalylogo.png" alt="EEX" style="height: 38px;">
+            <strong>Elgaly Express</strong>
+          </div>
+          <button type="button" class="btn-comic action-open-login" style="font-size: 0.9rem; padding: 8px 16px;">
+            🔓 Entrar no Terminal
+          </button>
+        </div>
+        <div class="landing-footer-bottom">
+          <small>© 2026 Elgaly Express • Central de Operações NA (Nova Arcanis) • Todos os direitos reservados.</small>
+        </div>
+      </footer>
+
+    </div>
+
+    <!-- ==========================================================================
+         PORTÃO DE ACESSO / MODAL DE LOGIN (REDE EEX - DESPACHO)
          ========================================================================== -->
     <div class="auth-gateway-container" id="authGateway" style="display: none;">
       
+      <!-- Botão Voltar para Landing -->
+      <button type="button" class="btn-close-auth" id="btnBackToLanding" title="Voltar para a página inicial">✕</button>
+
       <!-- Lado Esquerdo / Arte Visual Ilustrada (Desktop: Midnight Box / Mobile: Brave & Drizzle Box) -->
       <div class="auth-box-showcase">
         <picture class="auth-box-picture">
