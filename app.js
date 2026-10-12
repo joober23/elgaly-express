@@ -4599,8 +4599,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     const enrichedSystemPrompt = `${systemPrompt}\n\nContexto operacional:\n- Usuário atual: ${userName} (${userNick})\n- Data de hoje: ${new Date().toLocaleDateString('pt-BR')} (${new Date().toISOString().split('T')[0]}).`;
 
     const contents = [];
-    const recent = this.history.slice(-8);
-    for (const m of recent) {
+    // Pega mensagens anteriores do histórico (excluindo a mensagem atual que já foi adicionada em this.history)
+    const previousHistory = this.history.slice(0, -1).slice(-8);
+    for (const m of previousHistory) {
       contents.push({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.text }]
@@ -4669,8 +4670,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   async sendMessage(text) {
     if (!text || !text.trim() || this.isThinking) return;
     if (!this.checkEexPlusAccess()) return;
-    const userText = text.trim();
+    this.isThinking = true;
 
+    const userText = text.trim();
     this.playSound('sent');
 
     const timeNow = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -4690,7 +4692,6 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
       input.style.height = 'auto';
     }
 
-    this.isThinking = true;
     const typing = document.getElementById('tudumTyping');
     if (typing) typing.style.display = 'inline-flex';
     this.scrollToBottom();
@@ -6896,10 +6897,7 @@ const AppUI = {
       tudumInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          const val = tudumInput.value;
-          if (val && val.trim()) {
-            TudumManager.sendMessage(val);
-          }
+          tudumForm.requestSubmit();
         }
       });
 
