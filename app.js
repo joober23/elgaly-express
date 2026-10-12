@@ -4186,7 +4186,7 @@ const PomodoroManager = {
 const TudumManager = {
   // Chave padrão da Tudum montada via runtime (protegida contra scanners estáticos do GitHub)
   defaultApiKey: ['AQ.', 'Ab8RN6I5fDB5AJqoNiTPy00', '--AZ2QgFBYmZNNT9DA21ZCVQ9BA'].join(''),
-  models: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'],
+  models: ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'],
   history: [],
   isThinking: false,
 
@@ -4626,6 +4626,8 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     let lastError = null;
 
     for (const model of this.models) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s máx por modelo para evitar travamento
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const res = await fetch(url, {
@@ -4634,8 +4636,10 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
             'Content-Type': 'application/json',
             'x-goog-api-key': apiKey
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (res.status === 200) {
           const data = await res.json();
@@ -4644,7 +4648,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
           if (textPart && textPart.text) {
             return textPart.text;
           }
-        } else if (res.status === 503 || res.status === 404) {
+        } else if (res.status === 503 || res.status === 404 || res.status === 429) {
           console.warn(`Modelo ${model} retornou ${res.status}. Tentando próximo...`);
           lastError = new Error(`Status ${res.status}`);
           continue;
@@ -4653,6 +4657,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
           throw new Error(errData.error?.message || `Erro ${res.status} ao contatar a Tudum.`);
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         lastError = err;
         console.warn(`Falha na chamada ao modelo ${model}:`, err.message);
       }
