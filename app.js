@@ -6955,10 +6955,44 @@ const AppUI = {
         const landingPage = document.getElementById('landingPage');
         const authGateway = document.getElementById('authGateway');
         if (authGateway) authGateway.style.display = 'none';
-        if (landingPage) landingPage.style.display = 'block';
+        if (landingPage) {
+          landingPage.style.display = 'block';
+          this.initLandingAnimations();
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
+
+    this.initLandingAnimations();
+  },
+
+  initLandingAnimations() {
+    const targets = document.querySelectorAll('.landing-hero-grand, .landing-showcase-section, .landing-cta-banner');
+    if (!targets.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach(el => el.classList.add('is-revealed'));
+      return;
+    }
+
+    if (this._landingObserver) {
+      this._landingObserver.disconnect();
+    }
+
+    this._landingObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    targets.forEach(el => {
+      this._landingObserver.observe(el);
+    });
   },
 
   updateCurrentDateDisplay() {
@@ -6991,7 +7025,10 @@ const AppUI = {
         // Se o modal de login não estiver aberto explicitamente, mostra a landing page
         const isLoginOpen = authGateway && authGateway.style.display === 'flex';
         if (!isLoginOpen) {
-          if (landingPage) landingPage.style.display = 'block';
+          if (landingPage) {
+            landingPage.style.display = 'block';
+            this.initLandingAnimations();
+          }
           if (authGateway) authGateway.style.display = 'none';
         }
         if (mainHeader) mainHeader.style.display = 'none';

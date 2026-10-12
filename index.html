@@ -188,7 +188,7 @@
          ========================================================================== -->
     <div class="landing-page-container" id="landingPage" style="display: none;">
       
-      <!-- Barra Superior da Landing (Logotipo + Botão de Entrar) -->
+      <!-- Barra Superior Flutuante / Header Oficial -->
       <nav class="landing-nav-bar">
         <div class="landing-nav-brand">
           <img src="images/elgalylogo.png" alt="Elgaly Express" class="landing-nav-logo">
@@ -201,113 +201,189 @@
         </div>
       </nav>
 
-      <!-- Hero Section Principal -->
-      <header class="landing-hero-section">
-        <div class="landing-hero-badge">
-          <span>🚂 A CENTRAL DE ROTINAS & DESPACHO DA ILHA DE ELGALY EDGE</span>
+      <!-- ======================================================================
+           HERO SECTION: O GRANDE CHAMADO DIMENSIONAL
+           ====================================================================== -->
+      <section class="landing-hero-grand">
+        <div class="landing-hero-inner">
+          <div class="landing-hero-badge pulse-anim">
+            <span>🚂 SISTEMA DE ROTINAS & DESPACHO • ILHA DE ELGALY EDGE</span>
+          </div>
+          <h1 class="landing-hero-title">
+            ORGANIZAÇÃO NÃO PRECISA<br>
+            <span class="text-glow">SER UMA TORTURA.</span>
+          </h1>
+          <p class="landing-hero-desc">
+            Transforme sua rotina caótica num sistema ágil de entregas. Cumpra prazos, construa sequências lendárias e conte com a <strong>Tudum IA</strong> para fatiar seus maiores problemas em segundos.
+          </p>
+          <div class="landing-hero-btns">
+            <button type="button" class="btn-comic btn-landing-primary action-open-login" id="btnLandingHeroCta">
+              🚀 Embarcar na Expedição Grátis
+            </button>
+            <a href="#secao-encomendas" class="btn-comic btn-landing-secondary">
+              📦 Ver Como Funciona ↓
+            </a>
+          </div>
         </div>
-        <h1 class="landing-hero-headline">
-          ORGANIZAÇÃO NÃO PRECISA<br>
-          <span class="text-highlight">SER UMA TORTURA.</span>
-        </h1>
-        <p class="landing-hero-subhead">
-          Fatie tarefas gigantes em encomendas com prazo, acompanhe suas rotinas diárias com streaks insanos e conte com a <strong>Tudum IA</strong> para organizar o caos da sua vida antes que você surte!
-        </p>
 
-        <div class="landing-hero-cta-group">
-          <button type="button" class="btn-comic btn-landing-cta action-open-login" id="btnLandingHeroCta">
-            🚀 Iniciar Expedição Grátis
-          </button>
-          <a href="#landing-features" class="btn-comic btn-secondary btn-landing-ghost">
-            ✨ Conhecer os Recursos
-          </a>
-        </div>
-
-        <!-- Arte Showcase da Caixa em Destaque -->
-        <div class="landing-hero-showcase">
+        <!-- Grande Ilustração Hero com Efeito Flutuante e Crachás -->
+        <div class="landing-hero-art-wrapper">
+          <div class="landing-art-backdrop"></div>
           <picture>
             <source media="(max-width: 768px)" srcset="images/brave_e_drizzle_box.png">
-            <img src="images/midnight_box.png" alt="Caixa Elgaly Express" class="landing-box-art">
+            <img src="images/midnight_box.png" alt="Caixa Elgaly Express" class="landing-hero-box-art">
           </picture>
-          <div class="landing-floating-pill pill-1">
-            <span>📦 +10.000 Despachos Feitos</span>
+          <div class="landing-badge-floater floater-top">
+            <span class="floater-icon">📦</span>
+            <div>
+              <strong>+10.000 Despachos</strong>
+              <small>Entregues no prazo cravado</small>
+            </div>
           </div>
-          <div class="landing-floating-pill pill-2">
-            <span>⚡ Foco Extremo com Pomodoro</span>
-          </div>
-        </div>
-      </header>
-
-      <!-- Grade de Recursos / O que o site faz -->
-      <section class="landing-features-section" id="landing-features">
-        <div class="landing-section-header">
-          <span class="landing-section-tag">COMO FUNCIONA O SISTEMA</span>
-          <h2>TUDO QUE VOCÊ PRECISA PARA NUNCA MAIS ATRASAR NADA</h2>
-          <p>Esqueça listas de tarefas sem graça. Aqui você é um despachante oficial da vida real.</p>
-        </div>
-
-        <div class="landing-features-grid">
-          <!-- Card 1: Encomendas com Prazo -->
-          <div class="landing-card">
-            <div class="landing-card-icon">📦</div>
-            <h3>Despacho de Encomendas</h3>
-            <p>Cadastre tarefas urgentes com data e hora de entrega. Marque prioridades, embalagens cósmicas e nunca perca o prazo de entrega final!</p>
-          </div>
-
-          <!-- Card 2: Rotinas e Hábitos -->
-          <div class="landing-card">
-            <div class="landing-card-icon">☀️</div>
-            <h3>Rotinas & Streaks Diários</h3>
-            <p>Construa disciplina diária! Acompanhe sequências de dias cumpridos, ganhe Conchas EEX por cada rota concluída e veja sua evolução.</p>
-          </div>
-
-          <!-- Card 3: Tudum IA com Gemini -->
-          <div class="landing-card featured-card">
-            <div class="landing-card-badge">IA OFICIAL ✨</div>
-            <div class="landing-card-icon">🎀</div>
-            <h3>Tudum IA com Gemini</h3>
-            <p>A mascote hiperativa oficial do Elgaly! Cole textões do chefe ou da faculdade e a Tudum fatia tudo automaticamente em tarefas, eventos e notas na sua conta.</p>
-          </div>
-
-          <!-- Card 4: Agenda & Eventos -->
-          <div class="landing-card">
-            <div class="landing-card-icon">📅</div>
-            <h3>Agenda de Eventos</h3>
-            <p>Compromissos importantes com horário cravado. Sincronize com a ilha, receba avisos e mantenha sua rota em dia sem surpresas.</p>
-          </div>
-
-          <!-- Card 5: Loja EEX & Recompensas -->
-          <div class="landing-card">
-            <div class="landing-card-icon">🏪</div>
-            <h3>Loja EEX de Conchas</h3>
-            <p>Transforme produtividade em recompensas! Ganhe Conchas EEX ao completar suas tarefas e compre temas retrô, selos de despacho e cosméticos!</p>
-          </div>
-
-          <!-- Card 6: Conexão & Amigos -->
-          <div class="landing-card">
-            <div class="landing-card-icon">🤝</div>
-            <h3>Rede de Amigos & Despacho</h3>
-            <p>Conecte-se com outros agentes usando seu ID <code>.express.com</code>, compare seu nível de despacho e envie pacotes colaborativos.</p>
+          <div class="landing-badge-floater floater-bottom">
+            <span class="floater-icon">🔥</span>
+            <div>
+              <strong>Streaks Reais</strong>
+              <small>Ganhe Conchas EEX todo dia</small>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Banner EEX+ Premium -->
-      <section class="landing-eexplus-banner">
-        <div class="landing-eexplus-content">
-          <div class="landing-eexplus-tag">ASSINATURA VIP</div>
-          <h2>ELGALY EXPRESS+ (EEX+)</h2>
-          <p>Desbloqueie acesso exclusivo à <strong>Tudum IA</strong>, temas raros, ciclo dia/noite em tempo real, limite ilimitado de rotinas e o prestigioso Crachá Holográfico!</p>
-          <button type="button" class="btn-comic btn-landing-cta action-open-login" style="background: var(--yellow-bright); color: var(--black);">
-            ⭐ Entrar e Assinar EEX+
-          </button>
+      <!-- ======================================================================
+           SEÇÃO 1 (GRANDE): ENCOMENDAS & GESTÃO DE PRAZOS
+           ====================================================================== -->
+      <section class="landing-showcase-section showcase-reverse" id="secao-encomendas">
+        <div class="showcase-content">
+          <span class="showcase-pill">📦 DESPACHO DE ENCOMENDAS</span>
+          <h2>SEUS PRAZOS NUNCA MAIS VENCEM SEM VOCÊ NOTAR.</h2>
+          <p>
+            No Elgaly Express, tarefas não são listas mortas num bloquinho esquecido: elas são <strong>encomendas prioritárias</strong> com data e hora de entrega cravadas no relógio.
+          </p>
+          <ul class="showcase-checkmarks">
+            <li><span>⚡</span> <strong>Embalagens Temáticas:</strong> Escolha entre caixas Simples, Atenção ou Cósmica para destacar urgências.</li>
+            <li><span>🚨</span> <strong>Alertas Visuais:</strong> Avisos instantâneos de encomendas em rota, entregues ou com prazo crítico.</li>
+            <li><span>🐚</span> <strong>Recompensa Imediata:</strong> Cada pacote entregue deposita Conchas EEX na sua conta!</li>
+          </ul>
         </div>
-        <div class="landing-eexplus-visual">
-          <img src="elgalyexpressplus_logo.png" alt="EEX+ Logo" style="max-height: 90px; object-fit: contain;">
+        <div class="showcase-preview-card card-encomendas">
+          <div class="preview-card-header">
+            <span class="preview-card-dot red"></span>
+            <span class="preview-card-dot yellow"></span>
+            <span class="preview-card-dot green"></span>
+            <span class="preview-title">Painel de Despacho EEX</span>
+          </div>
+          <div class="preview-task-item urgent">
+            <div class="preview-task-left">
+              <span class="preview-task-tag">🚨 HOJE 18:00</span>
+              <h4>Relatório Final de Trimestre da Chefia</h4>
+              <p>Revisar planilhas e anexar balanço</p>
+            </div>
+            <div class="preview-task-status">EM ROTA 📦</div>
+          </div>
+          <div class="preview-task-item done">
+            <div class="preview-task-left">
+              <span class="preview-task-tag">✅ CONCLUÍDO</span>
+              <h4>Entregar Pacote para Agente Brave</h4>
+              <p>Despachado com embalagem cósmica</p>
+            </div>
+            <div class="preview-task-conchas">+15 🐚</div>
+          </div>
         </div>
       </section>
 
-      <!-- Rodapé da Landing Page -->
+      <!-- ======================================================================
+           SEÇÃO 2 (GRANDE): A FAMOSA TUDUM IA COM GEMINI
+           ====================================================================== -->
+      <section class="landing-showcase-section tudum-spotlight" id="secao-tudum">
+        <div class="showcase-content">
+          <span class="showcase-pill tudum-pill">🎀 INTELIGÊNCIA ARTIFICIAL EEX</span>
+          <h2>CONHEÇA A TUDUM: SUA AJUDANTE HIPERATIVA.</h2>
+          <p>
+            Recebeu aquele textão gigante do chefe no WhatsApp ou do professor na faculdade? <strong>Não surte!</strong>
+          </p>
+          <p>
+            Basta colar na Tudum. Ela fatia o problema gigante em tarefas com prazo, marca seus eventos na agenda e anota seus lembretes num piscar de olhos, tudo com muito bom humor e gírias fofas!
+          </p>
+          <div class="tudum-sound-badges">
+            <span class="sound-chip">🔊 Sons temáticos a cada resposta</span>
+            <span class="sound-chip">⚡ Alimentada por Google Gemini</span>
+          </div>
+        </div>
+        <div class="showcase-preview-card card-tudum">
+          <div class="preview-tudum-header">
+            <img src="images/tudum-claro.png" alt="Tudum" class="preview-tudum-avatar">
+            <div>
+              <strong>TUDUM IA</strong>
+              <small>● Pronta para despachar</small>
+            </div>
+          </div>
+          <div class="preview-chat-body">
+            <div class="preview-chat-msg user">
+              <p>tudum! preciso entregar o slide até amanhã 14h e reunião às 16h, socorro!</p>
+            </div>
+            <div class="preview-chat-msg bot">
+              <p>oieee chefia! rlx que a tudum resolve tudinho agorinha!! ✨📦</p>
+              <div class="preview-tudum-actions">
+                <div>📦 Encomenda: <strong>Apresentação Slide</strong> (Amanhã 14:00)</div>
+                <div>📅 Evento: <strong>Reunião de Alinhamento</strong> (Amanhã 16:00)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SEÇÃO 3 (GRANDE): HÁBITOS, STREAKS E LOJA DE CONCHAS
+           ====================================================================== -->
+      <section class="landing-showcase-section showcase-reverse" id="secao-rotina">
+        <div class="showcase-content">
+          <span class="showcase-pill">☀️ ROTINAS & GAMIFICAÇÃO</span>
+          <h2>SUA VIDA VIRA UM JOGO DE RECOMPENSAS.</h2>
+          <p>
+            Construa rotinas saudáveis e acompanhe seu fogo de sequência diária (*streak*). Cada dia consecutivo completado aumenta seus ganhos de <strong>Conchas EEX</strong>!
+          </p>
+          <p>
+            Use suas conchas na <strong>Loja EEX</strong> para comprar novos temas retrô (como Roxo Nu-Metálico, Verde Magáfico e Azul Arcânico), molduras de crachá e cosméticos exclusivos.
+          </p>
+        </div>
+        <div class="showcase-preview-card card-streaks">
+          <div class="preview-card-header">
+            <span class="preview-title">Terminal de Recompensas</span>
+            <span class="preview-concha-counter"><img src="images/shellcoin.png" alt="Concha"> 255 Conchas</span>
+          </div>
+          <div class="preview-streak-box">
+            <img src="images/fireon.png" alt="Fogo" class="preview-fire-icon">
+            <div>
+              <h3>7 DIAS DE SEQUÊNCIA!</h3>
+              <p>Rota 100% cumprida consecutivamente!</p>
+            </div>
+          </div>
+          <div class="preview-shop-items">
+            <div class="shop-mini-card">
+              <span>🎨 Tema Roxo Nu-Metálico</span>
+              <small>ADQUIRIDO</small>
+            </div>
+            <div class="shop-mini-card">
+              <span>🏪 Selo Carga Frágil</span>
+              <small>50 Conchas</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           CALL TO ACTION FINAL (RODAPÉ IMPACTANTE)
+           ====================================================================== -->
+      <section class="landing-cta-banner">
+        <h2>PRONTO PARA DESPACHAR SEU PRIMEIRO PACOTE?</h2>
+        <p>Acesse o Elgaly Express agora mesmo, crie seu ID oficial <code>.express.com</code> e comece a organizar sua vida com estilo.</p>
+        <button type="button" class="btn-comic btn-landing-cta-giant action-open-login">
+          🚀 Entrar na Rede EEX Agora
+        </button>
+      </section>
+
+      <!-- Rodapé Oficial -->
       <footer class="landing-footer">
         <div class="landing-footer-top">
           <div class="landing-footer-brand">
