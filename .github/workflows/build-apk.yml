@@ -101,7 +101,7 @@ jobs:
         id: read_version
         run: |
           VERSION=$(node -e "const v=require('./version.json'); console.log(v.version);")
-          TAG="v${VERSION}-build${{ github.run_number }}"
+          TAG="v${VERSION}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "📦 Versão: $VERSION  |  Tag: $TAG"

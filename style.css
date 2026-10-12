@@ -10752,11 +10752,14 @@ body.tudum-open .tudum-sidebar {
 }
 
 .update-providente-gif {
-  width: 280px;
-  height: 280px;
+  width: min(340px, 85vw);
+  height: auto;
+  max-height: 380px;
   object-fit: contain;
   image-rendering: pixelated;
   transition: transform 0.2s ease;
+  display: block;
+  margin: 0 auto;
 }
 
 .update-providente-gif:hover {

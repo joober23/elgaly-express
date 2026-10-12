@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.0-build79';
+const EEX_APP_VERSION = '1.0.1';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -28,7 +28,7 @@ const UpdateManager = {
 
   _parseVersion(v) {
     if (!v) return { major: 0, minor: 0, patch: 0, build: 0, raw: '' };
-    const str = String(v).trim().replace(/^v/, '');
+    const str = String(v).trim().replace(/^v/i, '');
     const buildMatch = str.match(/(?:-build|\+build|\.b|_b|build)(\d+)/i);
     const build = buildMatch ? parseInt(buildMatch[1], 10) : 0;
     const cleanStr = str.replace(/(?:-build|\+build|\.b|_b|build)\d+/i, '');
@@ -48,7 +48,11 @@ const UpdateManager = {
     if (r.major !== l.major) return r.major > l.major;
     if (r.minor !== l.minor) return r.minor > l.minor;
     if (r.patch !== l.patch) return r.patch > l.patch;
-    if (r.build !== l.build) return r.build > l.build;
+    // Se a versão semântica (major.minor.patch) for exatamente igual, NÃO considera atualização
+    // a menos que ambas explicitem build e a remota seja maior
+    if (l.build > 0 && r.build > 0) {
+      return r.build > l.build;
+    }
     return false;
   },
 
@@ -96,8 +100,8 @@ const UpdateManager = {
     const btnDismiss = document.getElementById('btnUpdateDismiss');
     const audio = document.getElementById('audioUpdateWaiting');
 
-    if (curVerEl) curVerEl.textContent = 'v' + EEX_APP_VERSION;
-    if (verEl) verEl.textContent = version;
+    if (curVerEl) curVerEl.textContent = 'v' + EEX_APP_VERSION.replace(/^v/i, '');
+    if (verEl) verEl.textContent = (version.startsWith('v') ? '' : 'v') + version;
     if (notesEl && notes) {
       const cleanNotes = notes
         .replace(/##+/g, '')
