@@ -30,6 +30,8 @@ const filesToCopy = [
   'tudum_answer.mp3',
   'tudum_done.mp3',
   'tudum_sent.mp3',
+  'providente-dance.gif',
+  'Waiting for It (Burning Ver.).mp3',
   'version.json'
 ];
 

@@ -16,30 +16,45 @@ const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 const UpdateManager = {
   _checked: false,
 
-  /**
-   * Compara duas strings de versão semver (ex: "1.2.3")
-   * Retorna true se remoteVersion > localVersion
-   */
+  isNativeApp() {
+    return typeof window !== 'undefined' && !!(
+      window.Capacitor && (
+        (typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) ||
+        window.Capacitor.isNative ||
+        (window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web')
+      )
+    );
+  },
+
+  _parseVersion(v) {
+    if (!v) return { major: 0, minor: 0, patch: 0, build: 0, raw: '' };
+    const str = String(v).trim().replace(/^v/, '');
+    const buildMatch = str.match(/(?:-build|\+build|\.b|_b|build)(\d+)/i);
+    const build = buildMatch ? parseInt(buildMatch[1], 10) : 0;
+    const cleanStr = str.replace(/(?:-build|\+build|\.b|_b|build)\d+/i, '');
+    const parts = cleanStr.split('.').map(n => parseInt(n, 10) || 0);
+    return {
+      major: parts[0] || 0,
+      minor: parts[1] || 0,
+      patch: parts[2] || 0,
+      build: build,
+      raw: v
+    };
+  },
+
   _isNewer(localVersion, remoteVersion) {
-    const parse = (v) => String(v || '0').replace(/^v/, '').split('.').map(Number);
-    const local = parse(localVersion);
-    const remote = parse(remoteVersion);
-    for (let i = 0; i < Math.max(local.length, remote.length); i++) {
-      const l = local[i] || 0;
-      const r = remote[i] || 0;
-      if (r > l) return true;
-      if (r < l) return false;
-    }
+    const l = this._parseVersion(localVersion);
+    const r = this._parseVersion(remoteVersion);
+    if (r.major !== l.major) return r.major > l.major;
+    if (r.minor !== l.minor) return r.minor > l.minor;
+    if (r.patch !== l.patch) return r.patch > l.patch;
+    if (r.build !== l.build) return r.build > l.build;
     return false;
   },
 
   async check() {
-    // Só verifica uma vez por sessão
     if (this._checked) return;
     this._checked = true;
-
-    // Não verifica se estiver rodando no app nativo Capacitor (já tem a versão mais recente)
-    const isNative = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNative;
 
     try {
       const res = await fetch(
@@ -57,9 +72,12 @@ const UpdateManager = {
         : data.html_url;
 
       if (this._isNewer(EEX_APP_VERSION, latestTag)) {
-        // Mostra popup apenas no app nativo; no web, o código web já é o mais recente
-        if (isNative) {
+        if (this.isNativeApp()) {
+          // No APK nativo: Providente Dance takeover com fundo #e2077e e música em loop!
           this._showUpdateModal(latestTag, downloadUrl, data.body || '');
+        } else {
+          // Na Web / PWA: Alerta de nova rota
+          this._showWebUpdateBanner(latestTag);
         }
       }
     } catch (e) {
@@ -71,18 +89,93 @@ const UpdateManager = {
     const modal = document.getElementById('modalUpdateAvailable');
     if (!modal) return;
 
+    const curVerEl = document.getElementById('updateModalCurrentVersion');
     const verEl = document.getElementById('updateModalVersion');
     const notesEl = document.getElementById('updateModalNotes');
     const btnDownload = document.getElementById('btnUpdateDownload');
+    const btnDismiss = document.getElementById('btnUpdateDismiss');
+    const audio = document.getElementById('audioUpdateWaiting');
 
+    if (curVerEl) curVerEl.textContent = 'v' + EEX_APP_VERSION;
     if (verEl) verEl.textContent = version;
-    if (notesEl) notesEl.textContent = notes || 'Melhorias de desempenho e correções de bugs.';
+    if (notesEl && notes) {
+      const cleanNotes = notes
+        .replace(/##+/g, '')
+        .replace(/\*\*/g, '')
+        .trim();
+      notesEl.textContent = cleanNotes.slice(0, 200) + (cleanNotes.length > 200 ? '...' : '');
+    }
+
+    // Toca música em loop perfeito: Waiting for It (Burning Ver.)
+    if (audio) {
+      try {
+        audio.currentTime = 0;
+        audio.loop = true;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            const onFirstTouch = () => {
+              audio.play().catch(() => {});
+              window.removeEventListener('click', onFirstTouch);
+            };
+            window.addEventListener('click', onFirstTouch, { once: true });
+          });
+        }
+      } catch (e) {}
+    }
+
+    const stopAudio = () => {
+      if (audio) {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (e) {}
+      }
+    };
+
     if (btnDownload) {
       btnDownload.onclick = () => {
-        window.open(downloadUrl, '_blank');
+        stopAudio();
+        window.open(downloadUrl || `https://github.com/${EEX_GITHUB_REPO}/releases/latest`, '_blank');
       };
     }
+
+    if (btnDismiss) {
+      btnDismiss.onclick = () => {
+        stopAudio();
+        modal.classList.remove('active');
+      };
+    }
+
     modal.classList.add('active');
+  },
+
+  _showWebUpdateBanner(version) {
+    const pill = document.getElementById('webUpdatePill');
+    if (!pill) return;
+    pill.style.display = 'block';
+
+    const btnReload = document.getElementById('btnWebUpdateReload');
+    if (btnReload) {
+      btnReload.onclick = () => {
+        window.location.reload(true);
+      };
+    }
+
+    const btnClose = document.getElementById('btnWebUpdateClose');
+    if (btnClose) {
+      btnClose.onclick = () => {
+        pill.style.display = 'none';
+      };
+    }
+  },
+
+  testApkUpdateScreen() {
+    this._showUpdateModal(
+      'v1.0.0-build80 (Teste)',
+      `https://github.com/${EEX_GITHUB_REPO}/releases/latest`,
+      'Demonstração: Nova rota dimensional da Providente com música e dança!'
+    );
   }
 };
 
@@ -3900,11 +3993,23 @@ const PWAManager = {
   deferredPrompt: null,
 
   init() {
-    // 1. Registro do Service Worker
+    // 1. Registro do Service Worker & Detecção de Atualizações Web
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then((reg) => console.log('PWA Service Worker ativo:', reg.scope))
+          .then((reg) => {
+            console.log('PWA Service Worker ativo:', reg.scope);
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    UpdateManager._showWebUpdateBanner('Nova rota detectada');
+                  }
+                });
+              }
+            });
+          })
           .catch((err) => console.warn('PWA SW registro falhou:', err));
       });
     }
@@ -6072,11 +6177,25 @@ const AppUI = {
       btnPWANotify.addEventListener('click', () => NotificationManager.testNotification());
     }
 
+    const btnTestUpdateAlert = document.getElementById('btnTestUpdateAlert');
+    if (btnTestUpdateAlert) {
+      btnTestUpdateAlert.addEventListener('click', () => {
+        UpdateManager.testApkUpdateScreen();
+      });
+    }
+
     // 18. Fechamento de Modais clicando fora — NÃO FECHA O ONBOARDING MANDATÓRIO
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
           if (overlay.id === 'modalOnboarding') return; // Onboarding obrigatório não fecha ao clicar fora!
+          if (overlay.id === 'modalUpdateAvailable') {
+            const audio = document.getElementById('audioUpdateWaiting');
+            if (audio) {
+              audio.pause();
+              audio.currentTime = 0;
+            }
+          }
           overlay.classList.remove('active');
         }
       });

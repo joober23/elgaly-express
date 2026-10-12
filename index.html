@@ -1201,6 +1201,9 @@
                 <button type="button" class="btn-comic btn-secondary" id="btnPWANotify" style="width: 100%;">
                   🔔 Ativar & Testar Notificações
                 </button>
+                <button type="button" class="btn-comic btn-secondary" id="btnTestUpdateAlert" style="width: 100%;">
+                  👑 Testar Alerta da Providente (Nova Versão)
+                </button>
                 <div id="pwaStatusText" style="font-size: 0.8rem; color: #6b7280; font-weight: 700; text-align: center;">
                   Notificações automáticas sincronizadas e ativas.
                 </div>
@@ -2183,17 +2186,63 @@
 
 
   <!-- ==========================================================================
-       MODAL DE ATUALIZAÇÃO DISPONÍVEL (Popup da Providente no app nativo)
+       TELA DE ATUALIZAÇÃO DA PROVIDENTE (FUNDO #e2077e + GIF + ÁUDIO EM LOOP)
        ========================================================================== -->
-  <div class="modal-overlay" id="modalUpdateAvailable">
-    <div class="modal-box" style="max-width:420px; text-align:center;">
-      <img src="magaficseal.png" alt="Providente" style="width:80px; height:80px; object-fit:contain; border-radius:50%; border:3px solid #ffd700; box-shadow:0 0 20px #ffd70055; margin-bottom:12px;">
-      <p style="font-size:0.72rem; font-weight:800; letter-spacing:0.15em; color:var(--purple-main); text-transform:uppercase; margin:0 0 4px;">C.E.O. Providente — Comunicado</p>
-      <h3 style="margin:0 0 8px; font-size:1.3rem; color:var(--purple-dark);">Há uma Nova Versão Disponível! 🚀</h3>
-      <p style="font-size:0.88rem; color:#6b7280; margin:0 0 10px;">Versão <strong id="updateModalVersion" style="color:var(--purple-main);">–</strong> chegou com novidades e melhorias da Frota EEX.</p>
-      <div id="updateModalNotes" style="background:var(--card-bg); border:2px dashed var(--purple-main); border-radius:12px; padding:12px; font-size:0.82rem; color:var(--purple-dark); text-align:left; margin-bottom:18px; max-height:100px; overflow-y:auto; line-height:1.5;"></div>
-      <button id="btnUpdateDownload" class="btn-comic" style="width:100%; margin-bottom:10px;">📲 Atualizar Agora</button>
-      <button id="btnUpdateDismiss" class="btn-comic btn-secondary" style="width:100%; font-size:0.85rem;">Agora Não</button>
+  <div class="modal-overlay update-takeover-overlay" id="modalUpdateAvailable">
+    <!-- Áudio em Loop Perfeito: Waiting for It (Burning Ver.) -->
+    <audio id="audioUpdateWaiting" src="Waiting for It (Burning Ver.).mp3" loop preload="auto"></audio>
+
+    <div class="update-takeover-box">
+      <!-- Tag / Badge Superior -->
+      <div class="update-badge-header">
+        <span>👑 COMUNICADO DA CHEFIA • C.E.O. PROVIDENTE</span>
+      </div>
+
+      <!-- Título Impactante -->
+      <h2 class="update-takeover-title">NOVA VERSÃO DETECTADA!</h2>
+      <p class="update-takeover-sub">A Frota EEX preparou novas rotas e atualizações imperdíveis para você!</p>
+
+      <!-- O Gif da Providente Dançando -->
+      <div class="update-gif-wrapper">
+        <img src="providente-dance.gif" alt="Providente Dançando" class="update-providente-gif">
+      </div>
+
+      <!-- Comparativo de Versão -->
+      <div class="update-version-card">
+        <div class="update-version-row">
+          <span class="update-chip-current">Sua Versão: <strong id="updateModalCurrentVersion">v1.0.0</strong></span>
+          <span class="update-arrow">➔</span>
+          <span class="update-chip-new">Nova: <strong id="updateModalVersion">v1.0.0-build80</strong></span>
+        </div>
+        <div id="updateModalNotes" class="update-notes-box">Melhorias de desempenho, correções e novas rotas de despacho!</div>
+      </div>
+
+      <!-- Botões de Ação -->
+      <div class="update-actions-wrap">
+        <button type="button" id="btnUpdateDownload" class="btn-comic btn-update-giant">
+          🚀 Baixar Novo APK Agora
+        </button>
+        <button type="button" id="btnUpdateDismiss" class="btn-update-dismiss">
+          Lembrar Mais Tarde (Ignorar)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       BANNER / PILL FLUTUANTE DE ATUALIZAÇÃO WEB / PWA
+       ========================================================================== -->
+  <div class="web-update-pill" id="webUpdatePill" style="display: none;">
+    <div class="web-update-pill-content">
+      <span class="web-update-icon">📦</span>
+      <div class="web-update-info">
+        <strong>Nova rota da Frota EEX disponível!</strong>
+        <small>Arquivos atualizados prontos para carregar.</small>
+      </div>
+      <button type="button" class="btn-comic btn-web-reload" id="btnWebUpdateReload">
+        Atualizar Agora ⚡
+      </button>
+      <button type="button" class="btn-web-close" id="btnWebUpdateClose" title="Fechar">✕</button>
     </div>
   </div>
 
