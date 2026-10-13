@@ -11486,6 +11486,20 @@ body.tudum-open .tudum-sidebar {
   overflow: hidden;
   border: 2.5px solid var(--black);
   box-shadow: 3px 3px 0 var(--black);
+  background: #fdf4ff;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vitrola-spotify-placeholder {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #a21caf;
+  line-height: 1.4;
 }
 
 /* Keyframes */

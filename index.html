@@ -2403,10 +2403,10 @@
   </div>
 
   <!-- ==========================================================================
-       VITROLA EXPRESS - WIDGET FLUTUANTE DE VINIL & POPUP INTERATIVO
+       VITROLA EXPRESS - WIDGET FLUTUANTE DE VINIL & POPUP INTERATIVO (SPOTIFY)
        ========================================================================== -->
-  <!-- Pop-up Flutuante com Disco de Vinil Arrarrável & Balãozinho -->
-  <div id="vitrolaFloatingWidget" class="vitrola-floating-widget" title="Vitrola EEX — Arraste ou clique para abrir">
+  <!-- Pop-up Flutuante com Disco de Vinil Arrastável & Balãozinho (visível apenas logado) -->
+  <div id="vitrolaFloatingWidget" class="vitrola-floating-widget" style="display: none;" title="Vitrola EEX — Arraste ou clique para abrir">
     <!-- O Disco de Vinil Flutuante -->
     <div class="vitrola-mini-disc" id="vitrolaMiniDisc">
       <div class="vitrola-mini-grooves"></div>
@@ -2417,7 +2417,7 @@
     <!-- Mini badge flutuante de faixa tocando -->
     <div class="vitrola-mini-pill" id="vitrolaMiniPill">
       <span class="vitrola-mini-wave" id="vitrolaMiniWave"></span>
-      <span class="vitrola-mini-text" id="vitrolaMiniText">Vitrola EEX</span>
+      <span class="vitrola-mini-text" id="vitrolaMiniText">Vitrola Spotify</span>
     </div>
   </div>
 
@@ -2428,7 +2428,7 @@
         <span class="vitrola-header-icon">📻</span>
         <div>
           <h4 class="vitrola-balloon-title">VITROLA EXPRESS</h4>
-          <span class="vitrola-balloon-sub">Sintonizador Retrô da Frota EEX</span>
+          <span class="vitrola-balloon-sub">Integração Spotify • Frota EEX</span>
         </div>
       </div>
       <div class="vitrola-header-actions">
@@ -2458,84 +2458,21 @@
       </div>
     </div>
 
-    <!-- Faixa Atual & Indicador de Status -->
-    <div class="vitrola-track-display">
-      <div class="vitrola-track-title" id="vitrolaTrackTitle">Lo-Fi Express ☕ Beats de Foco</div>
-      <div class="vitrola-track-status" id="vitrolaTrackStatus">Pausado • Escolha uma estação ou playlist</div>
-    </div>
-
-    <!-- Timeline / Barra de Progresso com Agulha Deslizante -->
-    <div class="vitrola-timeline-wrap">
-      <span class="vitrola-time-cur" id="vitrolaTimeCur">00:00</span>
-      <div class="vitrola-progress-bar" id="vitrolaProgressBar">
-        <div class="vitrola-progress-fill" id="vitrolaProgressFill"></div>
+    <!-- Formulário do Spotify -->
+    <div class="vitrola-spotify-form">
+      <label for="vitrolaSpotifyUrl" class="vitrola-spotify-label">🎵 Cole qualquer link do Spotify (playlist, álbum, música, podcast ou URI):</label>
+      <div class="vitrola-input-group">
+        <input type="text" id="vitrolaSpotifyUrl" class="vitrola-spotify-input" placeholder="Cole o link do Spotify aqui...">
+        <button type="button" class="btn-comic" id="btnLoadSpotify" style="background: #1db954; color: #fff; font-size: 0.82rem; padding: 6px 12px; font-weight: 900;">Tocar</button>
       </div>
-      <span class="vitrola-time-total" id="vitrolaTimeTotal">--:--</span>
+      <small class="vitrola-spotify-hint">Aceita links normais (open.spotify.com/...), links com share (?si=...), links móveis e URIs (spotify:track:...)!</small>
     </div>
 
-    <!-- Controles de Reprodução (Neo-brutalistas Comic) -->
-    <div class="vitrola-controls-bar">
-      <button type="button" class="vitrola-ctrl-btn" id="btnVitrolaPrev" title="Estação / Faixa Anterior">⏮</button>
-      <button type="button" class="vitrola-ctrl-btn vitrola-btn-play" id="btnVitrolaPlayPause" title="Tocar / Pausar">▶</button>
-      <button type="button" class="vitrola-ctrl-btn" id="btnVitrolaNext" title="Próxima Estação / Faixa">⏭</button>
-      <div class="vitrola-volume-wrap">
-        <span class="vitrola-vol-icon">🔊</span>
-        <input type="range" min="0" max="1" step="0.05" value="0.7" id="vitrolaVolSlider" class="vitrola-vol-slider" title="Volume">
+    <!-- Container do Embed do Spotify -->
+    <div id="vitrolaSpotifyEmbedWrap" class="vitrola-spotify-embed-wrap">
+      <div class="vitrola-spotify-placeholder" id="vitrolaSpotifyPlaceholder">
+        <span>🎧 Nenhuma playlist carregada ainda. Cole seu link acima e clique em "Tocar"!</span>
       </div>
-    </div>
-
-    <!-- Seletor de Modo: Estações EEX vs Playlist Spotify -->
-    <div class="vitrola-modes-tabs">
-      <button type="button" class="vitrola-mode-tab active" id="tabVitrolaRadio" data-mode="radio">📻 Rádio EEX</button>
-      <button type="button" class="vitrola-mode-tab" id="tabVitrolaSpotify" data-mode="spotify">🟢 Spotify</button>
-    </div>
-
-    <!-- Painel 1: Estações da Rádio Frota EEX -->
-    <div class="vitrola-tab-content" id="vitrolaContentRadio">
-      <div class="vitrola-stations-grid">
-        <button type="button" class="vitrola-station-card active" data-station="0">
-          <span class="vitrola-st-icon">☕</span>
-          <div class="vitrola-st-info">
-            <strong>Lo-Fi Express</strong>
-            <small>Beats aconchegantes de estudo e despacho</small>
-          </div>
-        </button>
-        <button type="button" class="vitrola-station-card" data-station="1">
-          <span class="vitrola-st-icon">🌆</span>
-          <div class="vitrola-st-info">
-            <strong>Synthwave 80s</strong>
-            <small>Retro synth e noites neon dimensionais</small>
-          </div>
-        </button>
-        <button type="button" class="vitrola-station-card" data-station="2">
-          <span class="vitrola-st-icon">⚡</span>
-          <div class="vitrola-st-info">
-            <strong>Burning Express</strong>
-            <small>Tema da Frota & adrenalina pura</small>
-          </div>
-        </button>
-        <button type="button" class="vitrola-station-card" data-station="3">
-          <span class="vitrola-st-icon">☕</span>
-          <div class="vitrola-st-info">
-            <strong>Jazz Café</strong>
-            <small>Piano suave e chuva na janela</small>
-          </div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Painel 2: Playlist do Spotify do Usuário -->
-    <div class="vitrola-tab-content" id="vitrolaContentSpotify" style="display: none;">
-      <div class="vitrola-spotify-form">
-        <label for="vitrolaSpotifyUrl" class="vitrola-spotify-label">Cole o link da sua Playlist ou Álbum do Spotify:</label>
-        <div class="vitrola-input-group">
-          <input type="text" id="vitrolaSpotifyUrl" class="vitrola-spotify-input" placeholder="https://open.spotify.com/playlist/... ou track/...">
-          <button type="button" class="btn-comic" id="btnLoadSpotify" style="background: #1db954; color: #fff; font-size: 0.82rem; padding: 6px 12px;">Carregar</button>
-        </div>
-        <small class="vitrola-spotify-hint">O vinil tocará em sincronia com o player do Spotify!</small>
-      </div>
-      <!-- Container do Embed do Spotify -->
-      <div id="vitrolaSpotifyEmbedWrap" class="vitrola-spotify-embed-wrap" style="display: none;"></div>
     </div>
   </div>
 
