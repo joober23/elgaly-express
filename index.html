@@ -79,11 +79,6 @@
         <span>🍅 Relógio Pomodoro</span>
       </button>
 
-      <button type="button" class="drawer-nav-btn" id="btnDrawerVitrola" style="width: 100%; text-align: left; background: var(--card-bg); color: var(--purple-dark); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-        <span>📻 Express-FM</span>
-        <span style="font-size:0.75rem; background: #e62b7e; color: #fff; padding: 2px 8px; border-radius: 8px;">VINIL</span>
-      </button>
-
       <button type="button" class="drawer-nav-btn" id="btnDrawerLoja" style="width: 100%; text-align: left; background: var(--yellow-bright); color: var(--black); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: 900; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
         <span>🏪 Loja EEX</span>
         <span style="font-size:0.75rem; background: var(--purple-dark); color: #fff; padding: 2px 8px; border-radius: 8px;">NOVO</span>
@@ -167,7 +162,6 @@
         <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
         <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
         <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
-        <a href="#vitrola" class="nav-link" id="btnNavVitrola" title="Abrir Express-FM">📻 Express-FM</a>
         <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
         <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
         <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
@@ -1757,10 +1751,6 @@
         <span class="bottom-nav-icon">🍅</span>
         <span class="bottom-nav-label">Pomodoro</span>
       </a>
-      <a href="#vitrola" class="bottom-nav-item" id="btnBottomVitrola" data-tab="vitrola">
-        <span class="bottom-nav-icon">📻</span>
-        <span class="bottom-nav-label">Express-FM</span>
-      </a>
       <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
         <span class="bottom-nav-icon">🏪</span>
         <span class="bottom-nav-label">Loja EEX</span>
@@ -2411,15 +2401,10 @@
     <div class="vitrola-mini-disc-wrapper" id="vitrolaMiniDiscWrapper">
       <div class="vitrola-mini-disc" id="vitrolaMiniDisc">
         <div class="vitrola-mini-grooves"></div>
-        <div class="vitrola-mini-label">
-          <span class="vitrola-mini-note">🎵</span>
+        <div class="vitrola-mini-label" id="vitrolaMiniLabel">
+          <img id="vitrolaMiniThumb" src="images/elgalylogo.png" alt="EEX" class="vitrola-mini-thumb">
         </div>
       </div>
-    </div>
-    <!-- Mini badge flutuante de faixa tocando -->
-    <div class="vitrola-mini-pill" id="vitrolaMiniPill">
-      <span class="vitrola-mini-wave" id="vitrolaMiniWave"></span>
-      <span class="vitrola-mini-text" id="vitrolaMiniText">Express-FM</span>
     </div>
   </div>
 
@@ -2427,10 +2412,15 @@
   <div id="vitrolaBalloonPanel" class="vitrola-balloon-panel" style="display: none;">
     <div class="vitrola-balloon-header">
       <div class="vitrola-balloon-title-wrap">
-        <span class="vitrola-header-icon">📻</span>
-        <div>
-          <h4 class="vitrola-balloon-title">EXPRESS-FM</h4>
-          <span class="vitrola-balloon-sub">Sintonizador Retrô • YouTube Music</span>
+        <div class="vitrola-header-badge">
+          <span class="vitrola-header-icon">📻</span>
+        </div>
+        <div class="vitrola-header-text-block">
+          <div class="vitrola-header-top-row">
+            <h4 class="vitrola-balloon-title">EXPRESS-FM</h4>
+            <span class="vitrola-tag-live">● ON AIR</span>
+          </div>
+          <span class="vitrola-balloon-sub">Sintonizador Estéreo Dimensional • 108.5 MHz</span>
         </div>
       </div>
       <div class="vitrola-header-actions">
@@ -2441,13 +2431,13 @@
       </div>
     </div>
 
-    <!-- Mesa da Vitrola (Toca-Discos com Braço & Disco de Vinil Grande) -->
+    <!-- Mesa da Vitrola (Meio Vinil Estilo Toca-Discos Horizontal) -->
     <div class="vitrola-turntable-deck">
       <div class="vitrola-platter">
         <div class="vitrola-record" id="vitrolaRecord">
           <div class="vitrola-record-grooves"></div>
           <div class="vitrola-record-label" id="vitrolaRecordLabel">
-            <img src="images/elgalylogo.png" alt="EEX" class="vitrola-label-logo">
+            <img id="vitrolaRecordThumb" src="images/elgalylogo.png" alt="EEX" class="vitrola-label-logo">
             <span class="vitrola-label-rpm">33 RPM</span>
           </div>
         </div>

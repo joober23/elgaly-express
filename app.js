@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.1';
+const EEX_APP_VERSION = '1.0.2';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -4391,6 +4391,10 @@ const VitrolaManager = {
     this._bindEvents();
     this._initDraggable();
 
+    window.addEventListener('resize', () => {
+      this.updateVisibility();
+    });
+
     // Carrega último link do YouTube salvo localmente
     const savedUrl = localStorage.getItem('elgaly_vitrola_music_url');
     if (savedUrl) {
@@ -4401,9 +4405,10 @@ const VitrolaManager = {
   updateVisibility() {
     const widget = document.getElementById('vitrolaFloatingWidget');
     const balloon = document.getElementById('vitrolaBalloonPanel');
+    const isMobile = window.innerWidth <= 768;
     const isLoggedIn = typeof AuthManager !== 'undefined' && AuthManager.isLoggedIn() && AuthManager.isEexPassVerified;
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn || isMobile) {
       if (widget) widget.style.display = 'none';
       if (balloon) balloon.style.display = 'none';
       if (this.isDvdMode) this.stopDvdMode();
@@ -4736,6 +4741,16 @@ const VitrolaManager = {
       </iframe>
     `;
 
+    // Atualiza a capa/thumbnail no centro do vinil
+    const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
+    const videoId = videoMatch ? videoMatch[1] : null;
+    const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'images/elgalylogo.png';
+
+    const recordThumb = document.getElementById('vitrolaRecordThumb');
+    const miniThumb = document.getElementById('vitrolaMiniThumb');
+    if (recordThumb) recordThumb.src = thumbUrl;
+    if (miniThumb) miniThumb.src = thumbUrl;
+
     const widget = document.getElementById('vitrolaFloatingWidget');
     const balloon = document.getElementById('vitrolaBalloonPanel');
     const miniText = document.getElementById('vitrolaMiniText');
@@ -4744,7 +4759,7 @@ const VitrolaManager = {
     if (miniText) miniText.textContent = 'YT Music 🔴';
 
     if (showToast && typeof AppUI !== 'undefined') {
-      AppUI.showToast('🔴 Música carregada na Vitrola! Curtindo som completo 🎉');
+      AppUI.showToast('📻 Música carregada na Express-FM! Tocando som completo 🎉');
     }
   }
 };
