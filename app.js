@@ -4289,6 +4289,92 @@ const PomodoroManager = {
 };
 
 // ==========================================================================
+// GERENCIADOR DE SONS CALMOS DE DIGITAÇÃO (TypingSoundManager - Web Audio API)
+// Produz cliques suaves, mecânicos e relaxantes ao digitar em qualquer input
+// ==========================================================================
+const TypingSoundManager = {
+  _ctx: null,
+  _enabled: true,
+  _lastPlayTime: 0,
+
+  _getAudioContext() {
+    if (!this._ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        this._ctx = new AudioCtx();
+      }
+    }
+    if (this._ctx && this._ctx.state === 'suspended') {
+      this._ctx.resume().catch(() => {});
+    }
+    return this._ctx;
+  },
+
+  playKeyClick(isSpecial = false) {
+    if (!this._enabled) return;
+    const now = Date.now();
+    // Limite para evitar eco se digitar muito rápido (mínimo 45ms entre cliques)
+    if (now - this._lastPlayTime < 45) return;
+    this._lastPlayTime = now;
+
+    try {
+      const ctx = this._getAudioContext();
+      if (!ctx) return;
+
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      // Variação orgânica suave de frequência (efeito teclado mecânico macio)
+      const baseFreq = isSpecial ? 180 + Math.random() * 40 : 320 + Math.random() * 90;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(baseFreq, t);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, t + 0.045);
+
+      // Filtro passa-baixa suave para o som ser macio e calmo (sem estalo estridente)
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(isSpecial ? 700 : 1100, t);
+      filter.frequency.exponentialRampToValueAtTime(300, t + 0.045);
+
+      // Envelope de volume calmo (curto e sutil)
+      const vol = isSpecial ? 0.07 : 0.045;
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.05);
+    } catch (e) {
+      // AudioContext bloqueado sem interação
+    }
+  },
+
+  init() {
+    // Intercepta qualquer digitação em campos de texto do app
+    window.addEventListener('keydown', (e) => {
+      const target = e.target;
+      if (!target) return;
+      const tag = target.tagName ? target.tagName.toLowerCase() : '';
+      const isInput = tag === 'input' && !['checkbox', 'radio', 'range', 'file', 'color'].includes(target.type);
+      const isTextArea = tag === 'textarea';
+      const isContentEditable = target.isContentEditable;
+
+      if (isInput || isTextArea || isContentEditable) {
+        // Ignora teclas modificadoras soltas
+        if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) return;
+        const isSpecial = ['Enter', 'Backspace', 'Delete', ' '].includes(e.key);
+        this.playKeyClick(isSpecial);
+      }
+    }, { passive: true });
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DA VITROLA EXPRESS - TOCA-DISCOS RETRÔ & YOUTUBE MUSIC FROTA EEX
 // Suporta Músicas, Playlists, Vídeos, Shorts (YouTube / YT Music) + Modo DVD
 // ==========================================================================
@@ -5542,6 +5628,7 @@ const AppUI = {
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
     if (typeof TudumManager !== 'undefined') TudumManager.init();
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
+    if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
 
     this.bindEvents();
     this.initNavigation();

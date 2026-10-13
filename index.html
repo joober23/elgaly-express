@@ -80,7 +80,7 @@
       </button>
 
       <button type="button" class="drawer-nav-btn" id="btnDrawerVitrola" style="width: 100%; text-align: left; background: var(--card-bg); color: var(--purple-dark); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-        <span>📻 Vitrola EEX</span>
+        <span>📻 Express-FM</span>
         <span style="font-size:0.75rem; background: #e62b7e; color: #fff; padding: 2px 8px; border-radius: 8px;">VINIL</span>
       </button>
 
@@ -167,7 +167,7 @@
         <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
         <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
         <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
-        <a href="#vitrola" class="nav-link" id="btnNavVitrola" title="Abrir Vitrola EEX">📻 Vitrola</a>
+        <a href="#vitrola" class="nav-link" id="btnNavVitrola" title="Abrir Express-FM">📻 Express-FM</a>
         <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
         <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
         <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
@@ -1759,7 +1759,7 @@
       </a>
       <a href="#vitrola" class="bottom-nav-item" id="btnBottomVitrola" data-tab="vitrola">
         <span class="bottom-nav-icon">📻</span>
-        <span class="bottom-nav-label">Vitrola</span>
+        <span class="bottom-nav-label">Express-FM</span>
       </a>
       <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
         <span class="bottom-nav-icon">🏪</span>
@@ -2403,21 +2403,23 @@
   </div>
 
   <!-- ==========================================================================
-       VITROLA EXPRESS - WIDGET FLUTUANTE DE VINIL & POPUP INTERATIVO (SPOTIFY)
+       EXPRESS-FM - WIDGET FLUTUANTE DE VINIL & POPUP INTERATIVO (YOUTUBE MUSIC)
        ========================================================================== -->
   <!-- Pop-up Flutuante com Disco de Vinil Arrastável & Balãozinho (visível apenas logado) -->
-  <div id="vitrolaFloatingWidget" class="vitrola-floating-widget" style="display: none;" title="Vitrola EEX — Arraste ou clique para abrir">
-    <!-- O Disco de Vinil Flutuante -->
-    <div class="vitrola-mini-disc" id="vitrolaMiniDisc">
-      <div class="vitrola-mini-grooves"></div>
-      <div class="vitrola-mini-label">
-        <span class="vitrola-mini-note">🎵</span>
+  <div id="vitrolaFloatingWidget" class="vitrola-floating-widget" style="display: none;" title="Express-FM — Arraste ou clique para abrir">
+    <!-- Wrapper com Sombra Fixa que NÃO gira -->
+    <div class="vitrola-mini-disc-wrapper" id="vitrolaMiniDiscWrapper">
+      <div class="vitrola-mini-disc" id="vitrolaMiniDisc">
+        <div class="vitrola-mini-grooves"></div>
+        <div class="vitrola-mini-label">
+          <span class="vitrola-mini-note">🎵</span>
+        </div>
       </div>
     </div>
     <!-- Mini badge flutuante de faixa tocando -->
     <div class="vitrola-mini-pill" id="vitrolaMiniPill">
       <span class="vitrola-mini-wave" id="vitrolaMiniWave"></span>
-      <span class="vitrola-mini-text" id="vitrolaMiniText">Vitrola EEX</span>
+      <span class="vitrola-mini-text" id="vitrolaMiniText">Express-FM</span>
     </div>
   </div>
 
@@ -2427,8 +2429,8 @@
       <div class="vitrola-balloon-title-wrap">
         <span class="vitrola-header-icon">📻</span>
         <div>
-          <h4 class="vitrola-balloon-title">VITROLA EXPRESS</h4>
-          <span class="vitrola-balloon-sub">YouTube Music • Músicas Completas</span>
+          <h4 class="vitrola-balloon-title">EXPRESS-FM</h4>
+          <span class="vitrola-balloon-sub">Sintonizador Retrô • YouTube Music</span>
         </div>
       </div>
       <div class="vitrola-header-actions">
