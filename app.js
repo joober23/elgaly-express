@@ -4289,8 +4289,8 @@ const PomodoroManager = {
 };
 
 // ==========================================================================
-// GERENCIADOR DA VITROLA EXPRESS - TOCA-DISCOS RETRÔ & SPOTIFY FROTA EEX
-// Suporta Playlists, Álbuns, Músicas, Podcasts do Spotify + Modo DVD
+// GERENCIADOR DA VITROLA EXPRESS - TOCA-DISCOS RETRÔ & YOUTUBE MUSIC FROTA EEX
+// Suporta Músicas, Playlists, Vídeos, Shorts (YouTube / YT Music) + Modo DVD
 // ==========================================================================
 const VitrolaManager = {
   isDvdMode: false,
@@ -4305,10 +4305,10 @@ const VitrolaManager = {
     this._bindEvents();
     this._initDraggable();
 
-    // Carrega último link do Spotify salvo localmente
-    const savedSpotify = localStorage.getItem('elgaly_vitrola_spotify_url');
-    if (savedSpotify) {
-      this.loadSpotify(savedSpotify, false);
+    // Carrega último link do YouTube salvo localmente
+    const savedUrl = localStorage.getItem('elgaly_vitrola_music_url');
+    if (savedUrl) {
+      this.loadMusic(savedUrl, false);
     }
   },
 
@@ -4329,8 +4329,8 @@ const VitrolaManager = {
   _bindEvents() {
     const btnClose = document.getElementById('btnVitrolaClose');
     const btnDvd = document.getElementById('btnVitrolaDvdMode');
-    const btnLoadSpotify = document.getElementById('btnLoadSpotify');
-    const inputSpotify = document.getElementById('vitrolaSpotifyUrl');
+    const btnLoadMusic = document.getElementById('btnLoadMusic');
+    const inputMusic = document.getElementById('vitrolaMusicUrl');
 
     if (btnClose) {
       btnClose.addEventListener('click', () => this.closeBalloon());
@@ -4340,14 +4340,14 @@ const VitrolaManager = {
       btnDvd.addEventListener('click', () => this.toggleDvdMode());
     }
 
-    if (btnLoadSpotify && inputSpotify) {
-      btnLoadSpotify.addEventListener('click', () => {
-        this.loadSpotify(inputSpotify.value.trim(), true);
+    if (btnLoadMusic && inputMusic) {
+      btnLoadMusic.addEventListener('click', () => {
+        this.loadMusic(inputMusic.value.trim(), true);
       });
-      inputSpotify.addEventListener('keydown', (e) => {
+      inputMusic.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          this.loadSpotify(inputSpotify.value.trim(), true);
+          this.loadMusic(inputMusic.value.trim(), true);
         }
       });
     }
@@ -4583,66 +4583,70 @@ const VitrolaManager = {
     if (btnDvd) btnDvd.classList.remove('active');
   },
 
-  // ---- SPOTIFY INTEGRATION ----
+  // ---- YOUTUBE / YOUTUBE MUSIC INTEGRATION ----
   /**
-   * Converte qualquer formato de URL ou URI do Spotify em URL de embed oficial:
+   * Converte qualquer link de vídeo, playlist ou shorts do YouTube / YouTube Music em URL de embed
    * Suporta:
-   * - https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=abc...
-   * - https://open.spotify.com/intl-pt/track/XYZ
-   * - spotify:playlist:37i9dQZF1DXcBWIGoYBM5M
-   * - https://open.spotify.com/embed/playlist/XYZ
+   * - https://www.youtube.com/watch?v=VIDEO_ID
+   * - https://youtu.be/VIDEO_ID
+   * - https://music.youtube.com/watch?v=VIDEO_ID
+   * - https://www.youtube.com/playlist?list=PLAYLIST_ID
+   * - https://music.youtube.com/playlist?list=PLAYLIST_ID
+   * - https://www.youtube.com/shorts/VIDEO_ID
    */
-  parseSpotifyUrl(input) {
+  parseYouTubeUrl(input) {
     if (!input || typeof input !== 'string') return null;
     let raw = input.trim();
 
-    // 1. Já é um embed direto?
-    if (raw.includes('spotify.com/embed/')) {
-      return raw.split('?')[0].replace(/\/+$/, '') + '?utm_source=generator&theme=0';
+    // 1. Já é um embed?
+    if (raw.includes('youtube.com/embed/')) {
+      return raw;
     }
 
-    // 2. Formato URI: spotify:type:id
-    const uriMatch = raw.match(/spotify:(playlist|album|track|episode|show|artist):([a-zA-Z0-9]+)/i);
-    if (uriMatch) {
-      return `https://open.spotify.com/embed/${uriMatch[1].toLowerCase()}/${uriMatch[2]}?utm_source=generator&theme=0`;
+    // 2. Playlist isolada (sem vídeo ou com vídeo)
+    const playlistMatch = raw.match(/[?&]list=([a-zA-Z0-9_-]+)/i);
+    const videoMatch = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
+
+    if (playlistMatch && !videoMatch) {
+      // Playlist pura
+      return `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistMatch[1]}&autoplay=1`;
     }
 
-    // 3. Formato Web Link (com ou sem intl-xx, queries, etc.)
-    const webMatch = raw.match(/(?:https?:\/\/)?(?:open\.)?spotify\.com\/(?:[a-zA-Z]{2,4}-[a-zA-Z]{2,4}\/)?(playlist|album|track|episode|show|artist)\/([a-zA-Z0-9]+)/i);
-    if (webMatch) {
-      return `https://open.spotify.com/embed/${webMatch[1].toLowerCase()}/${webMatch[2]}?utm_source=generator&theme=0`;
+    if (videoMatch) {
+      const vid = videoMatch[1];
+      const extraList = playlistMatch ? `&list=${playlistMatch[1]}` : '';
+      return `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1${extraList}`;
     }
 
     return null;
   },
 
-  loadSpotify(url, showToast = true) {
-    const wrap = document.getElementById('vitrolaSpotifyEmbedWrap');
-    const inputSpotify = document.getElementById('vitrolaSpotifyUrl');
+  loadMusic(url, showToast = true) {
+    const wrap = document.getElementById('vitrolaPlayerEmbedWrap');
+    const inputMusic = document.getElementById('vitrolaMusicUrl');
     if (!wrap || !url) return;
 
-    const embedUrl = this.parseSpotifyUrl(url);
+    const embedUrl = this.parseYouTubeUrl(url);
     if (!embedUrl) {
       if (showToast && typeof AppUI !== 'undefined') {
-        AppUI.showToast('⚠️ Link não reconhecido! Copie o link de compartilhar do Spotify e tente novamente.');
+        AppUI.showToast('⚠️ Link não reconhecido! Cole um link de vídeo ou playlist do YouTube/YouTube Music.');
       }
       return;
     }
 
     this.currentEmbedUrl = embedUrl;
-    localStorage.setItem('elgaly_vitrola_spotify_url', url);
-    if (inputSpotify) inputSpotify.value = url;
+    localStorage.setItem('elgaly_vitrola_music_url', url);
+    if (inputMusic) inputMusic.value = url;
 
-    // Renderiza o iframe do Spotify Embed com altura ideal
+    // Renderiza o iframe do YouTube
     wrap.innerHTML = `
       <iframe style="border-radius:16px; border:3px solid var(--black); box-shadow:4px 4px 0 var(--black);" 
         src="${embedUrl}" 
         width="100%" 
-        height="180" 
+        height="190" 
         frameBorder="0" 
-        allowfullscreen="" 
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-        loading="lazy">
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
       </iframe>
     `;
 
@@ -4651,10 +4655,10 @@ const VitrolaManager = {
     const miniText = document.getElementById('vitrolaMiniText');
     if (widget) widget.classList.add('playing');
     if (balloon) balloon.classList.add('playing');
-    if (miniText) miniText.textContent = 'Spotify 🟢';
+    if (miniText) miniText.textContent = 'YT Music 🔴';
 
     if (showToast && typeof AppUI !== 'undefined') {
-      AppUI.showToast('🟢 Spotify conectado à Vitrola! Dê play no card.');
+      AppUI.showToast('🔴 Música carregada na Vitrola! Curtindo som completo 🎉');
     }
   }
 };
