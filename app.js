@@ -4289,6 +4289,577 @@ const PomodoroManager = {
 };
 
 // ==========================================================================
+// GERENCIADOR DA VITROLA EXPRESS - TOCA-DISCOS RETRÔ & RÁDIO FROTA EEX
+// Suporta Estações Lo-Fi / Synthwave + Playlist Spotify Embed + Modo DVD
+// ==========================================================================
+const VitrolaManager = {
+  stations: [
+    {
+      id: 'lofi',
+      title: 'Lo-Fi Express ☕ Beats de Foco',
+      subtitle: 'Beats aconchegantes de estudo e despacho',
+      url: 'https://stream.zeno.fm/0r0xa792kwzuv', // Lofi radio stream
+      icon: '☕'
+    },
+    {
+      id: 'synthwave',
+      title: 'Synthwave 80s 🌆 Noites Dimensionais',
+      subtitle: 'Retro synth e noites neon dimensionais',
+      url: 'https://stream.zeno.fm/7ca40a6b72hvv', // Synthwave stream
+      icon: '🌆'
+    },
+    {
+      id: 'burning',
+      title: 'Burning Express ⚡ Trilha da Frota EEX',
+      subtitle: 'Tema oficial da Frota & energia pura',
+      url: 'Waiting for It (Burning Ver.).mp3',
+      icon: '⚡'
+    },
+    {
+      id: 'jazz',
+      title: 'Jazz Café 🎷 Piano & Chuva',
+      subtitle: 'Piano suave e aconchego dimensional',
+      url: 'https://stream.zeno.fm/3wfyg6v84nhvv', // Jazz stream
+      icon: '🎷'
+    }
+  ],
+
+  currentStationIdx: 0,
+  isPlaying: false,
+  audio: null,
+  isDvdMode: false,
+  dvdAnimId: null,
+  dvdPos: { x: 50, y: 50, dx: 2, dy: 2 },
+  isDragging: false,
+  dragStart: { x: 0, y: 0, initialLeft: 0, initialTop: 0 },
+  hasDragged: false,
+  activeMode: 'radio', // 'radio' | 'spotify'
+
+  init() {
+    this.audio = new Audio();
+    this.audio.preload = 'none';
+
+    // Volume salvo
+    const savedVol = localStorage.getItem('elgaly_vitrola_vol');
+    if (savedVol !== null) {
+      this.audio.volume = parseFloat(savedVol) || 0.7;
+      const slider = document.getElementById('vitrolaVolSlider');
+      if (slider) slider.value = this.audio.volume;
+    } else {
+      this.audio.volume = 0.7;
+    }
+
+    // Eventos do áudio
+    this.audio.addEventListener('play', () => {
+      this.isPlaying = true;
+      this._updateUIState();
+    });
+
+    this.audio.addEventListener('pause', () => {
+      this.isPlaying = false;
+      this._updateUIState();
+    });
+
+    this.audio.addEventListener('timeupdate', () => {
+      this._updateProgress();
+    });
+
+    this.audio.addEventListener('ended', () => {
+      if (this.stations[this.currentStationIdx].url.endsWith('.mp3')) {
+        this.next();
+      }
+    });
+
+    this.audio.addEventListener('error', (e) => {
+      console.warn('Erro ao reproduzir estação da Vitrola:', e);
+      const statusEl = document.getElementById('vitrolaTrackStatus');
+      if (statusEl) statusEl.textContent = 'Sinal fraco nessa frequência... tentando reconectar';
+    });
+
+    this._bindEvents();
+    this._initDraggable();
+  },
+
+  _bindEvents() {
+    const btnPlayPause = document.getElementById('btnVitrolaPlayPause');
+    const btnPrev = document.getElementById('btnVitrolaPrev');
+    const btnNext = document.getElementById('btnVitrolaNext');
+    const volSlider = document.getElementById('vitrolaVolSlider');
+    const btnClose = document.getElementById('btnVitrolaClose');
+    const btnDvd = document.getElementById('btnVitrolaDvdMode');
+    const progressBar = document.getElementById('vitrolaProgressBar');
+
+    if (btnPlayPause) {
+      btnPlayPause.addEventListener('click', () => this.togglePlay());
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener('click', () => this.prev());
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener('click', () => this.next());
+    }
+
+    if (volSlider) {
+      volSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        this.audio.volume = val;
+        localStorage.setItem('elgaly_vitrola_vol', val);
+      });
+    }
+
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.closeBalloon());
+    }
+
+    if (btnDvd) {
+      btnDvd.addEventListener('click', () => this.toggleDvdMode());
+    }
+
+    if (progressBar) {
+      progressBar.addEventListener('click', (e) => {
+        if (!this.audio.duration || isNaN(this.audio.duration)) return;
+        const rect = progressBar.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, clickX / rect.width));
+        this.audio.currentTime = pct * this.audio.duration;
+      });
+    }
+
+    // Tabs Modo Rádio / Spotify
+    const tabRadio = document.getElementById('tabVitrolaRadio');
+    const tabSpotify = document.getElementById('tabVitrolaSpotify');
+    const contentRadio = document.getElementById('vitrolaContentRadio');
+    const contentSpotify = document.getElementById('vitrolaContentSpotify');
+
+    if (tabRadio && tabSpotify) {
+      tabRadio.addEventListener('click', () => {
+        tabRadio.classList.add('active');
+        tabSpotify.classList.remove('active');
+        if (contentRadio) contentRadio.style.display = 'block';
+        if (contentSpotify) contentSpotify.style.display = 'none';
+        this.activeMode = 'radio';
+      });
+
+      tabSpotify.addEventListener('click', () => {
+        tabSpotify.classList.add('active');
+        tabRadio.classList.remove('active');
+        if (contentSpotify) contentSpotify.style.display = 'block';
+        if (contentRadio) contentRadio.style.display = 'none';
+        this.activeMode = 'spotify';
+      });
+    }
+
+    // Estações Cards
+    const stationCards = document.querySelectorAll('.vitrola-station-card');
+    stationCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.station, 10) || 0;
+        this.setStation(idx);
+      });
+    });
+
+    // Spotify Carregar
+    const btnLoadSpotify = document.getElementById('btnLoadSpotify');
+    const inputSpotify = document.getElementById('vitrolaSpotifyUrl');
+    if (btnLoadSpotify && inputSpotify) {
+      btnLoadSpotify.addEventListener('click', () => {
+        const url = inputSpotify.value.trim();
+        this.loadSpotify(url);
+      });
+      inputSpotify.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.loadSpotify(inputSpotify.value.trim());
+        }
+      });
+    }
+
+    // Botões no Header, Drawer e Bottom Nav para abrir Vitrola
+    const btnNavVitrola = document.getElementById('btnNavVitrola');
+    if (btnNavVitrola) {
+      btnNavVitrola.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openBalloon();
+      });
+    }
+
+    const btnDrawerVitrola = document.getElementById('btnDrawerVitrola');
+    if (btnDrawerVitrola) {
+      btnDrawerVitrola.addEventListener('click', () => {
+        if (typeof AppUI !== 'undefined' && AppUI.closeMobileDrawer) AppUI.closeMobileDrawer();
+        this.openBalloon();
+      });
+    }
+
+    const btnBottomVitrola = document.getElementById('btnBottomVitrola');
+    if (btnBottomVitrola) {
+      btnBottomVitrola.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openBalloon();
+      });
+    }
+  },
+
+  _initDraggable() {
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    if (!widget) return;
+
+    const onPointerDown = (e) => {
+      // Se estiver em modo DVD, qualquer clique/toque encerra o modo DVD
+      if (this.isDvdMode) {
+        this.stopDvdMode();
+      }
+
+      this.isDragging = true;
+      this.hasDragged = false;
+      const rect = widget.getBoundingClientRect();
+      this.dragStart.x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      this.dragStart.y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      this.dragStart.initialLeft = rect.left;
+      this.dragStart.initialTop = rect.top;
+
+      widget.style.transition = 'none';
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('touchmove', onPointerMove, { passive: false });
+      window.addEventListener('touchend', onPointerUp);
+    };
+
+    const onPointerMove = (e) => {
+      if (!this.isDragging) return;
+      const curX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const curY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      const dx = curX - this.dragStart.x;
+      const dy = curY - this.dragStart.y;
+
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        this.hasDragged = true;
+      }
+
+      const newLeft = Math.max(10, Math.min(window.innerWidth - widget.offsetWidth - 10, this.dragStart.initialLeft + dx));
+      const newTop = Math.max(10, Math.min(window.innerHeight - widget.offsetHeight - 10, this.dragStart.initialTop + dy));
+
+      widget.style.left = newLeft + 'px';
+      widget.style.top = newTop + 'px';
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+
+      // Posiciona balão junto se estiver aberto
+      this._repositionBalloon();
+    };
+
+    const onPointerUp = () => {
+      this.isDragging = false;
+      widget.style.transition = 'transform 0.15s ease, filter 0.2s ease';
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
+
+      // Se foi apenas um clique sem arrastar, abre ou fecha o balão da vitrola!
+      if (!this.hasDragged) {
+        this.toggleBalloon();
+      }
+    };
+
+    widget.addEventListener('pointerdown', onPointerDown);
+    widget.addEventListener('touchstart', onPointerDown, { passive: true });
+  },
+
+  _repositionBalloon() {
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    if (!widget || !balloon || balloon.style.display === 'none') return;
+
+    const widgetRect = widget.getBoundingClientRect();
+    const balloonWidth = Math.min(360, window.innerWidth - 32);
+
+    let left = widgetRect.left - (balloonWidth - widgetRect.width);
+    if (left < 16) left = 16;
+    if (left + balloonWidth > window.innerWidth - 16) left = window.innerWidth - balloonWidth - 16;
+
+    let top = widgetRect.top - balloon.offsetHeight - 14;
+    if (top < 16) {
+      // Abre para baixo se faltar espaço em cima
+      top = widgetRect.bottom + 14;
+    }
+
+    balloon.style.left = left + 'px';
+    balloon.style.top = top + 'px';
+    balloon.style.right = 'auto';
+    balloon.style.bottom = 'auto';
+  },
+
+  openBalloon() {
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    if (!balloon) return;
+    if (this.isDvdMode) this.stopDvdMode();
+    balloon.style.display = 'flex';
+    this._repositionBalloon();
+  },
+
+  closeBalloon() {
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    if (balloon) balloon.style.display = 'none';
+  },
+
+  toggleBalloon() {
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    if (!balloon) return;
+    if (balloon.style.display === 'none' || !balloon.style.display) {
+      this.openBalloon();
+    } else {
+      this.closeBalloon();
+    }
+  },
+
+  // ---- MODO DVD (O mini disco quica suavemente pelas bordas da tela) ----
+  toggleDvdMode() {
+    if (this.isDvdMode) {
+      this.stopDvdMode();
+    } else {
+      this.startDvdMode();
+    }
+  },
+
+  startDvdMode() {
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const btnDvd = document.getElementById('btnVitrolaDvdMode');
+    if (!widget) return;
+
+    this.closeBalloon(); // Fecha balão para desobstruir a tela
+    this.isDvdMode = true;
+    if (btnDvd) btnDvd.classList.add('active');
+
+    if (typeof AppUI !== 'undefined') {
+      AppUI.showToast('📀 Modo DVD Ativado! O disco vai quicar na tela (clique nele para pausar)');
+    }
+
+    const rect = widget.getBoundingClientRect();
+    this.dvdPos.x = rect.left;
+    this.dvdPos.y = rect.top;
+
+    // Velocidade tranquila e agradável
+    const speed = 2.2;
+    this.dvdPos.dx = (Math.random() > 0.5 ? 1 : -1) * speed;
+    this.dvdPos.dy = (Math.random() > 0.5 ? 1 : -1) * speed;
+
+    const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+    let colorIdx = 0;
+
+    const animate = () => {
+      if (!this.isDvdMode) return;
+
+      const wWidth = window.innerWidth;
+      const wHeight = window.innerHeight;
+      const elWidth = widget.offsetWidth;
+      const elHeight = widget.offsetHeight;
+
+      this.dvdPos.x += this.dvdPos.dx;
+      this.dvdPos.y += this.dvdPos.dy;
+
+      let hitWall = false;
+
+      // Colisão horizontal
+      if (this.dvdPos.x <= 10) {
+        this.dvdPos.x = 10;
+        this.dvdPos.dx *= -1;
+        hitWall = true;
+      } else if (this.dvdPos.x + elWidth >= wWidth - 10) {
+        this.dvdPos.x = wWidth - elWidth - 10;
+        this.dvdPos.dx *= -1;
+        hitWall = true;
+      }
+
+      // Colisão vertical
+      if (this.dvdPos.y <= 10) {
+        this.dvdPos.y = 10;
+        this.dvdPos.dy *= -1;
+        hitWall = true;
+      } else if (this.dvdPos.y + elHeight >= wHeight - 10) {
+        this.dvdPos.y = wHeight - elHeight - 10;
+        this.dvdPos.dy *= -1;
+        hitWall = true;
+      }
+
+      // Troca a corzinha do mini label a cada quicada, clássico DVD!
+      if (hitWall) {
+        colorIdx = (colorIdx + 1) % colors.length;
+        const miniLabel = widget.querySelector('.vitrola-mini-label');
+        if (miniLabel) miniLabel.style.background = colors[colorIdx];
+      }
+
+      widget.style.left = this.dvdPos.x + 'px';
+      widget.style.top = this.dvdPos.y + 'px';
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+
+      this.dvdAnimId = requestAnimationFrame(animate);
+    };
+
+    this.dvdAnimId = requestAnimationFrame(animate);
+  },
+
+  stopDvdMode() {
+    this.isDvdMode = false;
+    if (this.dvdAnimId) {
+      cancelAnimationFrame(this.dvdAnimId);
+      this.dvdAnimId = null;
+    }
+    const btnDvd = document.getElementById('btnVitrolaDvdMode');
+    if (btnDvd) btnDvd.classList.remove('active');
+  },
+
+  // ---- CONTROLE DE REPRODUÇÃO ----
+  togglePlay() {
+    if (this.isPlaying) {
+      this.pause();
+    } else {
+      this.play();
+    }
+  },
+
+  play() {
+    const station = this.stations[this.currentStationIdx];
+    if (!this.audio.src || !this.audio.src.includes(station.url)) {
+      this.audio.src = station.url;
+    }
+    this.audio.play().then(() => {
+      this.isPlaying = true;
+      this._updateUIState();
+    }).catch(err => {
+      console.warn('Erro ao dar play no áudio:', err);
+    });
+  },
+
+  pause() {
+    this.audio.pause();
+    this.isPlaying = false;
+    this._updateUIState();
+  },
+
+  prev() {
+    this.currentStationIdx = (this.currentStationIdx - 1 + this.stations.length) % this.stations.length;
+    this.setStation(this.currentStationIdx);
+  },
+
+  next() {
+    this.currentStationIdx = (this.currentStationIdx + 1) % this.stations.length;
+    this.setStation(this.currentStationIdx);
+  },
+
+  setStation(idx) {
+    this.currentStationIdx = idx;
+    const station = this.stations[idx];
+    this.audio.src = station.url;
+
+    const cards = document.querySelectorAll('.vitrola-station-card');
+    cards.forEach((c, i) => {
+      if (i === idx) c.classList.add('active');
+      else c.classList.remove('active');
+    });
+
+    const titleEl = document.getElementById('vitrolaTrackTitle');
+    const miniText = document.getElementById('vitrolaMiniText');
+    if (titleEl) titleEl.textContent = station.title;
+    if (miniText) miniText.textContent = station.title.split(' ')[0] + ' ' + station.icon;
+
+    this.play();
+  },
+
+  loadSpotify(url) {
+    const wrap = document.getElementById('vitrolaSpotifyEmbedWrap');
+    if (!wrap || !url) return;
+
+    // Converte links do Spotify em URL de embed oficial:
+    // https://open.spotify.com/playlist/XYZ -> https://open.spotify.com/embed/playlist/XYZ
+    let embedUrl = '';
+    const match = url.match(/spotify\.com\/(playlist|album|track|episode|show)\/([a-zA-Z0-9]+)/);
+    if (match) {
+      embedUrl = `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0`;
+    } else if (url.includes('spotify.com/embed/')) {
+      embedUrl = url;
+    } else {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Cole um link válido do Spotify (playlist, álbum ou música)');
+      return;
+    }
+
+    // Pausa a rádio se estiver tocando
+    if (this.isPlaying) this.pause();
+
+    wrap.innerHTML = `
+      <iframe style="border-radius:12px;" src="${embedUrl}" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    `;
+    wrap.style.display = 'block';
+
+    const titleEl = document.getElementById('vitrolaTrackTitle');
+    const statusEl = document.getElementById('vitrolaTrackStatus');
+    const miniText = document.getElementById('vitrolaMiniText');
+    if (titleEl) titleEl.textContent = 'Spotify Playlist Carregada 🟢';
+    if (statusEl) statusEl.textContent = 'Dê play no card abaixo para curtir';
+    if (miniText) miniText.textContent = 'Spotify 🟢';
+
+    // Roda o disco do vinil de leve para o visual
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    if (widget) widget.classList.add('playing');
+    if (balloon) balloon.classList.add('playing');
+  },
+
+  _updateUIState() {
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    const btnPlayPause = document.getElementById('btnVitrolaPlayPause');
+    const statusEl = document.getElementById('vitrolaTrackStatus');
+    const miniText = document.getElementById('vitrolaMiniText');
+    const station = this.stations[this.currentStationIdx];
+
+    if (this.isPlaying) {
+      if (widget) widget.classList.add('playing');
+      if (balloon) balloon.classList.add('playing');
+      if (btnPlayPause) btnPlayPause.textContent = '⏸';
+      if (statusEl) statusEl.textContent = 'Tocando agora na Frota EEX 📡';
+      if (miniText) miniText.textContent = station.title.split(' ')[0] + ' ' + station.icon;
+    } else {
+      if (widget) widget.classList.remove('playing');
+      if (balloon) balloon.classList.remove('playing');
+      if (btnPlayPause) btnPlayPause.textContent = '▶';
+      if (statusEl) statusEl.textContent = 'Pausado • Escolha uma estação ou playlist';
+    }
+  },
+
+  _updateProgress() {
+    const fill = document.getElementById('vitrolaProgressFill');
+    const timeCur = document.getElementById('vitrolaTimeCur');
+    const timeTotal = document.getElementById('vitrolaTimeTotal');
+
+    if (!this.audio) return;
+    const cur = this.audio.currentTime || 0;
+    const dur = this.audio.duration;
+
+    if (timeCur) timeCur.textContent = this._formatTime(cur);
+
+    if (dur && !isNaN(dur) && isFinite(dur)) {
+      if (timeTotal) timeTotal.textContent = this._formatTime(dur);
+      if (fill) fill.style.width = ((cur / dur) * 100) + '%';
+    } else {
+      // Transmissão de rádio contínua (stream ao vivo)
+      if (timeTotal) timeTotal.textContent = 'AO VIVO';
+      if (fill) fill.style.width = '100%';
+    }
+  },
+
+  _formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR TUDUM IA - ASSISTENTE INTELIGENTE DE DESPACHO EEX
 // Alimentado pela API Gemini (Google Generative AI)
 // ==========================================================================
@@ -5166,6 +5737,7 @@ const AppUI = {
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
     if (typeof TudumManager !== 'undefined') TudumManager.init();
+    if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
 
     this.bindEvents();
     this.initNavigation();

@@ -79,6 +79,11 @@
         <span>🍅 Relógio Pomodoro</span>
       </button>
 
+      <button type="button" class="drawer-nav-btn" id="btnDrawerVitrola" style="width: 100%; text-align: left; background: var(--card-bg); color: var(--purple-dark); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: bold; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <span>📻 Vitrola EEX</span>
+        <span style="font-size:0.75rem; background: #e62b7e; color: #fff; padding: 2px 8px; border-radius: 8px;">VINIL</span>
+      </button>
+
       <button type="button" class="drawer-nav-btn" id="btnDrawerLoja" style="width: 100%; text-align: left; background: var(--yellow-bright); color: var(--black); border: 2.5px solid var(--black); border-radius: 14px; padding: 10px 14px; font-weight: 900; font-family: var(--font-main); font-size: 0.95rem; margin: 6px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
         <span>🏪 Loja EEX</span>
         <span style="font-size:0.75rem; background: var(--purple-dark); color: #fff; padding: 2px 8px; border-radius: 8px;">NOVO</span>
@@ -162,6 +167,7 @@
         <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
         <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
         <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
+        <a href="#vitrola" class="nav-link" id="btnNavVitrola" title="Abrir Vitrola EEX">📻 Vitrola</a>
         <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
         <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
         <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
@@ -1751,6 +1757,10 @@
         <span class="bottom-nav-icon">🍅</span>
         <span class="bottom-nav-label">Pomodoro</span>
       </a>
+      <a href="#vitrola" class="bottom-nav-item" id="btnBottomVitrola" data-tab="vitrola">
+        <span class="bottom-nav-icon">📻</span>
+        <span class="bottom-nav-label">Vitrola</span>
+      </a>
       <a href="#loja" class="bottom-nav-item" id="btnBottomLoja" data-tab="loja">
         <span class="bottom-nav-icon">🏪</span>
         <span class="bottom-nav-label">Loja EEX</span>
@@ -2389,6 +2399,143 @@
       <span class="pomodoro-floating-time" id="pomodoroFloatingTime">25:00</span>
       <span class="pomodoro-floating-label" id="pomodoroFloatingPhase">Foco</span>
       <span class="pomodoro-floating-hint">↑ clique para abrir</span>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       VITROLA EXPRESS - WIDGET FLUTUANTE DE VINIL & POPUP INTERATIVO
+       ========================================================================== -->
+  <!-- Pop-up Flutuante com Disco de Vinil Arrarrável & Balãozinho -->
+  <div id="vitrolaFloatingWidget" class="vitrola-floating-widget" title="Vitrola EEX — Arraste ou clique para abrir">
+    <!-- O Disco de Vinil Flutuante -->
+    <div class="vitrola-mini-disc" id="vitrolaMiniDisc">
+      <div class="vitrola-mini-grooves"></div>
+      <div class="vitrola-mini-label">
+        <span class="vitrola-mini-note">🎵</span>
+      </div>
+    </div>
+    <!-- Mini badge flutuante de faixa tocando -->
+    <div class="vitrola-mini-pill" id="vitrolaMiniPill">
+      <span class="vitrola-mini-wave" id="vitrolaMiniWave"></span>
+      <span class="vitrola-mini-text" id="vitrolaMiniText">Vitrola EEX</span>
+    </div>
+  </div>
+
+  <!-- Balão / Painel da Vitrola (Abre ao Clicar no Vinil) -->
+  <div id="vitrolaBalloonPanel" class="vitrola-balloon-panel" style="display: none;">
+    <div class="vitrola-balloon-header">
+      <div class="vitrola-balloon-title-wrap">
+        <span class="vitrola-header-icon">📻</span>
+        <div>
+          <h4 class="vitrola-balloon-title">VITROLA EXPRESS</h4>
+          <span class="vitrola-balloon-sub">Sintonizador Retrô da Frota EEX</span>
+        </div>
+      </div>
+      <div class="vitrola-header-actions">
+        <button type="button" class="vitrola-btn-dvd" id="btnVitrolaDvdMode" title="Ativar Modo DVD (quica nas bordas)">
+          <span>📀 Modo DVD</span>
+        </button>
+        <button type="button" class="vitrola-btn-close" id="btnVitrolaClose" title="Recolher Vitrola">&times;</button>
+      </div>
+    </div>
+
+    <!-- Mesa da Vitrola (Toca-Discos com Braço & Disco de Vinil Grande) -->
+    <div class="vitrola-turntable-deck">
+      <div class="vitrola-platter">
+        <div class="vitrola-record" id="vitrolaRecord">
+          <div class="vitrola-record-grooves"></div>
+          <div class="vitrola-record-label" id="vitrolaRecordLabel">
+            <img src="images/elgalylogo.png" alt="EEX" class="vitrola-label-logo">
+            <span class="vitrola-label-rpm">33 RPM</span>
+          </div>
+        </div>
+      </div>
+      <!-- Braço da Agulha (Tonearm) -->
+      <div class="vitrola-tonearm" id="vitrolaTonearm">
+        <div class="vitrola-tonearm-base"></div>
+        <div class="vitrola-tonearm-rod"></div>
+        <div class="vitrola-tonearm-head"></div>
+      </div>
+    </div>
+
+    <!-- Faixa Atual & Indicador de Status -->
+    <div class="vitrola-track-display">
+      <div class="vitrola-track-title" id="vitrolaTrackTitle">Lo-Fi Express ☕ Beats de Foco</div>
+      <div class="vitrola-track-status" id="vitrolaTrackStatus">Pausado • Escolha uma estação ou playlist</div>
+    </div>
+
+    <!-- Timeline / Barra de Progresso com Agulha Deslizante -->
+    <div class="vitrola-timeline-wrap">
+      <span class="vitrola-time-cur" id="vitrolaTimeCur">00:00</span>
+      <div class="vitrola-progress-bar" id="vitrolaProgressBar">
+        <div class="vitrola-progress-fill" id="vitrolaProgressFill"></div>
+      </div>
+      <span class="vitrola-time-total" id="vitrolaTimeTotal">--:--</span>
+    </div>
+
+    <!-- Controles de Reprodução (Neo-brutalistas Comic) -->
+    <div class="vitrola-controls-bar">
+      <button type="button" class="vitrola-ctrl-btn" id="btnVitrolaPrev" title="Estação / Faixa Anterior">⏮</button>
+      <button type="button" class="vitrola-ctrl-btn vitrola-btn-play" id="btnVitrolaPlayPause" title="Tocar / Pausar">▶</button>
+      <button type="button" class="vitrola-ctrl-btn" id="btnVitrolaNext" title="Próxima Estação / Faixa">⏭</button>
+      <div class="vitrola-volume-wrap">
+        <span class="vitrola-vol-icon">🔊</span>
+        <input type="range" min="0" max="1" step="0.05" value="0.7" id="vitrolaVolSlider" class="vitrola-vol-slider" title="Volume">
+      </div>
+    </div>
+
+    <!-- Seletor de Modo: Estações EEX vs Playlist Spotify -->
+    <div class="vitrola-modes-tabs">
+      <button type="button" class="vitrola-mode-tab active" id="tabVitrolaRadio" data-mode="radio">📻 Rádio EEX</button>
+      <button type="button" class="vitrola-mode-tab" id="tabVitrolaSpotify" data-mode="spotify">🟢 Spotify</button>
+    </div>
+
+    <!-- Painel 1: Estações da Rádio Frota EEX -->
+    <div class="vitrola-tab-content" id="vitrolaContentRadio">
+      <div class="vitrola-stations-grid">
+        <button type="button" class="vitrola-station-card active" data-station="0">
+          <span class="vitrola-st-icon">☕</span>
+          <div class="vitrola-st-info">
+            <strong>Lo-Fi Express</strong>
+            <small>Beats aconchegantes de estudo e despacho</small>
+          </div>
+        </button>
+        <button type="button" class="vitrola-station-card" data-station="1">
+          <span class="vitrola-st-icon">🌆</span>
+          <div class="vitrola-st-info">
+            <strong>Synthwave 80s</strong>
+            <small>Retro synth e noites neon dimensionais</small>
+          </div>
+        </button>
+        <button type="button" class="vitrola-station-card" data-station="2">
+          <span class="vitrola-st-icon">⚡</span>
+          <div class="vitrola-st-info">
+            <strong>Burning Express</strong>
+            <small>Tema da Frota & adrenalina pura</small>
+          </div>
+        </button>
+        <button type="button" class="vitrola-station-card" data-station="3">
+          <span class="vitrola-st-icon">☕</span>
+          <div class="vitrola-st-info">
+            <strong>Jazz Café</strong>
+            <small>Piano suave e chuva na janela</small>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Painel 2: Playlist do Spotify do Usuário -->
+    <div class="vitrola-tab-content" id="vitrolaContentSpotify" style="display: none;">
+      <div class="vitrola-spotify-form">
+        <label for="vitrolaSpotifyUrl" class="vitrola-spotify-label">Cole o link da sua Playlist ou Álbum do Spotify:</label>
+        <div class="vitrola-input-group">
+          <input type="text" id="vitrolaSpotifyUrl" class="vitrola-spotify-input" placeholder="https://open.spotify.com/playlist/... ou track/...">
+          <button type="button" class="btn-comic" id="btnLoadSpotify" style="background: #1db954; color: #fff; font-size: 0.82rem; padding: 6px 12px;">Carregar</button>
+        </div>
+        <small class="vitrola-spotify-hint">O vinil tocará em sincronia com o player do Spotify!</small>
+      </div>
+      <!-- Container do Embed do Spotify -->
+      <div id="vitrolaSpotifyEmbedWrap" class="vitrola-spotify-embed-wrap" style="display: none;"></div>
     </div>
   </div>
 
