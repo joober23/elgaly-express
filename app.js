@@ -4312,7 +4312,9 @@ sua personalidade e tom de voz:
 - não use letras maiúsculas no início das frases, isso dá um ar de adolescente descolado que combina com o Elgaly Express!
 
 como você entende o Elgaly Express (O Sistema):
-sua função é fatiar problemas gigantes em passos minúsculos para o usuário não surtar. você classifica o que o usuário manda nestas caixas:
+sua função é fatiar problemas gigantes em passos minúsculos para o usuário não surtar, além de ser o olho vivo de toda a operação. você tem acesso direto em tempo real a todas as encomendas, eventos, rotinas e notas do usuário listadas no final deste prompt em 'Contexto operacional'.
+quando o usuário perguntar sobre o que tem para fazer, encomendas para determinado dia (ex: "tenho algo pro dia 18?"), compromissos na agenda ou rotinas pendentes, consulte com muita atenção essas listas fornecidas no contexto e responda com precisão, carinho e entusiasmo!
+você classifica as informações nestas caixas:
 - Rotinas: hábitos diários ou repetitivos.
 - Encomendas: tarefas com PRAZO cravado (data e hora para "entregar"). trate como despachos urgentes!
 - Eventos: compromissos na agenda (ex: reunião dia 18 às 22:30).
@@ -4697,6 +4699,78 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     return { cleanText, actions };
   },
 
+  buildAppDataContext() {
+    let contextStr = '';
+
+    // 1. Encomendas / Tarefas
+    try {
+      if (typeof TaskManager !== 'undefined' && Array.isArray(TaskManager.tasks) && TaskManager.tasks.length > 0) {
+        const pendingTasks = TaskManager.tasks.filter(t => !t.done);
+        const doneTasks = TaskManager.tasks.filter(t => t.done);
+        contextStr += `\n\n📦 ENCOMENDAS / TAREFAS NO PAINEL:\n`;
+        if (pendingTasks.length > 0) {
+          contextStr += `Pendentes (${pendingTasks.length}):\n` + pendingTasks.map(t => {
+            const due = t.dueDate ? ` (Prazo: ${t.dueDate})` : ' (Sem prazo)';
+            const prio = t.priority ? ` [Prioridade: ${t.priority}]` : '';
+            const cat = t.category ? ` [Cat: ${t.category}]` : '';
+            const desc = t.description ? ` - Obs: ${t.description}` : '';
+            return `- [ID: ${t.id}] "${t.title}"${due}${prio}${cat}${desc}`;
+          }).join('\n');
+        } else {
+          contextStr += `Nenhuma pendente. Todas entregues! 🎉\n`;
+        }
+        if (doneTasks.length > 0) {
+          contextStr += `\nConcluídas recentemente (${Math.min(doneTasks.length, 5)}): ` + doneTasks.slice(-5).map(t => `"${t.title}"`).join(', ');
+        }
+      } else {
+        contextStr += `\n\n📦 ENCOMENDAS: Nenhuma cadastrada no momento.`;
+      }
+    } catch (e) {
+      console.warn('Erro ao montar contexto de tarefas para Tudum:', e);
+    }
+
+    // 2. Eventos / Compromissos na Agenda
+    try {
+      if (typeof EventManager !== 'undefined' && Array.isArray(EventManager.events) && EventManager.events.length > 0) {
+        const upcomingEvents = EventManager.events.filter(ev => !ev.done);
+        if (upcomingEvents.length > 0) {
+          contextStr += `\n\n📅 EVENTOS / AGENDA:\n` + upcomingEvents.map(ev => {
+            const time = ev.time ? ` às ${ev.time}` : '';
+            const desc = ev.description ? ` - ${ev.description}` : '';
+            return `- "${ev.title}" (Data: ${ev.date || 'sem data'}${time})${desc}`;
+          }).join('\n');
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao montar contexto de eventos para Tudum:', e);
+    }
+
+    // 3. Rotinas / Hábitos Diários
+    try {
+      if (typeof HabitManager !== 'undefined' && Array.isArray(HabitManager.habits) && HabitManager.habits.length > 0) {
+        contextStr += `\n\n🔄 ROTINAS / HÁBITOS:\n` + HabitManager.habits.map(h => {
+          const status = h.done ? '✅ Concluído hoje' : '⏳ Pendente';
+          const streak = h.streak ? ` (Streak: ${h.streak}d)` : '';
+          return `- "${h.title}" [${status}]${streak}`;
+        }).join('\n');
+      }
+    } catch (e) {
+      console.warn('Erro ao montar contexto de hábitos para Tudum:', e);
+    }
+
+    // 4. Notas Fixadas / Recentes
+    try {
+      if (typeof NotesManager !== 'undefined' && Array.isArray(NotesManager.notes) && NotesManager.notes.length > 0) {
+        const topNotes = NotesManager.notes.slice(0, 5);
+        contextStr += `\n\n📝 NOTAS NO BLOQUINHO:\n` + topNotes.map(n => `- "${n.title}": ${n.content || ''}`).join('\n');
+      }
+    } catch (e) {
+      console.warn('Erro ao montar contexto de notas para Tudum:', e);
+    }
+
+    return contextStr;
+  },
+
   async callGemini(userPrompt) {
     const apiKey = this.getApiKey();
     const systemPrompt = this.getPersonality();
@@ -4705,7 +4779,8 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     const userName = currentUser ? currentUser.name : 'Agente';
     const userNick = currentUser ? (currentUser.eexEmail || currentUser.nickname) : '';
 
-    const enrichedSystemPrompt = `${systemPrompt}\n\nContexto operacional:\n- Usuário atual: ${userName} (${userNick})\n- Data de hoje: ${new Date().toLocaleDateString('pt-BR')} (${new Date().toISOString().split('T')[0]}).`;
+    const appDataContext = this.buildAppDataContext();
+    const enrichedSystemPrompt = `${systemPrompt}\n\nContexto operacional:\n- Usuário atual: ${userName} (${userNick})\n- Data de hoje: ${new Date().toLocaleDateString('pt-BR')} (${new Date().toISOString().split('T')[0]}).${appDataContext}`;
 
     const contents = [];
     // Pega mensagens anteriores do histórico (excluindo a mensagem atual que já foi adicionada em this.history)
