@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.3';
+const EEX_APP_VERSION = '1.0.4';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -4439,6 +4439,25 @@ const VitrolaManager = {
       this.updateVisibility();
     });
 
+    // Escuta eventos do YouTube iframe para garantir volume inicial sempre a 20%
+    window.addEventListener('message', (event) => {
+      try {
+        if (!event.data) return;
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && (data.event === 'onReady' || data.event === 'initialDelivery' || data.info === 1)) {
+          this.setInitialVolume();
+        }
+      } catch (_) {}
+    });
+
+    // Carrega informações da mídia salva anteriormente
+    const savedInfo = localStorage.getItem('elgaly_vitrola_media_info');
+    if (savedInfo) {
+      try {
+        this.updateTrackDisplay(JSON.parse(savedInfo));
+      } catch (_) {}
+    }
+
     // Apenas pré-carrega o input e a thumbnail do último som salvo, SEM iniciar reprodução ou criar iframe
     const savedUrl = localStorage.getItem('elgaly_vitrola_music_url');
     if (savedUrl) {
@@ -4453,6 +4472,83 @@ const VitrolaManager = {
       const miniThumb = document.getElementById('vitrolaMiniThumb');
       if (recordThumb) recordThumb.src = thumbUrl;
       if (miniThumb) miniThumb.src = thumbUrl;
+
+      if (!savedInfo) {
+        this.fetchMediaInfo(savedUrl);
+      }
+    }
+  },
+
+  setInitialVolume() {
+    const sendVol = () => {
+      try {
+        const iframe = document.getElementById('vitrolaPlayerIframe') || document.querySelector('#vitrolaPlayerEmbedWrap iframe');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setVolume',
+            args: [20]
+          }), '*');
+        }
+      } catch (_) {}
+    };
+
+    // Dispara em intervalos para sincronizar com a prontidão do player do YouTube
+    [250, 600, 1100, 1800, 3000].forEach(delay => {
+      setTimeout(sendVol, delay);
+    });
+  },
+
+  async fetchMediaInfo(url) {
+    if (!url) return;
+    const isPlaylist = /[?&]list=/i.test(url);
+    const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
+
+    let info = {
+      title: isPlaylist ? 'Playlist Sintonizada' : 'Música Sintonizada',
+      source: isPlaylist ? 'Playlist YouTube' : 'Canal do YouTube',
+      isPlaylist: isPlaylist
+    };
+
+    try {
+      let targetUrl = url;
+      if (videoMatch) {
+        targetUrl = `https://www.youtube.com/watch?v=${videoMatch[1]}`;
+      }
+
+      const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(targetUrl)}&format=json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.title) {
+          info.title = data.title;
+        }
+        if (data.author_name) {
+          info.source = isPlaylist ? `Playlist: ${data.author_name}` : `Canal: ${data.author_name}`;
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar oEmbed:', err);
+    }
+
+    localStorage.setItem('elgaly_vitrola_media_info', JSON.stringify(info));
+    this.updateTrackDisplay(info);
+    return info;
+  },
+
+  updateTrackDisplay(info) {
+    if (!info) return;
+    const titleEl = document.getElementById('vitrolaTrackTitle');
+    const sourceEl = document.getElementById('vitrolaTrackSource');
+    const sourceIcon = document.getElementById('vitrolaSourceIcon');
+
+    if (titleEl && info.title) {
+      titleEl.textContent = info.title;
+    }
+    if (sourceEl && info.source) {
+      sourceEl.textContent = info.source;
+    }
+    if (sourceIcon) {
+      sourceIcon.textContent = info.isPlaylist ? '📜' : '📺';
     }
   },
 
@@ -4765,7 +4861,11 @@ const VitrolaManager = {
 
     // 1. Já é um embed?
     if (raw.includes('youtube.com/embed/')) {
-      return autoPlay ? raw : raw.replace(/[?&]autoplay=[01]/g, '') + (raw.includes('?') ? '&autoplay=0' : '?autoplay=0');
+      let url = autoPlay ? raw : raw.replace(/[?&]autoplay=[01]/g, '') + (raw.includes('?') ? '&autoplay=0' : '?autoplay=0');
+      if (!url.includes('enablejsapi=1')) {
+        url += (url.includes('?') ? '&' : '?') + 'enablejsapi=1';
+      }
+      return url;
     }
 
     // 2. Playlist isolada (sem vídeo ou com vídeo)
@@ -4776,13 +4876,13 @@ const VitrolaManager = {
 
     if (playlistMatch && !videoMatch) {
       // Playlist pura
-      return `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistMatch[1]}&${playParam}`;
+      return `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistMatch[1]}&enablejsapi=1&${playParam}`;
     }
 
     if (videoMatch) {
       const vid = videoMatch[1];
       const extraList = playlistMatch ? `&list=${playlistMatch[1]}` : '';
-      return `https://www.youtube-nocookie.com/embed/${vid}?${playParam}${extraList}`;
+      return `https://www.youtube-nocookie.com/embed/${vid}?enablejsapi=1&${playParam}${extraList}`;
     }
 
     return null;
@@ -4813,9 +4913,9 @@ const VitrolaManager = {
     localStorage.setItem('elgaly_vitrola_music_url', url);
     if (inputMusic) inputMusic.value = url;
 
-    // Renderiza o iframe do YouTube sem autoplay intrusivo
+    // Renderiza o iframe do YouTube com API ativada e volume inicial a 20%
     wrap.innerHTML = `
-      <iframe style="border-radius:16px; border:3px solid var(--black); box-shadow:4px 4px 0 var(--black);" 
+      <iframe id="vitrolaPlayerIframe" style="border-radius:16px; border:3px solid var(--black); box-shadow:4px 4px 0 var(--black);" 
         src="${embedUrl}" 
         width="100%" 
         height="190" 
@@ -4824,6 +4924,14 @@ const VitrolaManager = {
         allowfullscreen>
       </iframe>
     `;
+
+    const iframeEl = document.getElementById('vitrolaPlayerIframe');
+    if (iframeEl) {
+      iframeEl.addEventListener('load', () => {
+        this.setInitialVolume();
+      });
+    }
+    this.setInitialVolume();
 
     // Atualiza a capa/thumbnail no centro do vinil
     const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
@@ -4834,6 +4942,9 @@ const VitrolaManager = {
     const miniThumb = document.getElementById('vitrolaMiniThumb');
     if (recordThumb) recordThumb.src = thumbUrl;
     if (miniThumb) miniThumb.src = thumbUrl;
+
+    // Busca e exibe o nome da música e canal/playlist no display digital
+    this.fetchMediaInfo(url);
 
     const widget = document.getElementById('vitrolaFloatingWidget');
     const balloon = document.getElementById('vitrolaBalloonPanel');
