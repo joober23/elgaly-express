@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.2';
+const EEX_APP_VERSION = '1.0.3';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -2253,15 +2253,59 @@ const FriendsManager = {
 // ==========================================================================
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
-  latestVersion: 'v2.8',
+  latestVersion: 'v3.0',
 
   editions: [
+    {
+      version: 'v3.0',
+      date: 'Outubro / 2026',
+      headline: 'CHEGADA TRIUNFAL DA TUDUM IA: A MASCOTE HIPERATIVA DO DESPACHO!',
+      subheadline: 'Decreto Presidencial de Assistência Cognitiva & Inteligência Emocional // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'A Tudum chegou com tudo na Frota EEX! ✨📦🎀',
+        text: 'Conheça a Tudum, nossa assistente oficial e mascote hiperativa com cérebro do Google Gemini! Ela não fala como robô chato: usa gírias fofas da internet, adora fatiar tarefas gigantescas em micropassos fáceis e tem visão de raio-X para checar suas encomendas, eventos, hábitos e notas em tempo real. Além disso, ela tem reações animadas, veste roupas temáticas combinando com seu tema e faz sininhos fofos a cada mensagem enviada!',
+        tags: ['Tudum IA ✨', 'Gemini Integrado', 'Gírias da Internet', 'Fatiador de Tarefas', 'Mascote Hiperativa']
+      },
+      sad: {
+        title: 'Cuidado com a empolgação excessiva da mascote!',
+        text: 'A Tudum é movida a cafeína quântica e entusiasmo infinito! Se você pedir ajuda, prepare-se para respostas rápidas, cheias de exclamações e emojis fofos. Não nos responsabilizamos por surtos de produtividade fofa!',
+        tags: ['Energia Pura', 'Produtividade Extrema']
+      },
+      angry: {
+        title: 'Providente exigiu: a Tudum lê TODAS as encomendas com precisão de laser!',
+        text: 'A C.E.O. Providente testou pessoalmente a Tudum: se você perguntar "o que tenho para o dia 18?", ela vasculha todo o seu calendário de despachos e responde na lata, sem esquecer nenhum pacote! Preguiça e respostas genéricas foram terminantemente proibidas no Elgaly Express!',
+        tags: ['Leitura de Encomendas', 'Zero Erros de Data', 'Inspeção da C.E.O.']
+      }
+    },
+    {
+      version: 'v2.9',
+      date: 'Outubro / 2026',
+      headline: 'EXPRESS-FM NA ÁREA: O TOCA-DISCOS RETRÔ & MÚSICAS DO YOUTUBE SEM LIMITES!',
+      subheadline: 'Decreto de Harmonização Sonora Dimensional // Autorizado por Providente C.E.O.',
+      badge: 'HISTÓRICO',
+      happy: {
+        title: 'Sintonizador Express-FM & Capa no Centro do Vinil! 📻🎶',
+        text: 'A Frota EEX agora tem sua própria estação estéreo 108.5 MHz! Um toca-discos retrô neo-brutalista horizontal onde a metade de cima do disco gira com a capa oficial do seu álbum ou vídeo do YouTube Music no centro. Suporta vídeos, músicas completas, playlists inteiras e até shorts sem cortes de 30 segundos! E para quem ama nostalgia: o Modo DVD faz o mini vinil quicar suavemente pelas bordas da tela!',
+        tags: ['Express-FM 📻', 'YouTube Music Completo', 'Meio Vinil Retrô', 'Thumbnail do Álbum', 'Modo DVD 📀']
+      },
+      sad: {
+        title: 'Autoplay surpresa foi banido para sempre!',
+        text: 'Nada de sustos ao abrir o app de madrugada! O autoplay foi domado e retirado da inicialização. O vinil agora só toca quando você estiver devidamente identificado com seu EEX-PASS e apertar o botão "Tocar"!',
+        tags: ['Sem Autoplay Fantasma', 'Paz nos Ouvidos']
+      },
+      angry: {
+        title: 'Providente tirou o botão da navbar e calibrou para desktop!',
+        text: 'A C.E.O. Providente viu a navbar apertada e não perdoou: o botão foi retirado do menu para manter a navegação limpa e desativado em celulares pequenos para que os agentes foquem nas entregas pelo celular. No PC, o disco flutua livre, sem pílulas de texto desnecessárias ao redor!',
+        tags: ['Navbar Limpa', 'Desktop Focus', 'Disco Flutuante Puro']
+      }
+    },
     {
       version: 'v2.8',
       date: 'Outubro / 2026',
       headline: 'MODO PROFISSÃO ATIVADO, AMIGOS LIBERADOS & PASSAPORTE CORRIGIDO!',
       subheadline: 'Decreto de Expansão Operacional // Autorizado por Providente C.E.O.',
-      badge: 'EDIÇÃO ATUAL',
+      badge: 'HISTÓRICO',
       happy: {
         title: 'Modo Profissão entra em operação! 💼',
         text: 'A pedido de agentes que trabalham além da faculdade e vida pessoal, a C.E.O. Providente autorizou o novo Modo Profissão! Ative nas configurações e desbloqueie a categoria Trabalho em tarefas, hábitos e eventos. Quem já tinha conta recebeu um popup especial da C.E.O. perguntando se deseja ativar. Bem-vindo(a) ao mundo corporativo do Elgaly Express! 💼🚀',
@@ -4395,10 +4439,20 @@ const VitrolaManager = {
       this.updateVisibility();
     });
 
-    // Carrega último link do YouTube salvo localmente
+    // Apenas pré-carrega o input e a thumbnail do último som salvo, SEM iniciar reprodução ou criar iframe
     const savedUrl = localStorage.getItem('elgaly_vitrola_music_url');
     if (savedUrl) {
-      this.loadMusic(savedUrl, false);
+      const inputMusic = document.getElementById('vitrolaMusicUrl');
+      if (inputMusic) inputMusic.value = savedUrl;
+
+      const videoMatch = savedUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
+      const videoId = videoMatch ? videoMatch[1] : null;
+      const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'images/elgalylogo.png';
+
+      const recordThumb = document.getElementById('vitrolaRecordThumb');
+      const miniThumb = document.getElementById('vitrolaMiniThumb');
+      if (recordThumb) recordThumb.src = thumbUrl;
+      if (miniThumb) miniThumb.src = thumbUrl;
     }
   },
 
@@ -4412,9 +4466,29 @@ const VitrolaManager = {
       if (widget) widget.style.display = 'none';
       if (balloon) balloon.style.display = 'none';
       if (this.isDvdMode) this.stopDvdMode();
+      if (!isLoggedIn) {
+        this.stopMusic();
+      }
     } else {
       if (widget) widget.style.display = 'flex';
     }
+  },
+
+  stopMusic() {
+    const wrap = document.getElementById('vitrolaPlayerEmbedWrap');
+    if (wrap) {
+      wrap.innerHTML = `
+        <div class="vitrola-spotify-placeholder" id="vitrolaPlayerPlaceholder">
+          <span>🎧 Nenhuma música carregada. Cole seu link do YouTube acima e clique em "Tocar"!</span>
+        </div>
+      `;
+    }
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const balloon = document.getElementById('vitrolaBalloonPanel');
+    const miniText = document.getElementById('vitrolaMiniText');
+    if (widget) widget.classList.remove('playing');
+    if (balloon) balloon.classList.remove('playing');
+    if (miniText) miniText.textContent = 'Express-FM';
   },
 
   _bindEvents() {
@@ -4685,39 +4759,49 @@ const VitrolaManager = {
    * - https://music.youtube.com/playlist?list=PLAYLIST_ID
    * - https://www.youtube.com/shorts/VIDEO_ID
    */
-  parseYouTubeUrl(input) {
+  parseYouTubeUrl(input, autoPlay = false) {
     if (!input || typeof input !== 'string') return null;
     let raw = input.trim();
 
     // 1. Já é um embed?
     if (raw.includes('youtube.com/embed/')) {
-      return raw;
+      return autoPlay ? raw : raw.replace(/[?&]autoplay=[01]/g, '') + (raw.includes('?') ? '&autoplay=0' : '?autoplay=0');
     }
 
     // 2. Playlist isolada (sem vídeo ou com vídeo)
     const playlistMatch = raw.match(/[?&]list=([a-zA-Z0-9_-]+)/i);
     const videoMatch = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i);
 
+    const playParam = autoPlay ? 'autoplay=1' : 'autoplay=0';
+
     if (playlistMatch && !videoMatch) {
       // Playlist pura
-      return `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistMatch[1]}&autoplay=1`;
+      return `https://www.youtube-nocookie.com/embed/videoseries?list=${playlistMatch[1]}&${playParam}`;
     }
 
     if (videoMatch) {
       const vid = videoMatch[1];
       const extraList = playlistMatch ? `&list=${playlistMatch[1]}` : '';
-      return `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1${extraList}`;
+      return `https://www.youtube-nocookie.com/embed/${vid}?${playParam}${extraList}`;
     }
 
     return null;
   },
 
-  loadMusic(url, showToast = true) {
+  loadMusic(url, showToast = true, autoPlay = false) {
     const wrap = document.getElementById('vitrolaPlayerEmbedWrap');
     const inputMusic = document.getElementById('vitrolaMusicUrl');
     if (!wrap || !url) return;
 
-    const embedUrl = this.parseYouTubeUrl(url);
+    const isLoggedIn = typeof AuthManager !== 'undefined' && AuthManager.isLoggedIn() && AuthManager.isEexPassVerified;
+    if (!isLoggedIn) {
+      if (showToast && typeof AppUI !== 'undefined') {
+        AppUI.showToast('🔒 Identifique-se com seu EEX-PASS para sintonizar a Express-FM!');
+      }
+      return;
+    }
+
+    const embedUrl = this.parseYouTubeUrl(url, autoPlay);
     if (!embedUrl) {
       if (showToast && typeof AppUI !== 'undefined') {
         AppUI.showToast('⚠️ Link não reconhecido! Cole um link de vídeo ou playlist do YouTube/YouTube Music.');
@@ -4729,7 +4813,7 @@ const VitrolaManager = {
     localStorage.setItem('elgaly_vitrola_music_url', url);
     if (inputMusic) inputMusic.value = url;
 
-    // Renderiza o iframe do YouTube
+    // Renderiza o iframe do YouTube sem autoplay intrusivo
     wrap.innerHTML = `
       <iframe style="border-radius:16px; border:3px solid var(--black); box-shadow:4px 4px 0 var(--black);" 
         src="${embedUrl}" 
@@ -4759,7 +4843,7 @@ const VitrolaManager = {
     if (miniText) miniText.textContent = 'YT Music 🔴';
 
     if (showToast && typeof AppUI !== 'undefined') {
-      AppUI.showToast('📻 Música carregada na Express-FM! Tocando som completo 🎉');
+      AppUI.showToast('📻 Música sintonizada na Express-FM! Aperte o play no tocador 🎉');
     }
   }
 };
