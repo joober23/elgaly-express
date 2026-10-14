@@ -588,6 +588,16 @@
             <div class="daily-habits-grid" id="dailyHabitsGrid">
               <!-- Hábitos inseridos dinamicamente pelo app.js -->
             </div>
+
+            <!-- BOTÃO DE EMISSÃO DE MANIFESTO DE CARGA -->
+            <div class="impressora-trigger-wrap" id="impressoraTriggerWrap" style="display:none;">
+              <button type="button" class="btn-comic btn-impressora-emit" id="btnEmitirManifesto" disabled title="Conclua todos os itens da sua rotina para emitir o manifesto!">
+                <span class="impressora-btn-icon">🖨️</span>
+                <span class="impressora-btn-text">Emitir Manifesto de Carga</span>
+                <span class="impressora-btn-lock" id="impressoraBtnLock">🔒</span>
+              </button>
+              <small class="impressora-btn-hint" id="impressoraBtnHint">Conclua toda a sua rotina para desbloquear!</small>
+            </div>
           </div>
         </section>
       </div>
@@ -2628,6 +2638,36 @@
       <div style="display: flex; gap: 10px; justify-content: center;">
         <button type="button" class="btn-comic btn-secondary" id="btnCloseTudumLock" style="flex: 1;">Depois</button>
         <button type="button" class="btn-comic" id="btnGoToEexPlusFromTudum" style="flex: 1.3; background: var(--yellow-bright); color: var(--black);">✨ Ver Planos EEX+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DA IMPRESSORA TÉRMICA (Manifesto de Carga)
+       ========================================================================== -->
+  <div class="modal-overlay impressora-overlay" id="modalImpressora" style="z-index: 11000;">
+    <div class="impressora-panel">
+      <!-- Máquina da Impressora -->
+      <div class="impressora-machine">
+        <div class="impressora-machine-body">
+          <div class="impressora-machine-slot"></div>
+          <div class="impressora-machine-lights">
+            <span class="impressora-light impressora-light-red" id="impressoraLightRed"></span>
+            <span class="impressora-light impressora-light-green" id="impressoraLightGreen"></span>
+          </div>
+          <div class="impressora-machine-label">EEX-PRINT 3000</div>
+        </div>
+      </div>
+      <!-- Papel Saindo da Impressora -->
+      <div class="impressora-paper-wrap">
+        <div class="impressora-paper" id="impressoraPaper">
+          <div class="impressora-receipt" id="impressoraReceipt"></div>
+        </div>
+      </div>
+      <!-- Botões de Ação -->
+      <div class="impressora-actions" id="impressoraActions" style="display:none;">
+        <button type="button" class="btn-comic" id="btnDownloadRecibo" style="background:#10b981;color:#fff;">📥 Baixar Recibo como PNG</button>
+        <button type="button" class="btn-comic btn-secondary" id="btnFecharImpressora">✕ Fechar</button>
       </div>
     </div>
   </div>

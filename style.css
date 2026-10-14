@@ -11690,6 +11690,185 @@ body.tudum-open .tudum-sidebar {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9), 2px 2px 0 #f472b6;
 }
 
+/* ==========================================================================
+   IMPRESSORA TÉRMICA - MANIFESTO DE CARGA EEX
+   ========================================================================== */
+.impressora-trigger-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 8px;
+  padding: 0 4px;
+}
+.btn-impressora-emit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  font-family: var(--font-main);
+  cursor: not-allowed;
+  box-shadow: 4px 4px 0 var(--black);
+  transition: all 0.15s ease;
+  width: 100%;
+  justify-content: center;
+  opacity: 0.6;
+}
+.btn-impressora-emit.unlocked {
+  background: #065f46;
+  color: #ecfdf5;
+  cursor: pointer;
+  opacity: 1;
+  animation: impressoraPulse 2s ease infinite;
+}
+.btn-impressora-emit.unlocked:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--black);
+}
+.btn-impressora-emit.unlocked:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--black);
+}
+.impressora-btn-icon { font-size: 1.2rem; }
+.impressora-btn-lock { font-size: 0.9rem; opacity: 0.7; }
+.btn-impressora-emit.unlocked .impressora-btn-lock { display: none; }
+.impressora-btn-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+}
+@keyframes impressoraPulse {
+  0%, 100% { box-shadow: 4px 4px 0 var(--black); }
+  50% { box-shadow: 4px 4px 0 var(--black), 0 0 18px rgba(16,185,129,0.45); }
+}
+.impressora-overlay {
+  background: rgba(0, 0, 0, 0.88) !important;
+  backdrop-filter: blur(4px);
+  align-items: flex-start;
+  padding-top: 40px;
+}
+.impressora-panel {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.impressora-machine { position: relative; z-index: 5; }
+.impressora-machine-body {
+  background: linear-gradient(135deg, #334155, #1e293b);
+  border: 3px solid var(--black);
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+  padding: 14px 24px;
+  width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 4px 0 0 var(--black), -4px 0 0 var(--black);
+  position: relative;
+}
+.impressora-machine-slot {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 8px;
+  background: #0f172a;
+  border-radius: 0 0 4px 4px;
+  border: 2px solid #475569;
+  border-top: none;
+}
+.impressora-machine-lights { display: flex; gap: 8px; }
+.impressora-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.4);
+}
+.impressora-light-red { background: #f43f5e; animation: impressoraLightBlink 0.5s ease infinite alternate; }
+.impressora-light-green { background: #22c55e; }
+@keyframes impressoraLightBlink {
+  from { opacity: 1; }
+  to { opacity: 0.3; }
+}
+.impressora-machine-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #94a3b8;
+  letter-spacing: 1.5px;
+  font-family: monospace;
+}
+.impressora-paper-wrap {
+  width: 300px;
+  max-height: 52vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-left: 4px solid var(--black);
+  border-right: 4px solid var(--black);
+  background: #fffef9;
+  scrollbar-width: thin;
+}
+.impressora-paper-wrap::-webkit-scrollbar { width: 4px; }
+.impressora-paper-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.impressora-paper {
+  background: #fffef9;
+  border-bottom: 4px solid var(--black);
+  padding-bottom: 12px;
+}
+.impressora-receipt {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.73rem;
+  color: #1a1a1a;
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 8px 12px;
+  line-height: 1.65;
+  min-height: 40px;
+}
+.impressora-stamp {
+  display: block;
+  border: 4px solid #e11d48;
+  border-radius: 12px;
+  padding: 8px 14px;
+  text-align: center;
+  color: #e11d48;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  transform: rotate(-8deg);
+  opacity: 0;
+  animation: impressoraStampIn 0.25s cubic-bezier(0.17, 0.67, 0.5, 1.5) 0.1s forwards;
+  margin: 12px auto;
+  width: fit-content;
+}
+@keyframes impressoraStampIn {
+  0% { transform: rotate(-8deg) scale(3); opacity: 0; }
+  100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+.impressora-actions {
+  width: 300px;
+  background: #f8fafc;
+  border: 4px solid var(--black);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 4px 4px 0 var(--black), -4px 4px 0 var(--black);
+}
+
 /* Desativar Express-FM no Mobile */
 @media (max-width: 768px) {
   #vitrolaFloatingWidget,

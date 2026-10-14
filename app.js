@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.4';
+const EEX_APP_VERSION = '1.0.5';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -4034,6 +4034,310 @@ const NotificationManager = {
 };
 
 // ==========================================================================
+// IMPRESSORA TÉRMICA — MANIFESTO DE CARGA DIÁRIO EEX
+// ==========================================================================
+const ImpressoraManager = {
+  _audioCtx: null,
+  _printing: false,
+
+  frasesRodape: [
+    'tudum!! despachei tudinho em tempo recorde, bora pra próxima! 📦✨',
+    'mds você é INCRÍVEL chefia, olha isso, tudo entregueeee!! 🎀',
+    'socorro de alegria!! a estação tá em festa com sua rotina hoje!! 🚂',
+    'bora comemorar? mereceu MUITO essa nota fiscal! vc arrasou dem! 🌟',
+    'providente aprova FORTEMENTE o desempenho desse agente hoje! 👑',
+    'que despacho impecável!! até a midnight ficou feliz, e ela nunca fica!! 😭',
+    'a frota EEX anda mais rápida por causa de você, sabe não?? muito amor! 💜',
+    'trr trr trrr... nota emitida com LOUVOR pela C.E.O. providente! boa demais! ✨',
+    'você não veio brincar não, hein chefia? TUDO concluído! orgulhosa demais!! 🏆',
+    'hoje o disco do express-fm tá girando com música da vitória por sua causa! 📻💿'
+  ],
+
+  init() {
+    const btnEmitir = document.getElementById('btnEmitirManifesto');
+    const btnFechar = document.getElementById('btnFecharImpressora');
+    const btnDownload = document.getElementById('btnDownloadRecibo');
+    const overlay = document.getElementById('modalImpressora');
+
+    if (btnEmitir) {
+      btnEmitir.addEventListener('click', () => {
+        if (!btnEmitir.disabled) this.openModal();
+      });
+    }
+    if (btnFechar) btnFechar.addEventListener('click', () => this.closeModal());
+    if (btnDownload) btnDownload.addEventListener('click', () => this.downloadReceiptAsPng());
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) this.closeModal();
+      });
+    }
+  },
+
+  checkAndUpdateButton() {
+    const btnEmitir = document.getElementById('btnEmitirManifesto');
+    const lockEl = document.getElementById('impressoraBtnLock');
+    const hintEl = document.getElementById('impressoraBtnHint');
+    const wrapEl = document.getElementById('impressoraTriggerWrap');
+    if (!btnEmitir) return;
+
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    if (!user) {
+      if (wrapEl) wrapEl.style.display = 'none';
+      return;
+    }
+    if (wrapEl) wrapEl.style.display = 'flex';
+
+    const allDone = this._checkAllHabitsDone();
+    if (allDone) {
+      btnEmitir.disabled = false;
+      btnEmitir.classList.add('unlocked');
+      if (lockEl) lockEl.style.display = 'none';
+      if (hintEl) hintEl.textContent = '🟢 Rotina completa! Manifesto pronto para emissão!';
+    } else {
+      btnEmitir.disabled = true;
+      btnEmitir.classList.remove('unlocked');
+      if (lockEl) lockEl.style.display = 'inline';
+      if (hintEl) hintEl.textContent = 'Conclua toda a sua rotina para desbloquear!';
+    }
+  },
+
+  _checkAllHabitsDone() {
+    if (typeof HabitManager === 'undefined') return false;
+    if (typeof HabitManager.getTodayStats === 'function') {
+      const stats = HabitManager.getTodayStats();
+      if (stats && stats.scheduledCount > 0) return stats.allDone;
+      if (stats && stats.scheduledCount === 0) return false;
+    }
+    const habits = HabitManager.habits || (HabitManager.getAllHabits ? HabitManager.getAllHabits() : []) || [];
+    if (habits.length === 0) return false;
+    const dayMap = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sab' };
+    const today = new Date();
+    const todayDow = today.getDay();
+    const todayKey = dayMap[todayDow];
+    const todayStr = today.toISOString().slice(0, 10);
+    const history = HabitManager.history || {};
+    const todaysHabits = habits.filter(h => !h.days || h.days.length === 0 || h.days.includes(todayDow) || h.days.includes(todayKey));
+    if (todaysHabits.length === 0) return false;
+    return todaysHabits.every(h => {
+      const histKey = `${h.id}_${todayStr}`;
+      const isDone = typeof HabitManager.isCompletedToday === 'function' ? HabitManager.isCompletedToday(h.id) : false;
+      return h.done === true || isDone || history[histKey] === true;
+    });
+  },
+
+  _getAudioCtx() {
+    if (!this._audioCtx) {
+      try { this._audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+    }
+    return this._audioCtx;
+  },
+
+  playPrinterSound(durationMs = 2500) {
+    const ctx = this._getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { ctx.resume(); } catch (_) {}
+    }
+    const startTime = ctx.currentTime;
+    const ticksPerSecond = 18;
+    const totalTicks = Math.floor((durationMs / 1000) * ticksPerSecond);
+    for (let i = 0; i < totalTicks; i++) {
+      const t = startTime + i / ticksPerSecond;
+      const bufferSize = Math.floor(ctx.sampleRate * 0.012);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let j = 0; j < bufferSize; j++) {
+        data[j] = (Math.random() * 2 - 1) * (Math.random() > 0.5 ? 0.6 : 0.1);
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2200 + Math.random() * 800;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      source.start(t);
+      source.stop(t + 0.045);
+    }
+  },
+
+  playStampSound() {
+    const ctx = this._getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { ctx.resume(); } catch (_) {}
+    }
+    const bufferSize = Math.floor(ctx.sampleRate * 0.15);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const decay = Math.exp(-i / (bufferSize * 0.15));
+      data[i] = (Math.random() * 2 - 1) * decay * 0.8;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 600;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.7, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+  },
+
+  _buildReceiptText() {
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR');
+    const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const manifestoId = Math.floor(100000 + Math.random() * 900000);
+    const habits = (typeof HabitManager !== 'undefined' ? (HabitManager.habits || (HabitManager.getAllHabits ? HabitManager.getAllHabits() : [])) : []) || [];
+    const dayMap = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sab' };
+    const todayDow = now.getDay();
+    const todayKey = dayMap[todayDow];
+    const todaysHabits = habits.filter(h => !h.days || h.days.length === 0 || h.days.includes(todayDow) || h.days.includes(todayKey));
+    const userName = user ? (user.name || user.eexEmail || 'Agente EEX') : 'Agente EEX';
+    const eexId = user ? (user.eexEmail || user.nickname || '---') : '---';
+    const level = user ? (user.level || 1) : 1;
+    const xp = user ? (user.xp || 0) : 0;
+    const shells = user ? (user.shells || 0) : 0;
+    const streak = (typeof HabitManager !== 'undefined' && HabitManager.getTodayStats) ? HabitManager.getTodayStats().streak : (user ? (user.streak || 0) : 0);
+    const getPatente = (lvl) => {
+      const patentes = [[1,'Recruta de Despacho'],[5,'Entregador Novato'],[10,'Operador de Frota'],[15,'Roteador Dimensional'],[20,'Técnico de Pacotes'],[25,'Coordenador de Rotas'],[30,'Inspetor de Carga'],[40,'Analista Dimensional'],[50,'Supervisor da Frota'],[60,'Comandante Express'],[70,'Mestre de Despacho'],[80,'Elite da C.E.O.'],[90,'Lenda da Frota'],[100,'O Olho de Providente']];
+      let label = patentes[0][1];
+      for (const [m, l] of patentes) { if (lvl >= m) label = l; }
+      return label;
+    };
+    const line = (char = '=', length = 34) => char.repeat(length);
+    const center = (str, width = 34) => { const pad = Math.max(0, Math.floor((width - str.length) / 2)); return ' '.repeat(pad) + str; };
+    const barcode = '||| |||| ||| || |||| ||| || |||| ||| ||';
+    const frase = this.frasesRodape[Math.floor(Math.random() * this.frasesRodape.length)];
+    const habitLines = todaysHabits.length > 0 
+      ? todaysHabits.map(h => ` ✓ ${h.title || h.name || 'Item concluído'}`).join('\n')
+      : ' ✓ Nenhuma rotina cadastrada';
+    return [
+      line('█', 34),
+      center('ELGALY EXPRESS'),
+      center('FROTA DIMENSIONAL DE DESPACHO'),
+      center('Nova Amerit — Setor Central'),
+      line('█', 34),
+      '',
+      center(`MANIFESTO Nº ${manifestoId}`),
+      ` DATA: ${dateStr}  HORA: ${timeStr}`,
+      ` AGENTE: ${userName}`,
+      ` EEX-ID: ${eexId}`,
+      line(),
+      ' ITENS DE ROTINA CONCLUÍDOS:',
+      line('-'),
+      habitLines,
+      line(),
+      ' DESEMPENHO DA FROTA:',
+      ` ROTINAS NO DIA:     ${todaysHabits.length} de ${todaysHabits.length} ✓`,
+      ` SEQUÊNCIA (STREAK):  ${streak} dias 🔥`,
+      ` NÍVEL ATUAL:        ${level} — ${getPatente(level)}`,
+      ` XP TOTAL:           ${xp} pts`,
+      ` CONCHAS FATURADAS:  ${shells} 🐚`,
+      line(),
+      center(barcode),
+      line(),
+      '',
+      center('*** MENSAGEM DA TUDUM ***'),
+      '',
+      frase,
+      '',
+      line(),
+    ].join('\n');
+  },
+
+  openModal() {
+    if (this._printing) return;
+    this._printing = true;
+    const modal = document.getElementById('modalImpressora');
+    const receiptEl = document.getElementById('impressoraReceipt');
+    const actionsEl = document.getElementById('impressoraActions');
+    const paperWrap = document.querySelector('.impressora-paper-wrap');
+    if (!modal || !receiptEl) { this._printing = false; return; }
+    receiptEl.innerHTML = '';
+    if (actionsEl) actionsEl.style.display = 'none';
+    if (paperWrap) paperWrap.scrollTop = 0;
+    modal.classList.add('active');
+    const receiptText = this._buildReceiptText();
+    const lines = receiptText.split('\n');
+    const printDurationMs = Math.max(2000, lines.length * 80);
+    this.playPrinterSound(printDurationMs);
+    let currentLine = 0;
+    const msPerLine = printDurationMs / lines.length;
+    const printNextLine = () => {
+      if (currentLine >= lines.length) {
+        setTimeout(() => {
+          const stampEl = document.createElement('div');
+          stampEl.className = 'impressora-stamp';
+          stampEl.innerHTML = '★ APROVADO ★<br>C.E.O. PROVIDENTE<br>FROTA EEX AUTORIZA';
+          receiptEl.appendChild(stampEl);
+          this.playStampSound();
+          if (paperWrap) setTimeout(() => { paperWrap.scrollTo({ top: paperWrap.scrollHeight, behavior: 'smooth' }); }, 100);
+          setTimeout(() => {
+            if (actionsEl) actionsEl.style.display = 'flex';
+            this._printing = false;
+          }, 500);
+        }, 300);
+        return;
+      }
+      const lineDiv = document.createElement('div');
+      lineDiv.textContent = lines[currentLine];
+      receiptEl.appendChild(lineDiv);
+      currentLine++;
+      if (paperWrap) paperWrap.scrollTop = paperWrap.scrollHeight;
+      setTimeout(printNextLine, msPerLine);
+    };
+    setTimeout(printNextLine, 400);
+  },
+
+  closeModal() {
+    const modal = document.getElementById('modalImpressora');
+    if (modal) modal.classList.remove('active');
+    this._printing = false;
+  },
+
+  async downloadReceiptAsPng() {
+    try {
+      const receiptEl = document.getElementById('impressoraReceipt');
+      const text = receiptEl ? receiptEl.innerText : '(recibo vazio)';
+      const lines = text.split('\n');
+      const fontSize = 13;
+      const lineHeight = fontSize * 1.7;
+      const padding = 20;
+      const width = 460;
+      const height = lines.length * lineHeight + padding * 2 + 60;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fffef9';
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = `${fontSize}px 'Courier New', Courier, monospace`;
+      lines.forEach((line, i) => { ctx.fillText(line, padding, padding + i * lineHeight + fontSize); });
+      const link = document.createElement('a');
+      const now = new Date();
+      link.download = `manifesto-eex-${now.toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      if (typeof AppUI !== 'undefined') AppUI.showToast('📥 Manifesto salvo como PNG!');
+    } catch (e) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('❌ Erro ao gerar o PNG.');
+    }
+  }
+};
+
+// ==========================================================================
 // GERENCIADOR DE PWA & NOTIFICAÇÕES (PWAManager)
 // Instalação na tela inicial do celular/PC e alertas operacionais
 // ==========================================================================
@@ -5838,6 +6142,7 @@ const AppUI = {
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
     if (typeof TudumManager !== 'undefined') TudumManager.init();
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
+    if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.init();
     if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
 
     this.bindEvents();
@@ -8241,6 +8546,9 @@ const AppUI = {
     } else {
       if (progressBar) progressBar.style.background = 'linear-gradient(90deg, var(--yellow-bright), var(--magenta-bright))';
     }
+
+    // Atualiza estado do botão da Impressora Térmica
+    if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.checkAndUpdateButton();
   },
 
   promptUnmarkHabit(habit) {
