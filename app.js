@@ -247,13 +247,20 @@ const AuthManager = {
       await FirebaseService.saveProfileToCloud({
         name: this.currentUser.name,
         location: this.currentUser.location,
+        bio: this.currentUser.bio || '',
         avatar: this.currentUser.avatar,
         banner: this.currentUser.banner || '',
         eexEmail: this.currentUser.eexEmail,
         nickname: this.currentUser.nickname,
+        equippedStrip: this.currentUser.equippedStrip || 'strip-padrao',
+        purchasedStrips: this.currentUser.purchasedStrips || ['strip-padrao'],
         bonusXp: this.currentUser.bonusXp || 0,
         unlockedAchievements: this.currentUser.unlockedAchievements || []
       });
+    }
+
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      FriendsManager.syncMyPublicProfile();
     }
     return this.currentUser;
   },
@@ -1010,13 +1017,20 @@ const ShellsManager = {
   },
 
   render() {
+    const balance = this.getBalance();
+    const balanceStr = balance.toLocaleString('pt-BR');
     const countEl = document.getElementById('headerShellsCount');
     if (countEl) {
-      countEl.textContent = this.getBalance().toLocaleString('pt-BR');
+      countEl.textContent = balanceStr;
     }
     const lojaCountEl = document.getElementById('lojaModalShellsCount');
     if (lojaCountEl) {
-      lojaCountEl.textContent = this.getBalance().toLocaleString('pt-BR');
+      lojaCountEl.textContent = balanceStr;
+    }
+    // Mobile header shells pill
+    const mobileCountEl = document.getElementById('mobileShellsCount');
+    if (mobileCountEl) {
+      mobileCountEl.textContent = balanceStr;
     }
   },
 
@@ -1626,6 +1640,8 @@ const FriendsManager = {
         eexEmail: user.eexEmail,
         avatar: user.avatar,
         banner: user.banner || '',
+        bio: user.bio || '',
+        equippedStrip: user.equippedStrip || 'strip-padrao',
         location: user.location,
         streak: stats.streak,
         allDoneToday: stats.allDone,
@@ -1947,6 +1963,30 @@ const FriendsManager = {
     // 1. Crachá retrô anos 2000
     const badgeContainer = document.getElementById('friendModalBadge');
     if (badgeContainer) {
+      const friendStripId = friend.equippedStrip || 'strip-padrao';
+      const friendCatalogStrip = (typeof HologramStripsCatalog !== 'undefined') 
+        ? HologramStripsCatalog.find(s => s.id === friendStripId) 
+        : null;
+      // Color from catalog, text always from the friend's career rank
+      const friendStripClass = friendCatalogStrip ? friendCatalogStrip.className : 'holo-strip-padrao';
+      // Derive rank text from friend's level
+      const _friendLevel = Math.min(100, Math.max(1, Math.floor(((friend.xp || 0)) / 100) + 1));
+      const _friendTiers = [
+        { min: 1,  max: 9,   stripText: '★ EEX RECRUTA ★' },
+        { min: 10, max: 19,  stripText: '🌿 CRIATURA DA MATA 🌿' },
+        { min: 20, max: 29,  stripText: '🚀 EEX DIMENSIONAL 🚀' },
+        { min: 30, max: 39,  stripText: '🌌 EEX STELLAR 🌌' },
+        { min: 40, max: 49,  stripText: '🛡️ EEX INSPECTOR 🛡️' },
+        { min: 50, max: 59,  stripText: '🎖️ EEX COMMANDER 🎖️' },
+        { min: 60, max: 69,  stripText: '🌀 EEX VORTEX 🌀' },
+        { min: 70, max: 79,  stripText: '👑 EEX MARSHAL 👑' },
+        { min: 80, max: 89,  stripText: '🌟 EEX HERALD 🌟' },
+        { min: 90, max: 99,  stripText: '⚜️ EEX GRAND MASTER ⚜️' },
+        { min: 100, max: 100, stripText: '👁️✨ O OLHO DE PROVIDENTE ✨👁️' }
+      ];
+      const _friendTier = _friendTiers.find(t => _friendLevel >= t.min && _friendLevel <= t.max) || _friendTiers[0];
+      const friendStripText = _friendTier.stripText;
+
       badgeContainer.innerHTML = `
         <div class="friend-badge-inner">
           <div class="friend-badge-header">
@@ -1958,6 +1998,7 @@ const FriendsManager = {
           <div class="friend-badge-body">
             <div class="friend-badge-photo-wrap">
               <img src="${friend.avatar || 'images/elgalylogo.png'}" alt="${friend.name}" class="friend-badge-photo">
+              <div class="hologram-strip ${friendStripClass}">${friendStripText}</div>
               <span class="friend-badge-stamp">OFICIAL</span>
             </div>
             <div class="friend-badge-info">
@@ -1970,6 +2011,12 @@ const FriendsManager = {
                 ` : ''}
               </div>
               <div class="friend-badge-eex">@${friend.eexEmail || (friend.nickname + '.express.com')}</div>
+              ${friend.bio ? `
+                <div class="friend-badge-bio">
+                  <span class="bio-quote-icon">“</span>
+                  <p class="bio-text">${friend.bio}</p>
+                </div>
+              ` : ''}
               <div class="friend-badge-detail">📍 Setor: <strong>${friend.location || 'Nova Amerit - NA'}</strong></div>
               <div class="friend-badge-streak">
                 🔥 Sequência: <strong>${friend.streak || 0} Dias Consecutivos</strong>
@@ -2964,6 +3011,32 @@ const ThemeManager = {
 };
 
 // ==========================================================================
+// CATÁLOGO DE FITAS HOLOGRÁFICAS DE CRACHÁ (20 Combinações - Loja EEX)
+// ==========================================================================
+const HologramStripsCatalog = [
+  { id: 'strip-padrao', name: 'Rosa com Roxo', tagline: 'Padrão Oficial EEX', desc: 'A clássica faixa chiclete e roxo retrô oficial do Elgaly Express. Padrão de fábrica para todos os agentes.', price: 0, className: 'holo-strip-padrao', text: '• ELGALY EXPRESS •', colors: ['#ec4899', '#8b5cf6'] },
+  { id: 'strip-neon-cyber', name: 'Neon Cyber', tagline: 'Ciano & Magenta Laser', desc: 'Reflexo futurista das avenidas iluminadas à noite no centro de Nova Amerit.', price: 75, className: 'holo-strip-neon-cyber', text: '• NEON CYBER •', colors: ['#06b6d4', '#ec4899'] },
+  { id: 'strip-chama-vulcanica', name: 'Chama Vulcânica', tagline: 'Laranja & Rubi Incandescente', desc: 'Calor extremo das caldeiras das locomotivas dimensionais em aceleração.', price: 80, className: 'holo-strip-chama-vulcanica', text: '• CHAMA VULCÂNICA •', colors: ['#ea580c', '#b91c1c'] },
+  { id: 'strip-aurora-boreal', name: 'Aurora Boreal', tagline: 'Esmeralda & Turquesa Ártica', desc: 'Partículas solares colidindo com a alta atmosfera das rotas polares de despacho.', price: 90, className: 'holo-strip-aurora-boreal', text: '• AURORA BOREAL •', colors: ['#10b981', '#06b6d4'] },
+  { id: 'strip-noite-estrelada', name: 'Noite Estrelada', tagline: 'Índigo Cósmico & Violeta', desc: 'Silêncio absoluto do céu noturno sobre os trilhos da meia-noite.', price: 95, className: 'holo-strip-noite-estrelada', text: '• NOITE ESTRELADA •', colors: ['#1e1b4b', '#7c3aed'] },
+  { id: 'strip-sol-poente', name: 'Sol Poente', tagline: 'Dourado Quente & Coral Tropical', desc: 'O entardecer perfeito refletindo no vidro da cabine de comando.', price: 100, className: 'holo-strip-sol-poente', text: '• SOL POENTE •', colors: ['#f59e0b', '#ec4899'] },
+  { id: 'strip-menta-eletrica', name: 'Menta Elétrica', tagline: 'Lima Neon & Menta Glacial', desc: 'Refrescância instantânea e alta voltagem nas rotinas mais pesadas do dia.', price: 110, className: 'holo-strip-menta-eletrica', text: '• MENTA ELÉTRICA •', colors: ['#84cc16', '#06b6d4'] },
+  { id: 'strip-doce-pastel', name: 'Doce Pastel', tagline: 'Lavanda & Rosa Algodão', desc: 'Suavidade máxima e afeto aprovado pelos confeiteiros da estação postal.', price: 120, className: 'holo-strip-doce-pastel', text: '• DOCE PASTEL •', colors: ['#fbcfe8', '#c084fc'] },
+  { id: 'strip-tempestade', name: 'Tempestade', tagline: 'Roxo Trovão & Relâmpago Azul', desc: 'Descarga elétrica cortando nuvens densas em dias de despacho sob tempestade.', price: 130, className: 'holo-strip-tempestade', text: '• TEMPESTADE •', colors: ['#312e81', '#38bdf8'] },
+  { id: 'strip-vaporwave-98', name: 'Vaporwave 98', tagline: 'Teal Nostalgia & Magenta CRT', desc: 'Estética nostálgica de fitas VHS e estações de trabalho de 1998.', price: 140, className: 'holo-strip-vaporwave-98', text: '• VAPORWAVE 98 •', colors: ['#14b8a6', '#f43f5e'] },
+  { id: 'strip-ametista-real', name: 'Ametista Real', tagline: 'Violeta Nobre & Prata Polida', desc: 'Gemas polidas dos cofres de despacho executivo da diretoria.', price: 150, className: 'holo-strip-ametista-real', text: '• AMETISTA REAL •', colors: ['#6b21a8', '#cbd5e1'] },
+  { id: 'strip-floresta-mistica', name: 'Floresta Mística', tagline: 'Verde Musgo & Âmbar Feérico', desc: 'Segredos e encantamentos botânicos dos bosques antigos de Nova Arcanis.', price: 160, className: 'holo-strip-floresta-mistica', text: '• FLORESTA MÍSTICA •', colors: ['#14532d', '#d97706'] },
+  { id: 'strip-prisma', name: 'Prisma Arco-Íris', tagline: 'Espectro Completo Fluido', desc: 'Decomposição cristalina da luz branca em um arco-íris radiante contínuo.', price: 180, className: 'holo-strip-prisma', text: '• PRISMA ARCO-ÍRIS •', colors: ['#f43f5e', '#38bdf8', '#a855f7'] },
+  { id: 'strip-obsidiana', name: 'Obsidiana Neon', tagline: 'Ônix Negro & Púrpura Brilhante', desc: 'Rocha vulcânica escura cortada por fraturas de pura energia magenta.', price: 190, className: 'holo-strip-obsidiana', text: '• OBSIDIANA NEON •', colors: ['#09090b', '#a21caf'] },
+  { id: 'strip-fogo-solar', name: 'Fogo Solar', tagline: 'Ouro Solar & Labareda Viva', desc: 'Radiação direta da coroa solar canalizada na borda holográfica da sua foto.', price: 200, className: 'holo-strip-fogo-solar', text: '• FOGO SOLAR •', colors: ['#eab308', '#ef4444'] },
+  { id: 'strip-abismo-quantico', name: 'Abismo Quântico', tagline: 'Azul Cobalto & Laser Magenta', desc: 'Profundezas insondáveis dos túneis de teletransporte da frota interestelar.', price: 220, className: 'holo-strip-abismo-quantico', text: '• ABISMO QUÂNTICO •', colors: ['#1e3a8a', '#d946ef'] },
+  { id: 'strip-reliquia-tudum', name: 'Relíquia da Tudum', tagline: 'Roxo Providente & Amarelo Tudum', desc: 'Consagrada pela inteligência artificial assistente oficial da Frota EEX.', price: 250, className: 'holo-strip-reliquia-tudum', text: '• RELÍQUIA TUDUM •', colors: ['#581c87', '#eab308'] },
+  { id: 'strip-aura-providente', name: 'Aura da Providente', tagline: 'Branco Pérola & Ouro Imperial', desc: 'Bênção direta da C.E.O. Providente para agentes com histórico exemplar.', price: 280, className: 'holo-strip-aura-providente', text: '• AURA PROVIDENTE •', colors: ['#fef9c3', '#f59e0b'] },
+  { id: 'strip-manto-sagrado', name: 'Manto Sagrado', tagline: 'Carmesim Real & Ouro da C.E.O.', desc: 'O mais distinto tecido cerimonial da cúpula de despacho interdimensional.', price: 320, className: 'holo-strip-manto-sagrado', text: '• MANTO SAGRADO •', colors: ['#991b1b', '#ffd700'] },
+  { id: 'strip-olho-supremo', name: 'O Olho Supremo', tagline: 'Púrpura Celestial & Ouro Divino', desc: 'A consagração máxima da Providente. Apenas a nata da Frota EEX tem acesso.', price: 350, className: 'holo-strip-olho-supremo', text: '• PROVIDENTE SUPREMO •', colors: ['#ffd700', '#581c87'] }
+];
+
+// ==========================================================================
 // GERENCIADOR DA LOJA EEX (LojaEEXManager — Bazar do Correio)
 // Menu popup, categorias verticais à esquerda, compra de itens com conchas
 // ==========================================================================
@@ -2980,6 +3053,9 @@ const LojaEEXManager = {
     const modal = document.getElementById('modalLojaEEX');
     if (modal) {
       modal.classList.add('active');
+      document.querySelectorAll('.loja-category-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.category === this.currentCategory);
+      });
       this.render();
     }
   },
@@ -3006,7 +3082,7 @@ const LojaEEXManager = {
       });
     }
 
-    // Botões de categorias na barra lateral esquerda (organizados de cima para baixo)
+    // Botões de categorias na barra lateral esquerda
     document.querySelectorAll('.loja-category-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.classList.contains('disabled')) {
@@ -3027,10 +3103,10 @@ const LojaEEXManager = {
       });
     });
 
-    // Cliques em ações de itens da loja
-    const grid = document.getElementById('lojaThemesGrid');
-    if (grid) {
-      grid.addEventListener('click', async (e) => {
+    // Cliques em ações de temas
+    const gridThemes = document.getElementById('lojaThemesGrid');
+    if (gridThemes) {
+      gridThemes.addEventListener('click', async (e) => {
         const btn = e.target.closest('.btn-loja-action');
         if (!btn || btn.disabled) return;
 
@@ -3063,6 +3139,28 @@ const LojaEEXManager = {
         }
       });
     }
+
+    // Cliques em ações de fitas holográficas
+    const gridStrips = document.getElementById('lojaStripsGrid');
+    if (gridStrips) {
+      gridStrips.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-loja-action');
+        if (!btn || btn.disabled) return;
+
+        const action = btn.dataset.action;
+        const stripId = btn.dataset.stripId;
+
+        if (action === 'equip-strip') {
+          if (stripId) await this.equipStrip(stripId);
+          return;
+        }
+
+        if (action === 'buy-strip') {
+          if (stripId) await this.purchaseStrip(stripId);
+          return;
+        }
+      });
+    }
   },
 
   render() {
@@ -3072,7 +3170,115 @@ const LojaEEXManager = {
       shellsCount.textContent = ShellsManager.getBalance().toLocaleString('pt-BR');
     }
 
-    this.renderThemes();
+    const viewTemas = document.getElementById('lojaViewTemas');
+    const viewFitas = document.getElementById('lojaViewFitas');
+
+    if (this.currentCategory === 'fitas') {
+      if (viewTemas) viewTemas.style.display = 'none';
+      if (viewFitas) viewFitas.style.display = 'block';
+      this.renderStrips();
+    } else {
+      if (viewTemas) viewTemas.style.display = 'block';
+      if (viewFitas) viewFitas.style.display = 'none';
+      this.renderThemes();
+    }
+  },
+
+  renderStrips() {
+    const grid = document.getElementById('lojaStripsGrid');
+    if (!grid) return;
+
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const balance = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
+    const purchased = Array.isArray(user?.purchasedStrips) ? user.purchasedStrips : ['strip-padrao'];
+    const equipped = user?.equippedStrip || 'strip-padrao';
+
+    grid.innerHTML = HologramStripsCatalog.map(s => {
+      const isEquipped = equipped === s.id;
+      const isPurchased = s.price === 0 || purchased.includes(s.id);
+      const canAfford = balance >= s.price;
+
+      let priceHtml = '';
+      let actionBtnHtml = '';
+
+      if (s.price === 0) {
+        priceHtml = '<span class="loja-item-price free">Grátis (Padrão)</span>';
+      } else {
+        priceHtml = `<span class="loja-item-price shells"><img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> ${s.price} Conchas</span>`;
+      }
+
+      if (isEquipped) {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action disabled" disabled style="background:#16a34a;color:#ffffff;border-color:var(--black);cursor:default;">✓ Em Uso</button>`;
+      } else if (isPurchased) {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="equip-strip" data-strip-id="${s.id}" style="background:var(--yellow-bright);color:var(--black);">⚡ Usar Fita</button>`;
+      } else {
+        actionBtnHtml = `<button type="button" class="btn-comic btn-sm btn-loja-action" data-action="buy-strip" data-strip-id="${s.id}" ${canAfford ? '' : 'style="opacity:0.75;"'}>🛒 Comprar (${s.price} 🐚)</button>`;
+      }
+
+      return `
+        <div class="loja-item-card ${isEquipped ? 'item-equipped' : ''} ${isPurchased ? 'item-owned' : ''}">
+          <div class="loja-item-top">
+            <div class="strip-swatch-box ${s.className}">
+              <span class="strip-swatch-text">${s.text}</span>
+            </div>
+          </div>
+          <div class="loja-item-meta" style="margin-top: 4px;">
+            <strong class="loja-item-name">✨ ${s.name}</strong>
+            <span class="loja-item-tagline">${s.tagline}</span>
+          </div>
+          <p class="loja-item-desc">${s.desc}</p>
+          <div class="loja-item-footer">
+            ${priceHtml}
+            ${actionBtnHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  async equipStrip(stripId) {
+    const strip = HologramStripsCatalog.find(s => s.id === stripId);
+    if (!strip) return;
+    if (typeof AuthManager !== 'undefined') {
+      await AuthManager.updateUserProfile({ equippedStrip: stripId });
+      this.render();
+      if (typeof AppUI !== 'undefined') {
+        AppUI.renderProfileView();
+        AppUI.showToast(`✨ Fita "${strip.name}" equipada no seu crachá!`);
+      }
+    }
+  },
+
+  async purchaseStrip(stripId) {
+    const strip = HologramStripsCatalog.find(s => s.id === stripId);
+    if (!strip) return false;
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    if (!user) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Faça login para comprar itens!');
+      return false;
+    }
+    const balance = typeof ShellsManager !== 'undefined' ? ShellsManager.getBalance() : 0;
+    if (balance < strip.price) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast(`🐚 Conchas insuficientes! Você precisa de ${strip.price} Conchas.`);
+      return false;
+    }
+    const spent = ShellsManager.spendShells(strip.price, `Fita Holográfica: ${strip.name}`);
+    if (!spent) return false;
+
+    const purchased = Array.isArray(user.purchasedStrips) ? [...user.purchasedStrips] : ['strip-padrao'];
+    if (!purchased.includes(stripId)) purchased.push(stripId);
+
+    await AuthManager.updateUserProfile({
+      purchasedStrips: purchased,
+      equippedStrip: stripId
+    });
+
+    this.render();
+    if (typeof AppUI !== 'undefined') {
+      AppUI.renderProfileView();
+      AppUI.showToast(`🎉 Fita "${strip.name}" adquirida e equipada com sucesso!`);
+    }
+    return true;
   },
 
   renderThemes() {
@@ -6736,9 +6942,11 @@ const AppUI = {
         e.preventDefault();
         const newName = document.getElementById('editProfileName').value;
         const newLocation = document.getElementById('editProfileLocation').value;
+        const newBio = document.getElementById('editProfileBio') ? document.getElementById('editProfileBio').value.trim() : '';
         const updateData = {
           name: newName.trim(),
-          location: newLocation.trim()
+          location: newLocation.trim(),
+          bio: newBio
         };
         if (this.editAvatarBase64) {
           updateData.avatar = this.editAvatarBase64;
@@ -8080,7 +8288,25 @@ const AppUI = {
       });
     }
 
-    // Modal de Atualização Disponível — Botão "Agora Não"
+    // Mobile header: Gazeta da Providência (ícone da Providente feliz)
+    const btnMobileProvidenteNews = document.getElementById('btnMobileProvidenteNews');
+    if (btnMobileProvidenteNews) {
+      btnMobileProvidenteNews.addEventListener('click', () => {
+        ProvidenteNewsManager.openModal(0);
+      });
+    }
+
+    // Mobile header: Pill de Conchas → abre a Loja
+    const mobileShellsPill = document.getElementById('mobileShellsPill');
+    if (mobileShellsPill) {
+      mobileShellsPill.addEventListener('click', () => {
+        if (typeof LojaManager !== 'undefined') {
+          LojaManager.openModal();
+        }
+      });
+    }
+
+
     const btnUpdateDismiss = document.getElementById('btnUpdateDismiss');
     if (btnUpdateDismiss) {
       btnUpdateDismiss.addEventListener('click', () => {
@@ -9345,10 +9571,31 @@ const AppUI = {
     const progressInLevel = level >= 100 ? 100 : (totalXp - currentLevelBaseXp);
     const progressPercent = level >= 100 ? 100 : Math.min(100, Math.max(0, Math.round((progressInLevel / 100) * 100)));
 
-    // Exclusividade EEX+: Tarja arco-íris holográfica com "★ EEX+ • EEX+ • EEX+ ★"
+    // Exclusividade EEX+: Tarja holográfica com "• EEX+ •" exatamente uma única vez
     const isEexPlus = (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium());
-    const finalStripClass = isEexPlus ? 'holo-eexplus' : currentTier.stripClass;
-    const finalStripText  = isEexPlus ? '★ EEX+ • EEX+ • EEX+ ★' : currentTier.stripText;
+    
+    let finalStripClass = 'holo-strip-padrao';
+    // Text always comes from the career tier, not the catalog item name
+    let finalStripText = currentTier.stripText || '• ELGALY EXPRESS •';
+
+    if (isEexPlus) {
+      finalStripClass = 'holo-eexplus';
+      finalStripText = '• EEX+ •';
+    } else {
+      const equippedStripId = user?.equippedStrip || 'strip-padrao';
+      const catalogStrip = (typeof HologramStripsCatalog !== 'undefined') 
+        ? HologramStripsCatalog.find(s => s.id === equippedStripId) 
+        : null;
+
+      // Color/style from catalog, text always from the career tier
+      if (catalogStrip) {
+        finalStripClass = catalogStrip.className;
+      } else {
+        finalStripClass = currentTier.stripClass || 'holo-strip-padrao';
+      }
+      // Strip text is always the rank text, not the palette name
+      finalStripText = currentTier.stripText || '• ELGALY EXPRESS •';
+    }
 
     return {
       totalXp,
@@ -9697,6 +9944,16 @@ const AppUI = {
 
             <div class="grand-badge-meta-column">
               <div class="grand-agent-meta">
+                ${user.bio ? `
+                  <div class="grand-agent-bio">
+                    <span class="bio-quote-icon">“</span>
+                    <p class="bio-text">${user.bio}</p>
+                  </div>
+                ` : `
+                  <div class="grand-agent-bio empty-bio">
+                    <p class="bio-text">Nenhuma bio configurada. Clique em Editar Perfil para adicionar uma!</p>
+                  </div>
+                `}
                 <div class="meta-row">📍 <strong>Setor:</strong> ${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</div>
                 <div class="meta-row">${statusDot} <strong>Status:</strong> <span style="font-weight:800;color:${statusColor};">${statusText}</span></div>
                 <div class="meta-row">🎖️ <strong>Patente:</strong> ${career.rankTitle} (Nível ${career.level}/100)</div>
@@ -9754,59 +10011,62 @@ const AppUI = {
           </div>
         </div>
 
-        <!-- ARMÁRIO DE CONQUISTAS DA FROTA (INSÍGNIAS) -->
-        <div class="profile-achievements-section">
-          <div class="section-title-wrap">
-            <h3 class="profile-section-heading">🏆 Insígnias & Medalhas da Frota</h3>
-            <span class="achievements-counter">${achievements.filter(a => a.unlocked).length} de ${achievements.length} Desbloqueadas</span>
-          </div>
-          <div class="achievements-grid">
-            ${achievements.map(ach => `
-              <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
-                <div class="achievement-icon-wrap">
-                  <span class="achievement-icon">${ach.icon}</span>
-                  ${!ach.unlocked ? '<span class="lock-indicator">🔒</span>' : ''}
-                </div>
-                <div class="achievement-info">
-                  <strong>${ach.title}</strong>
-                  <p>${ach.desc}</p>
-                  <span class="achievement-badge-pill">${ach.unlocked ? '✨ DESBLOQUEADO' : 'BLOQUEADO'}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- MURAL PESSOAL DE MOMENTOS (FOTOS COM STICKERS) -->
-        <div class="profile-memories-section">
-          <div class="section-title-wrap">
-            <h3 class="profile-section-heading">📸 Meu Mural de Momentos Fotográficos</h3>
-            <span class="achievements-counter">${memories.length} Registros</span>
-          </div>
-
-          ${memories.length === 0 ? `
-            <div class="empty-subtab-box" style="background: var(--card-bg); border: 2.5px dashed var(--purple-main); border-radius: 16px; padding: 24px;">
-              <span style="font-size: 2.4rem;">📷</span>
-              <h4>Nenhuma Foto Registrada Ainda</h4>
-              <p>Ao cumprir seus hábitos pelo celular, tire fotos para carimbar adesivos e preencher sua galeria!</p>
+        <!-- GRID DASHBOARD DO PERFIL (CONQUISTAS & MURAL DE FOTOS LADO A LADO) -->
+        <div class="profile-dashboard-grid">
+          <!-- ARMÁRIO DE CONQUISTAS DA FROTA (INSÍGNIAS) -->
+          <div class="profile-achievements-section profile-dash-card">
+            <div class="section-title-wrap">
+              <h3 class="profile-section-heading">🏆 Insígnias & Medalhas da Frota</h3>
+              <span class="achievements-counter">${achievements.filter(a => a.unlocked).length} de ${achievements.length} Desbloqueadas</span>
             </div>
-          ` : `
-            <div class="profile-memories-carousel">
-              ${memories.slice(0, 10).map(mem => `
-                <div class="friend-photo-polaroid">
-                  <div class="friend-polaroid-img-wrap">
-                    <img src="${mem.photo}" alt="${mem.caption}" class="friend-polaroid-img">
-                    <img src="images/${mem.sticker === 'midnight' ? 'midnight.png' : (mem.sticker === 'fire' ? 'fireon.png' : 'brave.png')}" alt="Sticker" class="friend-polaroid-sticker">
+            <div class="achievements-grid">
+              ${achievements.map(ach => `
+                <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
+                  <div class="achievement-icon-wrap">
+                    <span class="achievement-icon">${ach.icon}</span>
+                    ${!ach.unlocked ? '<span class="lock-indicator">🔒</span>' : ''}
                   </div>
-                  <div class="friend-polaroid-body">
-                    <strong>✨ ${mem.habitTitle || 'Rotina'}</strong>
-                    <p>"${mem.caption || ''}"</p>
-                    <small>📅 ${mem.date} às ${mem.time}</small>
+                  <div class="achievement-info">
+                    <strong>${ach.title}</strong>
+                    <p>${ach.desc}</p>
+                    <span class="achievement-badge-pill">${ach.unlocked ? '✨ DESBLOQUEADO' : 'BLOQUEADO'}</span>
                   </div>
                 </div>
               `).join('')}
             </div>
-          `}
+          </div>
+
+          <!-- MURAL PESSOAL DE MOMENTOS (FOTOS COM STICKERS) -->
+          <div class="profile-memories-section profile-dash-card">
+            <div class="section-title-wrap">
+              <h3 class="profile-section-heading">📸 Meu Mural de Momentos</h3>
+              <span class="achievements-counter">${memories.length} Registros</span>
+            </div>
+
+            ${memories.length === 0 ? `
+              <div class="empty-subtab-box" style="background: var(--card-bg); border: 2.5px dashed var(--purple-main); border-radius: 16px; padding: 24px; text-align: center; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-size: 2.4rem;">📷</span>
+                <h4>Nenhuma Foto Registrada Ainda</h4>
+                <p>Ao cumprir seus hábitos pelo celular, tire fotos para carimbar adesivos e preencher sua galeria!</p>
+              </div>
+            ` : `
+              <div class="profile-memories-carousel">
+                ${memories.slice(0, 10).map(mem => `
+                  <div class="friend-photo-polaroid">
+                    <div class="friend-polaroid-img-wrap">
+                      <img src="${mem.photo}" alt="${mem.caption}" class="friend-polaroid-img">
+                      <img src="images/${mem.sticker === 'midnight' ? 'midnight.png' : (mem.sticker === 'fire' ? 'fireon.png' : 'brave.png')}" alt="Sticker" class="friend-polaroid-sticker">
+                    </div>
+                    <div class="friend-polaroid-body">
+                      <strong>✨ ${mem.habitTitle || 'Rotina'}</strong>
+                      <p>"${mem.caption || ''}"</p>
+                      <small>📅 ${mem.date} às ${mem.time}</small>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
         </div>
 
       </div>
@@ -9950,8 +10210,11 @@ const AppUI = {
     const locInput = document.getElementById('editProfileLocation');
     const avatarPreview = document.getElementById('editAvatarPreview');
 
+    const bioInput = document.getElementById('editProfileBio');
+
     if (nameInput) nameInput.value = user.name;
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
+    if (bioInput) bioInput.value = user.bio || '';
     if (avatarPreview) avatarPreview.src = user.avatar || 'images/elgalylogo.png';
     this.editAvatarBase64 = null;
     this.editBannerBase64 = null;
