@@ -2298,9 +2298,31 @@ const FriendsManager = {
 // ==========================================================================
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
-  latestVersion: 'v3.0',
+  latestVersion: 'v3.1',
 
   editions: [
+    {
+      version: 'v3.1',
+      date: 'Outubro / 2026',
+      headline: 'CRACHÁ REFORMULADO, TUDUM DESBLOQUEADA NO CELULAR E FITAS COM PATENTE REAL!',
+      subheadline: 'Decreto de Refinamento Operacional & Correção de Sistemas Críticos // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'Fitas Holográficas agora exibem sua Patente de verdade! 🎖️✨',
+        text: 'Um erro histórico foi finalmente corrigido nos arquivos da Central de Despacho: as fitas holográficas do seu crachá, tanto no seu perfil quanto no Passaporte dos Parceiros, agora exibem o nome REAL da sua patente de carreira — "🌿 CRIATURA DA MATA 🌿", "★ EEX RECRUTA ★", "🚀 EEX DIMENSIONAL 🚀" e assim por diante! As cores das fitas na Loja EEX permanecem intactas: você escolhe a paleta de cores, a Providente escolhe o texto de prestígio que vai nela!',
+        tags: ['Fita com Patente Real ✨', 'Crachá de Amigos Corrigido', 'Loja EEX Intacta', 'Honra ao Agente!']
+      },
+      sad: {
+        title: 'Reparos emergenciais na janela da Tudum foram necessários!',
+        text: 'A C.E.O. Providente ficou chocada ao descobrir que a Tudum estava escondida atrás do header no celular, e que no PC ela aparecia "solta" no meio da tela! A equipe técnica atuou imediatamente: no celular a Tudum agora cobre toda a tela com z-index de missão crítica, e no PC ela se encaixa perfeitamente ao lado da navbar sem nenhum vão ou desconexão. Missão cumprida!',
+        tags: ['Tudum no Mobile Corrigida', 'Desktop Alinhado', 'Z-Index Crítico Ajustado']
+      },
+      angry: {
+        title: 'Providente exigiu que a saudação de boas-vindas NUNCA mais seja obstruída!',
+        text: 'Foi registrado um incidente grave nos logs da Central: a saudação da C.E.O. Providente e as mensagens de conquistas estavam sendo cobertas por modais e overlays sem cerimônia! Isso foi corrigido com hierarquia máxima de camadas — o toast e a saudação agora ficam no topo absoluto de TODA a interface, acima de qualquer modal, qualquer overlay e qualquer outra janela. Além disso, Conchas EEX e o botão da Gazeta agora aparecem corretamente no header do celular!',
+        tags: ['Toast Invencível', 'Boas-vindas Sempre Visível', 'Conchas no Mobile', 'Gazeta no Header Mobile']
+      }
+    },
     {
       version: 'v3.0',
       date: 'Outubro / 2026',
