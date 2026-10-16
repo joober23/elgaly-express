@@ -154,29 +154,41 @@
 
     </div>
     
-    <!-- Navegação Desktop (Abas Estruturadas & Intuitivas) -->
+    <!-- Navegação Desktop (Abas Estruturadas & Intuitivas com Estética de Terminal Console) -->
     <nav class="desktop-nav">
-      <div class="nav-tabs-group">
-        <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
-        <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina</a>
-        <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
-        <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
-        <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
-        <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
-        <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
-        <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
-        <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil</a>
-        <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+      <div class="desktop-nav-terminal-bar">
+        <div class="terminal-dots">
+          <span class="tdot tdot-red"></span>
+          <span class="tdot tdot-yellow"></span>
+          <span class="tdot tdot-green"></span>
+        </div>
+        <div class="terminal-tag" id="terminalTelemetryTag">EEX://CONSOLE.DESPACHO &bull; ESTAÇÃO NOVA AMERIT</div>
+        <div class="terminal-status"><span class="terminal-pulse"></span> ONLINE</div>
       </div>
 
-      <button type="button" class="nav-link btn-nav-tudum" id="btnNavTudum" title="Abrir Tudum IA" aria-label="Abrir Tudum IA">
-        <img src="images/tudum-claro.png" alt="Tudum" class="tudum-nav-logo tudum-logo-on-dark">
-        <img src="images/tudum-escuro.png" alt="Tudum" class="tudum-nav-logo tudum-logo-on-light" style="display:none;">
-      </button>
+      <div class="desktop-nav-body">
+        <div class="nav-tabs-group">
+          <a href="#inicio" class="nav-link active" data-tab="inicio">🏠 Início</a>
+          <a href="#rotina" class="nav-link" data-tab="rotina">☀️ Rotina</a>
+          <a href="#encomendas" class="nav-link" data-tab="encomendas">📦 Encomendas</a>
+          <a href="#notas" class="nav-link" data-tab="notas">📝 Notas</a>
+          <a href="#pomodoro" class="nav-link" id="btnNavPomodoro" title="Abrir Relógio Pomodoro EEX+">🍅 Pomodoro</a>
+          <a href="#loja" class="nav-link" id="btnNavLoja" title="Abrir Loja EEX">🏪 Loja EEX</a>
+          <a href="#relatorios" class="nav-link" data-tab="relatorios">📊 Relatórios</a>
+          <a href="#amigos" class="nav-link" data-tab="amigos">🤝 Amigos</a>
+          <a href="#perfil" class="nav-link" data-tab="perfil">👤 Perfil</a>
+          <a href="#configuracoes" class="nav-link" data-tab="configuracoes">⚙️ Configurações</a>
+        </div>
 
-      <div class="nav-actions-group">
-        <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
-        <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
+        <button type="button" class="nav-link btn-nav-tudum" id="btnNavTudum" title="Abrir Tudum IA" aria-label="Abrir Tudum IA">
+          <img src="images/tudum-claro.png" alt="Tudum" class="tudum-nav-logo tudum-logo-on-dark">
+          <img src="images/tudum-escuro.png" alt="Tudum" class="tudum-nav-logo tudum-logo-on-light" style="display:none;">
+        </button>
+
+        <div class="nav-actions-group">
+          <button class="nav-btn nav-cta action-new-task">⚡ + Encomenda</button>
+          <button class="nav-btn nav-cta action-new-event" style="background: var(--yellow-bright); color: var(--black);">📅 + Evento</button>
+        </div>
       </div>
     </nav>
   </header>
@@ -1740,6 +1752,15 @@
        BOTTOM NAV BAR — MOBILE (ESTÉTICA NEO-BRUTALISTA EEX)
        ========================================================================== -->
   <div class="bottom-nav-container" id="bottomNavContainer">
+    <div class="bottom-nav-terminal-strip">
+      <div class="terminal-strip-left">
+        <span class="strip-pulse-dot"></span>
+        <span class="strip-label" id="bottomNavTelemetryTag">EEX://PORTABLE.DOCK</span>
+      </div>
+      <div class="terminal-strip-right">
+        <span class="strip-hint">DESLIZE ⇄</span>
+      </div>
+    </div>
     <nav class="bottom-nav-bar" id="bottomNavBar">
       <a href="#inicio" class="bottom-nav-item active" data-tab="inicio">
         <span class="bottom-nav-icon">🏠</span>
@@ -2200,7 +2221,7 @@
        ========================================================================== -->
   <div class="modal-overlay update-takeover-overlay" id="modalUpdateAvailable">
     <!-- Áudio em Loop Perfeito: Waiting for It (Burning Ver.) -->
-    <audio id="audioUpdateWaiting" src="Waiting for It (Burning Ver.).mp3" loop preload="auto"></audio>
+    <audio id="audioUpdateWaiting" src="Waiting for It (Burning Ver.).mp3?v=1.0.5" loop preload="auto"></audio>
 
     <div class="update-takeover-box">
       <!-- Tag / Badge Superior -->

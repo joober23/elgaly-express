@@ -200,7 +200,16 @@ const FirebaseService = {
               cloudProfile.joinedAt = realCreation;
               this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
             }
+            const localUser = AuthManager.getCurrentUser();
+            const localAchievements = (localUser && Array.isArray(localUser.unlockedAchievements)) ? localUser.unlockedAchievements : [];
+            const cloudAchievements = Array.isArray(cloudProfile.unlockedAchievements) ? cloudProfile.unlockedAchievements : [];
+            const mergedAchievements = Array.from(new Set([...localAchievements, ...cloudAchievements]));
+
             userData = { ...userData, ...cloudProfile };
+            if (mergedAchievements.length > 0) {
+              userData.unlockedAchievements = mergedAchievements;
+            }
+
             if (cloudProfile.purchasedThemes && typeof ThemeManager !== 'undefined') {
               ThemeManager.syncPurchasedThemes(cloudProfile.purchasedThemes);
             }
@@ -615,10 +624,18 @@ const FirebaseService = {
       if (profile.location) publicData.location = profile.location;
       if (profile.avatar) publicData.avatar = this.getSafeAvatar(profile.avatar);
       if (profile.banner !== undefined) publicData.banner = profile.banner;
+      if (profile.unlockedAchievements && Array.isArray(profile.unlockedAchievements)) {
+        publicData.unlockedAchievements = profile.unlockedAchievements;
+      }
 
       this.db.collection('public_profiles').doc(uid).set(publicData, { merge: true }).catch(err => {
         console.warn('Erro ao atualizar public_profiles em saveProfileToCloud:', err);
       });
+    } else if (profile.unlockedAchievements && Array.isArray(profile.unlockedAchievements)) {
+      this.db.collection('public_profiles').doc(uid).set({
+        unlockedAchievements: profile.unlockedAchievements,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true }).catch(() => {});
     }
   },
 

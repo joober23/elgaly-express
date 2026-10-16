@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.5';
+const EEX_APP_VERSION = '1.0.6';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -434,9 +434,7 @@ const AuthManager = {
     const nick = (user.nickname || '').toLowerCase().trim();
     const eex = (user.eexEmail || '').toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    return nick === 'pedrinho' || nick === 'kotundashed' || nick === 'lana' ||
-           eex.includes('pedrinho') || eex.includes('kotundashed') || eex.includes('lana') ||
-           email.includes('pedrinho') || email.includes('kotundashed') || email.includes('lana');
+    return nick === 'pedrinho' || eex.includes('pedrinho') || email.includes('pedrinho');
   }
 };
 
@@ -2086,7 +2084,7 @@ const FriendsManager = {
             sosActive: friend.sosActive,
             radioStatus: friend.radioStatus,
             shells: friend.shells || 0
-          })
+          }, friend)
         : [];
       const unlockedCount = friendAchievements.filter(a => a.unlocked).length;
 
@@ -4205,16 +4203,15 @@ const ImpressoraManager = {
     const todaysHabits = habits.filter(h => !h.days || h.days.length === 0 || h.days.includes(todayDow) || h.days.includes(todayKey));
     const userName = user ? (user.name || user.eexEmail || 'Agente EEX') : 'Agente EEX';
     const eexId = user ? (user.eexEmail || user.nickname || '---') : '---';
-    const level = user ? (user.level || 1) : 1;
-    const xp = user ? (user.xp || 0) : 0;
+    const career = (typeof AppUI !== 'undefined' && AppUI.calculateCareerStats) 
+      ? AppUI.calculateCareerStats() 
+      : { level: 1, totalXp: 0, rankTitle: 'Recruta da Rota Express 📦' };
+    const level = career.level;
+    const xp = career.totalXp;
+    const rankTitle = career.rankTitle;
     const shells = user ? (user.shells || 0) : 0;
     const streak = (typeof HabitManager !== 'undefined' && HabitManager.getTodayStats) ? HabitManager.getTodayStats().streak : (user ? (user.streak || 0) : 0);
-    const getPatente = (lvl) => {
-      const patentes = [[1,'Recruta de Despacho'],[5,'Entregador Novato'],[10,'Operador de Frota'],[15,'Roteador Dimensional'],[20,'Técnico de Pacotes'],[25,'Coordenador de Rotas'],[30,'Inspetor de Carga'],[40,'Analista Dimensional'],[50,'Supervisor da Frota'],[60,'Comandante Express'],[70,'Mestre de Despacho'],[80,'Elite da C.E.O.'],[90,'Lenda da Frota'],[100,'O Olho de Providente']];
-      let label = patentes[0][1];
-      for (const [m, l] of patentes) { if (lvl >= m) label = l; }
-      return label;
-    };
+    const getPatente = () => rankTitle;
     const line = (char = '=', length = 34) => char.repeat(length);
     const center = (str, width = 34) => { const pad = Math.max(0, Math.floor((width - str.length) / 2)); return ' '.repeat(pad) + str; };
     const barcode = '||| |||| ||| || |||| ||| || |||| ||| ||';
@@ -5895,6 +5892,161 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
 };
 
 // ==========================================================================
+// GERENCIADOR DE TELEMETRIA DINÂMICA DO TERMINAL (TerminalTelemetryManager)
+// Alterna cíclicamente: Informação > Horário Atual > Informação > Horário Atual...
+// ==========================================================================
+const TerminalTelemetryManager = {
+  _step: 0,
+  _intervalId: null,
+  _clockIntervalId: null,
+  _durationPerSlide: 4500, // 4.5 segundos por tela
+
+  init() {
+    this.update();
+    if (this._intervalId) clearInterval(this._intervalId);
+    this._intervalId = setInterval(() => {
+      this.next();
+    }, this._durationPerSlide);
+
+    // No celular: atualiza o relógio a cada 1s de forma contínua
+    setInterval(() => {
+      const elMobile = document.getElementById('bottomNavTelemetryTag');
+      if (elMobile) {
+        elMobile.textContent = this.getClockText();
+      }
+    }, 1000);
+  },
+
+  next() {
+    this._step = (this._step + 1) % 8;
+    this.update();
+  },
+
+  getWeatherText() {
+    if (typeof WeatherManager !== 'undefined') {
+      const cached = WeatherManager.getCachedWeather();
+      if (cached && cached.temp !== undefined) {
+        const icon = cached.icon || '⛅';
+        const city = (cached.city || 'SÃO PAULO').toUpperCase();
+        const desc = (cached.desc || 'BOM').toUpperCase();
+        return `${icon} CLIMA: ${cached.temp}°C • ${city} (${desc})`;
+      }
+    }
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    const loc = (user?.location || 'SÃO PAULO - SP').replace(/ - SP/i, '').replace(/ - NA.*/i, '').trim().toUpperCase();
+    return `⛅ CLIMA: SINTONIZANDO SETOR ${loc || 'NOVA AMERIT'}...`;
+  },
+
+  getClockText() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `⏰ ${timeStr}`;
+  },
+
+  getMusicOrRoutineText() {
+    // 1. Verifica se a Vitrola (Express-FM) está tocando
+    const widget = document.getElementById('vitrolaFloatingWidget');
+    const isPlaying = widget && widget.classList.contains('playing');
+
+    if (isPlaying) {
+      const titleEl = document.getElementById('vitrolaTrackTitle');
+      const sourceEl = document.getElementById('vitrolaTrackSource');
+      const title = titleEl ? titleEl.textContent.trim() : '';
+      const source = sourceEl ? sourceEl.textContent.trim() : '';
+      if (title && title !== 'Nenhuma música tocando') {
+        const cleanTitle = title.length > 26 ? title.slice(0, 24) + '...' : title;
+        return `📻 EXPRESS-FM: ${cleanTitle.toUpperCase()}${source ? ' • ' + source.toUpperCase() : ''}`;
+      }
+    }
+
+    // 2. Se não estiver tocando, mostra o progresso das rotinas diárias
+    if (typeof HabitManager !== 'undefined' && typeof HabitManager.getTodayStats === 'function') {
+      const stats = HabitManager.getTodayStats();
+      if (stats && stats.scheduledCount > 0) {
+        const pct = Math.round((stats.completedCount / stats.scheduledCount) * 100);
+        return `📦 ROTINA DE HOJE: ${stats.completedCount} DE ${stats.scheduledCount} ENTREGUES (${pct}%)`;
+      }
+    }
+
+    // 3. Fallback
+    return `📦 CENTRAL DE DESPACHO: ENCOMENDAS PRONTAS PARA ENVIO`;
+  },
+
+  getAgentRankText() {
+    const career = (typeof AppUI !== 'undefined' && AppUI.calculateCareerStats) 
+      ? AppUI.calculateCareerStats() 
+      : { level: 1, rankTitle: 'Recruta da Rota Express 📦' };
+    const stats = (typeof HabitManager !== 'undefined' && HabitManager.getTodayStats) 
+      ? HabitManager.getTodayStats() 
+      : { streak: 0 };
+    const streak = stats.streak || 0;
+    const cleanTitle = (career.rankTitle || 'RECRUTA').replace(/[^\p{L}\p{N}\s]/gu, '').trim().toUpperCase();
+    return `👑 PATENTE: ${cleanTitle} • LVL ${career.level} (🔥 ${streak} DIAS DE STREAK)`;
+  },
+
+  getStationText() {
+    return `🚂 ESTAÇÃO NOVA AMERIT: FROTA EEX OPERACIONAL • TUDUM IA ATIVA`;
+  },
+
+  getCurrentContent() {
+    // Ordem estrita: Info > Horário > Info > Horário...
+    switch (this._step) {
+      case 0:
+        return { text: this.getWeatherText(), isClock: false };
+      case 1:
+        return { text: this.getClockText(), isClock: true };
+      case 2:
+        return { text: this.getMusicOrRoutineText(), isClock: false };
+      case 3:
+        return { text: this.getClockText(), isClock: true };
+      case 4:
+        return { text: this.getAgentRankText(), isClock: false };
+      case 5:
+        return { text: this.getClockText(), isClock: true };
+      case 6:
+        return { text: this.getStationText(), isClock: false };
+      case 7:
+        return { text: this.getClockText(), isClock: true };
+      default:
+        return { text: this.getClockText(), isClock: true };
+    }
+  },
+
+  update() {
+    const el = document.getElementById('terminalTelemetryTag');
+    const elMobile = document.getElementById('bottomNavTelemetryTag');
+
+    // No celular: mostra sempre o horário em tempo real
+    if (elMobile) {
+      elMobile.textContent = this.getClockText();
+    }
+
+    if (!el) return;
+
+    const { text, isClock } = this.getCurrentContent();
+
+    if (this._clockIntervalId) {
+      clearInterval(this._clockIntervalId);
+      this._clockIntervalId = null;
+    }
+
+    if (isClock) {
+      this._clockIntervalId = setInterval(() => {
+        const liveClock = this.getClockText();
+        if (el) el.textContent = liveClock;
+      }, 1000);
+    }
+
+    // Transição suave de fade no desktop
+    el.classList.add('telemetry-fade');
+    setTimeout(() => {
+      el.textContent = text;
+      el.classList.remove('telemetry-fade');
+    }, 180);
+  }
+};
+
+// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
 // ==========================================================================
@@ -6144,6 +6296,7 @@ const AppUI = {
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
     if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.init();
     if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
+    if (typeof TerminalTelemetryManager !== 'undefined') TerminalTelemetryManager.init();
 
     this.bindEvents();
     this.initNavigation();
@@ -9148,12 +9301,10 @@ const AppUI = {
 
   isMagafusVIP(user) {
     if (!user) return false;
-    const nick = (user.nickname || '').toLowerCase();
-    const eex = (user.eexEmail || '').toLowerCase();
-    const email = (user.email || '').toLowerCase();
-    return nick === 'pedrinho' || nick === 'kotundashed' || nick === 'lana' ||
-           eex.includes('pedrinho') || eex.includes('kotundashed') || eex.includes('lana') ||
-           email.includes('pedrinho') || email.includes('kotundashed') || email.includes('lana');
+    const nick = (user.nickname || '').toLowerCase().trim();
+    const eex = (user.eexEmail || '').toLowerCase().trim();
+    const email = (user.email || '').toLowerCase().trim();
+    return nick === 'pedrinho' || eex.includes('pedrinho') || email.includes('pedrinho');
   },
 
   calculateCareerStats() {
@@ -9174,8 +9325,8 @@ const AppUI = {
 
     // 10 Tiers a cada 10 patentes até o Nível 100 (O Olho de Providente)
     const tiers = [
-      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Bronze', stripClass: 'holo-copper', stripText: '★ EEX RECRUTA ★' },
-      { min: 10, max: 19,  title: 'Mensageiro de Asfalto Cósmico ⚡', color: '#06b6d4', tierName: 'Cobre Veloz', stripClass: 'holo-copper', stripText: '⚡ EEX SPEED ⚡' },
+      { min: 1,  max: 9,   title: 'Recruta da Rota Express 📦', color: '#a855f7', tierName: 'Recruta da Rota Express', stripClass: 'holo-copper', stripText: '★ EEX RECRUTA ★' },
+      { min: 10, max: 19,  title: 'Criatura da Mata 🌿', color: '#10b981', tierName: 'Criatura da Mata', stripClass: 'holo-emerald', stripText: '🌿 CRIATURA DA MATA 🌿' },
       { min: 20, max: 29,  title: 'Piloto de Salto Dimensional 🚀', color: '#3b82f6', tierName: 'Prata Prismática', stripClass: 'holo-silver', stripText: '🚀 EEX DIMENSIONAL 🚀' },
       { min: 30, max: 39,  title: 'Especialista de Carga Estelar 🌌', color: '#6366f1', tierName: 'Aço Meteórico', stripClass: 'holo-steel', stripText: '🌌 EEX STELLAR 🌌' },
       { min: 40, max: 49,  title: 'Inspetor Postal de Nova Amerit 🛡️', color: '#eab308', tierName: 'Ouro Lapidado', stripClass: 'holo-gold', stripText: '🛡️ EEX INSPECTOR 🛡️' },
@@ -9228,20 +9379,29 @@ const AppUI = {
     }
   },
 
-  getAchievements(stats = {}) {
-    const user           = AuthManager.getCurrentUser();
-    const unlockedList   = (user && Array.isArray(user.unlockedAchievements))
-      ? [...user.unlockedAchievements]
+  getAchievements(stats = {}, targetUser = null) {
+    const currentUser    = AuthManager.getCurrentUser();
+    const effectiveUser  = targetUser || currentUser;
+    const isTargetFriend = !!targetUser && (targetUser.uid !== (currentUser && currentUser.uid));
+
+    const unlockedList   = (effectiveUser && Array.isArray(effectiveUser.unlockedAchievements))
+      ? [...effectiveUser.unlockedAchievements]
       : [];
 
-    const streak         = stats.streak         || 0;
-    const completedTasks = stats.completedTasks || 0;
-    const friendsCount   = stats.friendsCount   || 0;
-    const memoriesCount  = stats.memoriesCount  || 0;
+    const streak         = typeof stats.streak === 'number' ? stats.streak : (effectiveUser?.streak || 0);
+    const completedTasks = typeof stats.completedTasks === 'number' ? stats.completedTasks : (effectiveUser?.completedTasksCount || 0);
+    const friendsCount   = typeof stats.friendsCount === 'number' ? stats.friendsCount : 0;
+    const memoriesCount  = typeof stats.memoriesCount === 'number' ? stats.memoriesCount : 0;
     const radioStatus    = !!stats.radioStatus;
-    const shells         = stats.shells         || 0;
+    const shells         = typeof stats.shells === 'number' ? stats.shells : (effectiveUser?.shells || 0);
 
-    // Conquistas disponíveis (SOS temporariamente removido a pedido do usuário)
+    const isSubscribed   = effectiveUser && (
+      effectiveUser.isEexPlus === true ||
+      effectiveUser.eexPlusActive === true ||
+      (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isSubscribed && EEXPlusManager.isSubscribed(effectiveUser))
+    );
+
+    // Conquistas disponíveis (incluindo Ato Immemorial e 100% Express)
     const list = [
       {
         id: 'primeira-missao',
@@ -9263,6 +9423,13 @@ const AppUI = {
         title: 'Super Sônico',
         desc: 'Alcançou 7 dias de streak ininterrupto',
         unlocked: unlockedList.includes('super-sonico') || streak >= 7
+      },
+      {
+        id: 'ato-immemorial',
+        icon: '⏳',
+        title: 'Ato Immemorial',
+        desc: 'Manteve 30 dias de rotina ininterrupta — uma lenda na Frota!',
+        unlocked: unlockedList.includes('ato-immemorial') || streak >= 30
       },
       {
         id: 'mestre-frete',
@@ -9304,32 +9471,100 @@ const AppUI = {
         icon: '✨',
         title: '100% Express',
         desc: 'Ativou o EEX+ uma vez — Agente de Elite da Frota!',
-        unlocked: unlockedList.includes('express-total'),
+        unlocked: unlockedList.includes('express-total') || isSubscribed,
         exclusive: true // marca visual EEX+
       }
     ];
 
-    // Persiste no banco de dados do Firebase qualquer conquista que acabou de ser cumprida
-    let hasNew = false;
-    list.forEach(a => {
-      if (a.unlocked && !unlockedList.includes(a.id)) {
-        unlockedList.push(a.id);
-        hasNew = true;
-      }
-    });
+    // Se NÃO for amigo (for o próprio usuário logado), persiste conquistas na nuvem
+    if (!isTargetFriend && currentUser) {
+      let hasNew = false;
+      list.forEach(a => {
+        if (a.unlocked && !unlockedList.includes(a.id)) {
+          unlockedList.push(a.id);
+          hasNew = true;
+        }
+      });
 
-    if (hasNew && user) {
-      user.unlockedAchievements = unlockedList;
-      AuthManager.currentUser = user;
-      AuthManager.saveCurrent();
-      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && user.id) {
-        FirebaseService.saveProfileToCloud({ unlockedAchievements: unlockedList });
+      if (hasNew) {
+        currentUser.unlockedAchievements = unlockedList;
+        AuthManager.currentUser = currentUser;
+        AuthManager.saveCurrent();
+        if (typeof FirebaseService !== 'undefined' && FirebaseService.db && currentUser.id) {
+          FirebaseService.saveProfileToCloud({ unlockedAchievements: unlockedList });
+        }
       }
     }
 
     return list;
   },
 
+  // Ajusta contraste das palavras no Hero Banner conforme a imagem e opacidade
+  adaptBannerContrast(bannerUrl, heroBannerEl) {
+    if (!heroBannerEl) return;
+
+    // Se não houver banner customizado, o padrão é o gradiente retrô escuro
+    if (!bannerUrl) {
+      heroBannerEl.classList.remove('banner-theme-light');
+      heroBannerEl.classList.add('banner-theme-dark');
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 32, 32);
+        const imgData = ctx.getImageData(0, 0, 32, 32).data;
+
+        // Fundo do crachá para compor com o canal alpha da imagem
+        const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                            document.documentElement.getAttribute('data-theme') === 'roxo-numetalico';
+        const bgR = isDarkTheme ? 30 : 255;
+        const bgG = isDarkTheme ? 10 : 255;
+        const bgB = isDarkTheme ? 46 : 255;
+
+        let totalLum = 0;
+        let count = 0;
+
+        for (let i = 0; i < imgData.length; i += 4) {
+          const r = imgData[i];
+          const g = imgData[i + 1];
+          const b = imgData[i + 2];
+          const a = imgData[i + 3] / 255; // Opacidade 0 a 1
+
+          // Alpha blending com o fundo do crachá
+          const effR = r * a + bgR * (1 - a);
+          const effG = g * a + bgG * (1 - a);
+          const effB = b * a + bgB * (1 - a);
+
+          const lum = 0.299 * effR + 0.587 * effG + 0.114 * effB;
+          totalLum += lum;
+          count++;
+        }
+
+        const avgLum = totalLum / (count || 1);
+        if (avgLum > 135) {
+          heroBannerEl.classList.remove('banner-theme-dark');
+          heroBannerEl.classList.add('banner-theme-light');
+        } else {
+          heroBannerEl.classList.remove('banner-theme-light');
+          heroBannerEl.classList.add('banner-theme-dark');
+        }
+      } catch (err) {
+        heroBannerEl.classList.add('banner-theme-dark');
+      }
+    };
+    img.onerror = () => {
+      heroBannerEl.classList.add('banner-theme-dark');
+    };
+    img.src = bannerUrl;
+  },
 
   renderProfileView() {
     const user = AuthManager.getCurrentUser();
@@ -9403,63 +9638,68 @@ const AppUI = {
             <div class="badge-clearance-stamp">OFICIAL</div>
           </div>
 
-          <!-- BANNER DO CRACHÁ (PERSONALIZAÇÃO VISUAL) -->
-          <div class="grand-badge-banner-wrap">
-            <div class="grand-badge-banner ${user.banner ? '' : 'banner-default'}" id="grandBadgeBanner" style="${user.banner ? `background-image: url('${user.banner}');` : ''}">
-              <button type="button" class="btn-change-banner-badge" id="btnQuickEditBanner" title="Trocar Banner do Crachá">
-                📷 Trocar Banner
-              </button>
-            </div>
-          </div>
+          <!-- HERO BANNER DO CRACHÁ (ENVOLVE AVATAR, NOME E NICK COM CONTRASTE) -->
+          <div class="grand-badge-hero-banner ${user.banner ? '' : 'banner-default'}" id="grandBadgeHeroBanner" style="${user.banner ? `background-image: url('${user.banner}');` : ''}">
+            <div class="hero-banner-overlay"></div>
 
-          <div class="grand-badge-body">
-            <div class="grand-badge-photo-column">
-              <div class="grand-badge-photo-box">
+            <button type="button" class="btn-change-banner-badge" id="btnQuickEditBanner" title="Trocar Banner do Crachá">
+              📷 Trocar Banner
+            </button>
+
+            <div class="hero-banner-foreground">
+              <div class="grand-badge-photo-box hero-photo-box">
                 <img src="${user.avatar || 'images/elgalylogo.png'}" alt="Foto" id="grandPassAvatar" class="grand-badge-avatar">
                 <button type="button" class="btn-change-photo-badge" id="btnQuickEditPhoto" title="Trocar Foto">✎</button>
                 <div class="hologram-strip ${career.stripClass}">${career.stripText}</div>
               </div>
+
+              <div class="hero-banner-text-plate" id="heroBannerTextPlate">
+                <div class="badge-rank-pill" style="border-color: ${career.rankColor}; color: ${career.rankColor};">
+                  NÍVEL ${career.level} • ${career.rankTitle}
+                </div>
+
+                <div class="agent-name-seal-row">
+                  <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
+                  ${this.isMagafusVIP(user) ? `
+                    <div class="magafic-seal-container">
+                      <button type="button" class="magafic-seal-btn" id="magaficSealBtn" title="Selo Magáfico 💜 (Clique para conversar!)" aria-label="Selo Magáfico">
+                        <img src="images/magaficseal.png" alt="Selo Magáfico" class="magafic-seal-img" id="magaficSealImg">
+                      </button>
+                      <!-- Balão de Diálogo do Coraçãozinho Magáfico -->
+                      <div class="magafic-speech-dialog" id="magaficSpeechDialog" style="display: none;">
+                        <div class="magafic-bubble-arrow"></div>
+                        <div class="magafic-bubble-content">
+                          <div class="magafic-bubble-header">
+                            <span class="magafic-badge-title">💜 CORAÇÃO MAGÁFICO:</span>
+                            <button type="button" class="magafic-bubble-close" id="btnCloseMagaficDialog">✕</button>
+                          </div>
+                          <p class="magafic-dialog-text" id="magaficDialogText">"Oi, Magafus! 💜"</p>
+                        </div>
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="grand-agent-nick-row">
+                  <strong class="grand-agent-nick">@${user.eexEmail || (user.nickname + '.express.com')}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO INFERIOR DO CRACHÁ (CÓDIGO DE BARRAS + METADADOS + BARRA DE XP) -->
+          <div class="grand-badge-lower-section">
+            <div class="grand-badge-barcode-wrap">
               <div class="badge-barcode">
                 <div class="barcode-lines"></div>
                 <span class="barcode-text">ID: ${user.id ? user.id.slice(0, 10).toUpperCase() : 'EEX-AGENT'}</span>
               </div>
             </div>
 
-            <div class="grand-badge-info-column">
-              <div class="badge-rank-pill" style="border-color: ${career.rankColor}; color: ${career.rankColor};">
-                NÍVEL ${career.level} • ${career.rankTitle}
-              </div>
-
-              <div class="agent-name-seal-row">
-                <h1 class="grand-agent-name">${user.name || 'Agente'}</h1>
-                ${this.isMagafusVIP(user) ? `
-                  <div class="magafic-seal-container">
-                    <button type="button" class="magafic-seal-btn" id="magaficSealBtn" title="Selo Magáfico 💜 (Clique para conversar!)" aria-label="Selo Magáfico">
-                      <img src="images/magaficseal.png" alt="Selo Magáfico" class="magafic-seal-img" id="magaficSealImg">
-                    </button>
-                    <!-- Balão de Diálogo do Coraçãozinho Magáfico -->
-                    <div class="magafic-speech-dialog" id="magaficSpeechDialog" style="display: none;">
-                      <div class="magafic-bubble-arrow"></div>
-                      <div class="magafic-bubble-content">
-                        <div class="magafic-bubble-header">
-                          <span class="magafic-badge-title">💜 CORAÇÃO MAGÁFICO:</span>
-                          <button type="button" class="magafic-bubble-close" id="btnCloseMagaficDialog">✕</button>
-                        </div>
-                        <p class="magafic-dialog-text" id="magaficDialogText">"Oi, Magafus! 💜"</p>
-                      </div>
-                    </div>
-                  </div>
-                ` : ''}
-              </div>
-              <div class="grand-agent-nick-row">
-                <strong class="grand-agent-nick">@${user.eexEmail || (user.nickname + '.express.com')}</strong>
-                <button type="button" class="btn-comic btn-copy-mini" id="btnCopyProfileNick" title="Copiar ID">📋</button>
-              </div>
-
+            <div class="grand-badge-meta-column">
               <div class="grand-agent-meta">
                 <div class="meta-row">📍 <strong>Setor:</strong> ${user.location || 'Nova Amerit - NA (Nova Arcanis)'}</div>
                 <div class="meta-row">${statusDot} <strong>Status:</strong> <span style="font-weight:800;color:${statusColor};">${statusText}</span></div>
-                <div class="meta-row">🎖️ <strong>Patente:</strong> Tier ${career.tierName} (Nível ${career.level}/100)</div>
+                <div class="meta-row">🎖️ <strong>Patente:</strong> ${career.rankTitle} (Nível ${career.level}/100)</div>
                 <div class="meta-row">📅 <strong>Membro desde:</strong> ${memberDateFormatted}</div>
               </div>
 
@@ -9686,6 +9926,18 @@ const AppUI = {
           if (this._magaficTimeout) clearTimeout(this._magaficTimeout);
         });
       }
+    }
+
+    // Adapta contraste das palavras do crachá conforme luminância e opacidade do banner
+    const heroBannerEl = document.getElementById('grandBadgeHeroBanner');
+    this.adaptBannerContrast(user.banner, heroBannerEl);
+
+    // Animação do Crachá Caindo Pendurado pelo cordão (efeito pêndulo físico)
+    const profileContainer = wrap.querySelector('.grand-profile-container');
+    if (profileContainer) {
+      profileContainer.classList.remove('badge-hanging-drop');
+      void profileContainer.offsetWidth;
+      profileContainer.classList.add('badge-hanging-drop');
     }
   },
 

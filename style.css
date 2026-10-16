@@ -2226,31 +2226,75 @@ footer {
   transform: scale(1.2);
 }
 
-/* Alternador Encomendas / Eventos */
+/* Alternador Encomendas / Eventos (Switch de Terminal EEX) */
 .subnav-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  background: rgba(30, 15, 50, 0.08);
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  padding: 4px;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .subnav-tabs {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--black);
 }
 
 .subnav-btn {
-  padding: 8px 16px;
-  border: 3px solid var(--black);
-  border-radius: 12px;
+  padding: 8px 18px;
+  border: 2px solid var(--black);
+  border-radius: 10px;
   font-family: var(--font-main);
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 800;
   background: var(--white);
   color: var(--purple-dark);
   cursor: pointer;
-  box-shadow: 3px 3px 0px var(--black);
-  transition: all 0.15s ease;
+  box-shadow: 2px 2px 0px var(--black);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.subnav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3.5px 3.5px 0px var(--black);
 }
 
 .subnav-btn.active {
   background: var(--yellow-bright);
   color: var(--black);
+  box-shadow: 2.5px 2.5px 0px var(--black);
+  transform: translateY(-2px);
+}
+
+.subnav-btn.active::before {
+  content: '▶';
+  font-size: 0.65rem;
+  color: #b45309;
+}
+
+@media (max-width: 768px) {
+  .subnav-tabs {
+    width: 100%;
+    display: flex;
+  }
+
+  .subnav-btn {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 /* ==========================================================================
@@ -2759,6 +2803,10 @@ footer {
   display: none;
 }
 
+.bottom-nav-terminal-strip {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .bottom-nav-container {
     display: block;
@@ -2767,8 +2815,59 @@ footer {
     left: 0;
     right: 0;
     z-index: 500;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
   }
 
+  /* Mini Fita de Terminal Superior do Console Portátil */
+  .bottom-nav-terminal-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0f071a;
+    border-top: 3.5px solid var(--black);
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
+    padding: 3px 12px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #d8b4fe;
+    user-select: none;
+  }
+
+  .terminal-strip-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .strip-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 5px #22c55e;
+    display: inline-block;
+    animation: termPulse 1.8s ease-in-out infinite;
+  }
+
+  .strip-label {
+    text-transform: uppercase;
+  }
+
+  .terminal-strip-right {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .strip-hint {
+    color: #facc15;
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+  }
+
+  /* Barra Principal de Navegação Inferior (Mobile Friendly) */
   .bottom-nav-bar {
     display: flex;
     position: relative;
@@ -2776,15 +2875,14 @@ footer {
     left: auto;
     right: auto;
     z-index: 500;
-    background: var(--purple-dark);
-    border-top: 5px solid var(--black);
-    box-shadow: 0 -5px 0px var(--magenta-bright);
-    padding: 6px 8px max(10px, env(safe-area-inset-bottom));
+    background: #1b0c30;
+    padding: 6px 10px max(12px, env(safe-area-inset-bottom));
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    gap: 4px;
+    gap: 6px;
     justify-content: flex-start;
   }
 
@@ -2792,35 +2890,9 @@ footer {
     display: none;
   }
 
-  /* Indicativo animado de arrastar / deslizar */
+  /* Indicativo animado de arrastar / deslizar - Desativado a pedido (mantendo o da própria barra) */
   .bottom-nav-drag-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    position: absolute;
-    top: -18px;
-    right: 14px;
-    z-index: 502;
-    background: var(--yellow-bright);
-    color: var(--black);
-    font-family: var(--font-main);
-    font-size: 0.72rem;
-    font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 2px solid var(--black);
-    box-shadow: 2px 2px 0px var(--black);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    animation: dragHintBounce 1.8s ease-in-out infinite;
-  }
-
-  .bottom-nav-drag-hint.hidden {
-    opacity: 0;
-    transform: translateX(12px) scale(0.9);
-    pointer-events: none;
+    display: none !important;
   }
 
   @keyframes dragHintBounce {
@@ -2828,22 +2900,33 @@ footer {
       transform: translateX(0);
     }
     50% {
-      transform: translateX(-5px);
+      transform: translateX(-4px);
     }
   }
 
-  /* Gradiente na borda direita para evidenciar continuidade */
+  /* Gradiente na borda esquerda e direita para evidenciar continuidade */
+  .bottom-nav-container::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 24px;
+    bottom: 0;
+    width: 14px;
+    background: linear-gradient(to right, rgba(15, 7, 26, 0.7), transparent);
+    pointer-events: none;
+    z-index: 501;
+  }
+
   .bottom-nav-container::after {
     content: '';
     position: absolute;
     right: 0;
-    top: 0;
+    top: 24px;
     bottom: 0;
     width: 20px;
-    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4));
+    background: linear-gradient(to right, transparent, rgba(15, 7, 26, 0.85));
     pointer-events: none;
     z-index: 501;
-    border-top: 5px solid transparent;
     transition: opacity 0.25s ease;
   }
 
@@ -2851,24 +2934,35 @@ footer {
     opacity: 0;
   }
 
+  /* Item Individual da Bottom Bar */
   .bottom-nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 3px;
     flex: 0 0 auto;
-    min-width: 58px;
+    min-width: 66px;
+    min-height: 52px;
     padding: 6px 4px;
     text-decoration: none;
     border-radius: 12px;
     border: 2px solid transparent;
-    transition: background 0.15s, transform 0.1s, border-color 0.15s;
-    color: rgba(255, 255, 255, 0.6);
+    transition: background 0.15s, transform 0.12s, border-color 0.15s;
+    color: rgba(255, 255, 255, 0.85);
     font-family: var(--font-main);
+    scroll-snap-align: center;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Estado ATIVO: comic pill amarelo com borda e sombra */
+  /* Feedback tátil imediato no clique com o polegar */
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  /* Estado ATIVO: Cartucho de Console Amarelo com LED */
   .bottom-nav-item.active {
     background: var(--yellow-bright);
     border-color: var(--black);
@@ -2877,23 +2971,34 @@ footer {
     transform: translateY(-2px);
   }
 
-  .bottom-nav-item:active {
-    transform: scale(0.94);
-    box-shadow: 1px 1px 0px var(--black);
+  .bottom-nav-item.active::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 4px #16a34a;
+    position: absolute;
+    top: 4px;
+    right: 8px;
   }
 
   .bottom-nav-icon {
     font-size: 1.25rem;
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .bottom-nav-label {
-    font-size: 0.65rem;
+    font-size: 0.64rem;
     font-weight: 800;
     font-family: var(--font-main);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     white-space: nowrap;
     text-transform: uppercase;
+    line-height: 1;
   }
 
   /* Compensa a altura da barra para nÃ£o cobrir conteÃºdo */
@@ -4715,13 +4820,43 @@ footer {
   display: block;
 }
 
-/* Container Geral do Perfil PrÃ³prio */
+/* Container Geral do Perfil Próprio (Crachá Retrô EEX) */
 .grand-profile-container {
   max-width: 740px;
   margin: 0 auto 40px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  transform-origin: top center;
+}
+
+/* Animação do Crachá Caindo Pendurado pelo Cordão */
+.grand-profile-container.badge-hanging-drop {
+  animation: badgeDropSwing 0.85s cubic-bezier(0.25, 0.82, 0.4, 1.1) forwards;
+}
+
+@keyframes badgeDropSwing {
+  0% {
+    transform: translateY(-90px) rotate(8deg) scale(0.96);
+    opacity: 0;
+  }
+  32% {
+    transform: translateY(14px) rotate(-6.5deg) scale(1.02);
+    opacity: 1;
+  }
+  52% {
+    transform: translateY(-7px) rotate(4deg) scale(1);
+  }
+  70% {
+    transform: translateY(3px) rotate(-2deg);
+  }
+  85% {
+    transform: translateY(-1px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
 }
 
 /* --- CORDÃƒO & CLIPE RETRÃ” --- */
@@ -5261,34 +5396,121 @@ footer {
 nav.desktop-nav {
   margin-top: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
-  background: var(--card-bg, #ffe4f0);
+  background: #200f33;
   border: 3.5px solid var(--black);
-  border-radius: 20px;
-  padding: 10px 12px;
-  min-height: 58px;
+  border-radius: 18px;
+  padding: 8px 14px 10px;
   box-shadow: 4px 4px 0px var(--black);
-  flex-wrap: nowrap;
   box-sizing: border-box;
   width: 100%;
+  position: relative;
 }
 
+/* Modo Escuro & Roxo Nu-Metálico */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) nav.desktop-nav {
-  background: #e9d5ff;
+  background: #140924;
   border-color: var(--black);
   box-shadow: 4px 4px 0px var(--black);
+}
+
+/* Modo Claro Padrão */
+[data-theme="claro"] nav.desktop-nav,
+body:not([data-theme]) nav.desktop-nav {
+  background: #221035;
+}
+
+/* Barra Superior de Status do Console de Terminal */
+.desktop-nav-terminal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px dashed rgba(255, 255, 255, 0.18);
+  padding: 0 4px 6px;
+}
+
+.terminal-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  display: inline-block;
+}
+
+.tdot-red { background: #ef4444; }
+.tdot-yellow { background: #facc15; }
+.tdot-green { background: #22c55e; }
+
+.terminal-tag {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #e9d5ff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex: 1;
+  text-align: center;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.terminal-tag.telemetry-fade {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+
+.terminal-status {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #4ade80;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.5px;
+}
+
+.terminal-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+  animation: termPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes termPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Corpo Principal da Navegação Desktop */
+.desktop-nav-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 
 .nav-tabs-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   flex-wrap: nowrap;
   flex: 1;
   min-width: 0;
-  padding: 4px 2px;
+  padding: 2px 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -5303,23 +5525,23 @@ nav.desktop-nav {
   display: flex;
   align-items: center;
   gap: 6px;
-  border-left: 2px dashed var(--black);
+  border-left: 2px dashed rgba(255, 255, 255, 0.25);
   padding-left: 10px;
   flex-shrink: 0;
 }
 
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .nav-actions-group {
-  border-left-color: var(--black);
+  border-left-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Botões das Abas de Navegação (Identidade Oficial Elgaly Express) */
+/* Botões das Abas de Navegação (Módulos de Terminal EEX) */
 nav.desktop-nav a.nav-link {
   color: var(--white);
   text-decoration: none;
-  background: var(--magenta-bright);
-  padding: 6px 9px;
+  background: #6b21a8;
+  padding: 6px 10px;
   border: 2px solid var(--black);
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 0.85rem;
   font-weight: 800;
   font-family: var(--font-main);
@@ -5328,43 +5550,49 @@ nav.desktop-nav a.nav-link {
   transition: transform 0.15s ease, background 0.15s, box-shadow 0.15s;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   white-space: nowrap;
   flex-shrink: 1;
-  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
 
 nav.desktop-nav a.nav-link:hover {
-  background: #f43f5e;
+  background: #ec4899;
   transform: translateY(-2px);
   box-shadow: 3.5px 3.5px 0px var(--black);
   color: var(--white);
 }
 
-/* Aba Ativa (Amarelo Radiante de Destaque) */
+/* Aba Ativa (Amarelo Radiante de Destaque com Indicador LED) */
 nav.desktop-nav a.nav-link.active {
   background: var(--yellow-bright);
   color: var(--black);
   border-color: var(--black);
-  box-shadow: 3.5px 3.5px 0px var(--black);
+  box-shadow: 3px 3px 0px var(--black);
   transform: translateY(-2px);
   text-shadow: none;
+  position: relative;
+}
+
+nav.desktop-nav a.nav-link.active::before {
+  content: '●';
+  color: #16a34a;
+  font-size: 0.65rem;
+  line-height: 1;
 }
 
 /* Modo Escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) nav.desktop-nav a.nav-link {
-  background: #7e22ce;
+  background: #4c1d95;
   color: #ffffff;
   border-color: var(--black);
-  box-shadow: 2.5px 2.5px 0px var(--black);
-  text-shadow: none;
+  box-shadow: 2px 2px 0px var(--black);
 }
 
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) nav.desktop-nav a.nav-link:hover {
   background: #ff3b94;
   transform: translateY(-2px);
-  box-shadow: 4px 4px 0px var(--black);
+  box-shadow: 3.5px 3.5px 0px var(--black);
   color: #ffffff;
 }
 
@@ -5372,15 +5600,14 @@ nav.desktop-nav a.nav-link.active {
   background: var(--yellow-bright);
   color: #000000;
   border-color: var(--black);
-  box-shadow: 3.5px 3.5px 0px var(--black);
-  text-shadow: none;
+  box-shadow: 3px 3px 0px var(--black);
 }
 
-/* Botões de Ação (+ Encomenda e + Evento) */
+/* Botões de Ação Operacional (+ Encomenda e + Evento) */
 .desktop-nav .nav-btn {
   font-size: 0.82rem;
-  padding: 6px 10px;
-  border-radius: 12px;
+  padding: 6px 11px;
+  border-radius: 10px;
   font-weight: 800;
   font-family: var(--font-main);
   border: 2px solid var(--black);
@@ -8816,46 +9043,163 @@ html.theme-night::after {
 }
 
 /* ==========================================================================
-   BANNER DO CRACHÁ EEX (PERSONALIZAÇÃO DE PERFIL)
+   BANNER HERO DO CRACHÁ EEX (ENVOLVE AVATAR, NOME E NICK COM CONTRASTE)
    ========================================================================== */
-.grand-badge-banner-wrap {
-  width: 100%;
-  margin-bottom: 22px;
+.grand-badge-hero-banner {
   position: relative;
-}
-
-.grand-badge-banner {
   width: 100%;
-  height: 145px;
-  border-radius: 16px;
+  min-height: 275px;
+  border-radius: 20px;
   border: 3.5px solid var(--black);
   box-shadow: 4px 4px 0 var(--black);
   background-color: #240d3a;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: relative;
   overflow: hidden;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: flex-end;
+  padding: 22px;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.grand-badge-banner.banner-default {
+.grand-badge-hero-banner.banner-default {
   background: linear-gradient(135deg, #2b0b46 0%, #701a75 35%, #be123c 70%, #d97706 100%);
 }
 
-.grand-badge-banner.banner-default::after {
+.grand-badge-hero-banner.banner-default::after {
   content: '⚡ ELGALY EXPRESS // FROTA OPERACIONAL';
   position: absolute;
-  bottom: 12px;
+  top: 14px;
   left: 16px;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
   pointer-events: none;
+  z-index: 2;
 }
 
+/* Overlay Protetor Dinâmico */
+.hero-banner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+/* Tema Escuro do Banner (Padrão ou Imagem Escura) */
+.grand-badge-hero-banner.banner-theme-dark .hero-banner-overlay {
+  background: linear-gradient(180deg, rgba(15, 6, 26, 0.15) 0%, rgba(15, 6, 26, 0.65) 100%);
+}
+
+/* Tema Claro do Banner (Imagem Clara ou com Alta Transparência sobre Fundo Claro) */
+.grand-badge-hero-banner.banner-theme-light .hero-banner-overlay {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.58) 100%);
+}
+
+/* Conteúdo em Primeiro Plano sobre o Banner */
+.hero-banner-foreground {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.hero-photo-box {
+  width: 116px;
+  height: 116px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  border: 3.5px solid var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  background: var(--card-bg, #f8f0ff);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Placa Protetora de Identificação do Agente (Menor e mais Translúcida) */
+.hero-banner-text-plate {
+  max-width: fit-content;
+  padding: 8px 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero-banner-text-plate .grand-agent-name {
+  font-size: 1.65rem;
+  margin: 0 0 2px 0;
+  line-height: 1.1;
+}
+
+.hero-banner-text-plate .grand-agent-nick-row {
+  margin-bottom: 0;
+}
+
+.hero-banner-text-plate .grand-agent-nick {
+  font-size: 0.86rem;
+}
+
+.hero-banner-text-plate .badge-rank-pill {
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  margin-bottom: 4px;
+}
+
+/* Contraste: Banner Tema Escuro */
+.grand-badge-hero-banner.banner-theme-dark .hero-banner-text-plate {
+  background: rgba(18, 6, 32, 0.42);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.grand-badge-hero-banner.banner-theme-dark .grand-agent-name {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9), 2px 2px 0 var(--black);
+}
+
+.grand-badge-hero-banner.banner-theme-dark .grand-agent-nick {
+  color: #facc15;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 1px 1px 0 var(--black);
+}
+
+.grand-badge-hero-banner.banner-theme-dark .badge-rank-pill {
+  background: rgba(0, 0, 0, 0.55);
+  border-width: 1.5px;
+  box-shadow: 1px 1px 0 var(--black);
+}
+
+/* Contraste: Banner Tema Claro (Imagens Claras ou Transparentes) */
+.grand-badge-hero-banner.banner-theme-light .hero-banner-text-plate {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.grand-badge-hero-banner.banner-theme-light .grand-agent-name {
+  color: #1a052e;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.9), 1px 1px 0 #ffffff;
+}
+
+.grand-badge-hero-banner.banner-theme-light .grand-agent-nick {
+  color: #701a75;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+
+.grand-badge-hero-banner.banner-theme-light .badge-rank-pill {
+  background: rgba(255, 255, 255, 0.85);
+  border-width: 1.5px;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+}
+
+/* Botão Trocar Banner */
 .btn-change-banner-badge {
   position: absolute;
   top: 10px;
@@ -8873,7 +9217,7 @@ html.theme-night::after {
   align-items: center;
   gap: 5px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  z-index: 2;
+  z-index: 3;
   font-family: var(--font-main);
 }
 
@@ -8886,6 +9230,32 @@ html.theme-night::after {
 .btn-change-banner-badge:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--black);
+}
+
+/* Seção Inferior do Crachá (Código de Barras + Metadados + XP) */
+.grand-badge-lower-section {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.grand-badge-barcode-wrap {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  background: var(--card-bg, #f8f0ff);
+  border: 2.5px solid var(--black);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+.grand-badge-meta-column {
+  flex: 1;
+  min-width: 220px;
 }
 
 /* Banner no Crachá de Amigos */
@@ -8902,8 +9272,31 @@ html.theme-night::after {
 }
 
 @media (max-width: 600px) {
-  .grand-badge-banner {
-    height: 110px;
+  .grand-badge-hero-banner {
+    min-height: 310px;
+    padding: 16px 14px;
+  }
+  .hero-banner-foreground {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .hero-photo-box {
+    width: 92px;
+    height: 92px;
+    border-radius: 16px;
+  }
+  .hero-banner-text-plate {
+    width: 100%;
+    padding: 8px 12px;
+  }
+  .grand-badge-lower-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .grand-badge-barcode-wrap {
+    align-self: center;
   }
 }
 
