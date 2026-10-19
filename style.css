@@ -3474,51 +3474,123 @@ footer {
 }
 
 /* ==========================================================================
-   TELA SPLASH OFICIAL EEX (3s OBRIGATÓRIOS - ESTILO MINIMALISTA PROFISSIONAL)
+   TELA SPLASH OFICIAL EEX (ESTILO NEO-BRUTALISTA DIMENSIONAL)
    ========================================================================== */
 .eex-splash-screen {
   position: fixed;
   inset: 0;
   z-index: 999999;
-  background-color: #831843; /* Rosa Chiclete Escuro com alto contraste para logotipo branco */
+  background-color: #831843; /* Base de alto contraste */
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.22) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(226, 7, 126, 0.35) 0%, rgba(58, 21, 77, 0.98) 100%);
+  background-size: 24px 24px, 100% 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Meio centro exato tanto no PC quanto no Mobile */
+  justify-content: center;
   padding-bottom: 0;
   user-select: none;
+  overflow: hidden;
+  box-sizing: border-box;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: opacity, visibility;
+  transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.3s ease;
+  will-change: transform, opacity;
 }
 
-/* Fundo da splash por tema: versão escura e contrastante no Rosa Express */
+/* Faixa Superior Neo-Brutalista de Alerta */
+.eex-splash-screen::before {
+  content: '⚡ ELGALY EXPRESS • SISTEMA DE ROTINAS & ENTREGAS ⚡';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--yellow-bright, #ffe600);
+  color: #000;
+  font-family: var(--font-main, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 9px 12px;
+  border-bottom: 3.5px solid var(--black, #000);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  text-transform: uppercase;
+}
+
+/* Faixa Inferior Neo-Brutalista de Alerta */
+.eex-splash-screen::after {
+  content: '📦 FOCO, HÁBITOS & PRODUTIVIDADE 📦';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #000;
+  color: var(--yellow-bright, #ffe600);
+  font-family: var(--font-main, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 9px 12px;
+  border-top: 3.5px solid var(--yellow-bright, #ffe600);
+  z-index: 5;
+  text-transform: uppercase;
+}
+
+/* Fundo da splash por tema com halftone brutalista */
 :is(:root, [data-theme="rosa-express"]) .eex-splash-screen {
-  background-color: #831843; /* Rosa/Bordeaux Express Escuro */
+  background-color: #831843;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.22) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(226, 7, 126, 0.4) 0%, rgba(58, 21, 77, 0.98) 100%);
 }
 
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eex-splash-screen {
   background-color: #12071f;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.18) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(91, 33, 182, 0.4) 0%, rgba(18, 7, 31, 0.98) 100%);
 }
 
 [data-theme="verde-magafico"] .eex-splash-screen {
-  background-color: #3b5832;
+  background-color: #1e3a1e;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.2) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(34, 197, 94, 0.35) 0%, rgba(10, 30, 15, 0.98) 100%);
 }
 
 [data-theme="vermelho-culposo"] .eex-splash-screen {
-  background-color: #ba4c4c;
+  background-color: #7f1d1d;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.2) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(69, 10, 10, 0.98) 100%);
 }
 
 [data-theme="azul-arcanico"] .eex-splash-screen {
   background-color: #0b1329;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.2) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(8, 20, 48, 0.98) 100%);
 }
 
 [data-theme="ouro-providentico"] .eex-splash-screen {
   background-color: #2b1f05;
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 0, 0.25) 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(234, 179, 8, 0.35) 0%, rgba(35, 24, 4, 0.98) 100%);
 }
 
-/* Fade out do fundo da tela splash */
+/* Transição Neo-Brutalista: Wipe Dimensional para cima (Persiana de Despacho) */
+.eex-splash-screen.neo-wipe-out {
+  transform: translateY(-100%);
+  border-bottom: 9px solid var(--black, #000);
+  box-shadow: 0 20px 0 var(--yellow-bright, #ffe600), 0 35px 50px rgba(0, 0, 0, 0.85);
+  transition: transform 0.62s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
 .eex-splash-screen.fade-out {
   opacity: 0;
 }
@@ -3532,40 +3604,97 @@ footer {
 
 .eex-splash-logo-wrap {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 16px;
   opacity: 1;
-  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 3;
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3), opacity 0.35s ease;
   will-change: opacity, transform;
 }
 
-/* Fade out do logotipo */
+/* Lançamento mecânico do logotipo */
+.eex-splash-logo-wrap.neo-launch {
+  animation: splashNeoLaunch 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.3) forwards;
+}
+
+@keyframes splashNeoLaunch {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  35% {
+    transform: scale(1.15) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.65) translateY(-90px);
+    opacity: 0;
+  }
+}
+
 .eex-splash-logo-wrap.fade-out {
   opacity: 0;
   transform: scale(0.96);
 }
 
+/* Logotipo da Splash: BEM MAIOR e com Sombra Dura Neo-Brutalista */
 .eex-splash-logo {
-  width: 195px;
-  height: 195px;
-  max-width: 80vw;
-  max-height: 80vh;
+  width: 285px;
+  height: 285px;
+  max-width: 85vw;
+  max-height: 52vh;
   object-fit: contain;
   display: block;
-  /* Sem animação estática, profissional como Duolingo */
-  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(6px 6px 0px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 24px rgba(255, 230, 0, 0.45));
+  animation: splashLogoFloat 2.6s ease-in-out infinite alternate;
 }
 
-/* Mobile: logotipo no meio centro, tamanho equilibrado */
+@keyframes splashLogoFloat {
+  0% { transform: translateY(0px) rotate(-1deg); }
+  100% { transform: translateY(-7px) rotate(1deg); }
+}
+
+.eex-splash-sub-badge {
+  background: var(--yellow-bright, #ffe600);
+  color: var(--black, #000);
+  font-family: var(--font-main, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  border: 3px solid var(--black, #000);
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 var(--black, #000);
+  text-transform: uppercase;
+}
+
+/* Mobile: logotipo no meio centro, tamanho bem maior e proporcional */
 @media (max-width: 768px) {
   .eex-splash-screen {
     justify-content: center;
     padding-bottom: 0;
   }
 
+  .eex-splash-screen::before,
+  .eex-splash-screen::after {
+    font-size: 0.62rem;
+    padding: 7px 8px;
+    letter-spacing: 1px;
+  }
+
   .eex-splash-logo {
-    width: 135px;
-    height: 135px;
+    width: 215px;
+    height: 215px;
+    max-width: 78vw;
+    filter: drop-shadow(5px 5px 0px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(255, 230, 0, 0.4));
+  }
+
+  .eex-splash-sub-badge {
+    font-size: 0.72rem;
+    padding: 5px 12px;
   }
 }
 
@@ -10790,6 +10919,24 @@ body.tudum-open .tudum-sidebar {
   border: 1.5px solid var(--black);
 }
 
+.tudum-quota-badge {
+  background: var(--yellow-bright);
+  color: var(--black);
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  letter-spacing: 0.3px;
+  box-shadow: 1.5px 1.5px 0 var(--black);
+  white-space: nowrap;
+}
+
+.tudum-quota-badge.depleted {
+  background: #f87171;
+  color: var(--white);
+}
+
 .tudum-online-status {
   font-size: 0.76rem;
   color: #d8b4fe;
@@ -11140,6 +11287,15 @@ body.tudum-open .tudum-sidebar {
 .tudum-btn-send:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--black);
+}
+
+.tudum-btn-send:disabled,
+.tudum-btn-send.disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  box-shadow: 2px 2px 0 var(--black) !important;
 }
 
 .tudum-send-arrow {
@@ -12837,4 +12993,385 @@ img {
 .btn-save-zoom-photo:active {
   transform: translate(2px, 2px) !important;
   box-shadow: 2px 2px 0 var(--black) !important;
+}
+
+/* ==========================================================================
+   BOTÕES DE ACESSO AO "SOBRE O EEX" (LANDING & AUTH)
+   ========================================================================== */
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-landing-about {
+  background: var(--card-bg, #fffef9) !important;
+  color: var(--purple-dark, #3a154d) !important;
+  font-weight: 900 !important;
+  font-size: 0.92rem !important;
+  padding: 8px 16px !important;
+  border: 3px solid var(--black) !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 3px 0 var(--black) !important;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.btn-landing-about:hover {
+  background: var(--magenta-bright) !important;
+  color: var(--white) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--black) !important;
+}
+
+.btn-auth-about {
+  width: 100%;
+  background: #25093b !important;
+  color: var(--yellow-bright) !important;
+  border: 3px solid var(--black) !important;
+  border-radius: 14px !important;
+  font-size: 0.95rem !important;
+  font-weight: 900 !important;
+  padding: 11px 16px !important;
+  margin-top: 10px;
+  box-shadow: 3px 3px 0 var(--black) !important;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-auth-about:hover {
+  background: var(--magenta-bright) !important;
+  color: var(--white) !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--black) !important;
+}
+
+@media (max-width: 600px) {
+  .landing-nav-actions {
+    gap: 6px;
+  }
+  .btn-landing-about {
+    font-size: 0.78rem !important;
+    padding: 6px 10px !important;
+  }
+}
+
+/* ==========================================================================
+   MODAL "SOBRE O ELGALY EXPRESS" (@un.dashed & FATEC ITAPETININGA)
+   ========================================================================== */
+.modal-about-overlay {
+  z-index: 100500 !important;
+  padding: 16px;
+}
+
+.modal-about-box {
+  max-width: 540px !important;
+  width: 100%;
+  background: var(--card-bg, #fffef9) !important;
+  border: 5px solid var(--black) !important;
+  border-radius: 26px !important;
+  box-shadow: 10px 10px 0 var(--magenta-bright), 10px 10px 0 3px var(--black) !important;
+  padding: 24px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.about-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 3px dashed var(--purple-dark);
+  padding-bottom: 12px;
+}
+
+.about-badge-tag {
+  background: var(--yellow-bright);
+  color: var(--black);
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border: 2px solid var(--black);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--black);
+  text-transform: uppercase;
+}
+
+.btn-close-about {
+  background: var(--magenta-bright);
+  color: var(--white);
+  border: 2.5px solid var(--black);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--black);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.btn-close-about:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--black);
+  background: #be123c;
+}
+
+/* Hero do Modal Sobre */
+.about-hero-section {
+  text-align: center;
+  padding: 4px 0 8px;
+}
+
+.about-logo-halo {
+  display: inline-block;
+  background: var(--purple-dark);
+  padding: 12px;
+  border-radius: 20px;
+  border: 3.5px solid var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  margin-bottom: 10px;
+}
+
+.about-logo-pop {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+}
+
+.about-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--purple-dark);
+  margin: 0 0 4px;
+  letter-spacing: 1px;
+}
+
+.about-subtitle {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--magenta-bright);
+  margin: 0;
+}
+
+/* Card do Criador (@un.dashed) */
+.about-creator-card {
+  background: #fdf2f8;
+  border: 3.5px solid var(--black);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 4px 4px 0 var(--black);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.creator-badge-top {
+  position: absolute;
+  top: -12px;
+  left: 16px;
+  background: var(--yellow-bright);
+  color: var(--black);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border: 2px solid var(--black);
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 var(--black);
+}
+
+.creator-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.creator-avatar-wrap {
+  width: 52px;
+  height: 52px;
+  background: var(--purple-dark);
+  border: 2.5px solid var(--black);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0 var(--black);
+  flex-shrink: 0;
+}
+
+.creator-avatar-emoji {
+  font-size: 1.8rem;
+}
+
+.creator-details {
+  flex: 1;
+}
+
+.creator-handle {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--purple-dark);
+  margin: 0 0 2px;
+}
+
+.creator-faculdade {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.creator-faculdade strong {
+  color: #1e1b4b;
+}
+
+.btn-instagram-link {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid var(--black) !important;
+  border-radius: 12px !important;
+  padding: 10px 16px !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 3px 3px 0 var(--black) !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+  cursor: pointer;
+}
+
+.btn-instagram-link:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0 var(--black) !important;
+  filter: brightness(1.1);
+}
+
+/* Card da História / Motivação */
+.about-story-card {
+  background: #fefce8;
+  border: 3px solid var(--black);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.about-card-title {
+  font-size: 1.02rem;
+  font-weight: 900;
+  color: var(--purple-dark);
+  margin: 0 0 8px;
+}
+
+.about-story-card p {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.about-story-card p:last-child {
+  margin-bottom: 0;
+}
+
+.about-story-card strong {
+  color: var(--purple-dark);
+}
+
+/* Grid de Destaques */
+.about-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.about-highlight-pill {
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 2.5px 2.5px 0 var(--black);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.about-highlight-pill .pill-icon {
+  font-size: 1.3rem;
+}
+
+.about-highlight-pill .pill-text strong {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--purple-dark);
+  line-height: 1.2;
+}
+
+.about-highlight-pill .pill-text small {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  line-height: 1.15;
+}
+
+/* Rodapé do Modal */
+.about-modal-footer {
+  margin-top: 4px;
+}
+
+.btn-about-done {
+  width: 100% !important;
+  background: var(--yellow-bright) !important;
+  color: var(--black) !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  padding: 12px 18px !important;
+  border: 3.5px solid var(--black) !important;
+  border-radius: 14px !important;
+  box-shadow: 4px 4px 0 var(--black) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-about-done:hover {
+  background: #fde047 !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--black) !important;
+}
+
+@media (max-width: 600px) {
+  .modal-about-box {
+    padding: 18px 14px !important;
+    gap: 12px;
+  }
+  .about-highlights-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .about-highlight-pill {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
 }

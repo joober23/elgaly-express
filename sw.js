@@ -96,3 +96,11 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// 5. Comunicação com a Aplicação (Ativação imediata de atualização)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+

@@ -154,7 +154,10 @@ const UpdateManager = {
     modal.classList.add('active');
   },
 
-  _showWebUpdateBanner(version) {
+  _showWebUpdateBanner(version, worker = null) {
+    if (sessionStorage.getItem('eex_web_update_dismissed') === 'true') {
+      return;
+    }
     const pill = document.getElementById('webUpdatePill');
     if (!pill) return;
     pill.style.display = 'block';
@@ -162,13 +165,20 @@ const UpdateManager = {
     const btnReload = document.getElementById('btnWebUpdateReload');
     if (btnReload) {
       btnReload.onclick = () => {
-        window.location.reload(true);
+        if (worker) {
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        } else if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+        }
+        sessionStorage.removeItem('eex_web_update_dismissed');
+        window.location.reload();
       };
     }
 
     const btnClose = document.getElementById('btnWebUpdateClose');
     if (btnClose) {
       btnClose.onclick = () => {
+        sessionStorage.setItem('eex_web_update_dismissed', 'true');
         pill.style.display = 'none';
       };
     }
@@ -490,7 +500,104 @@ function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75
 }
 
 // ==========================================================================
-// EEX+ — GERENCIADOR DE ASSINATURA PREMIUM
+// GERENCIADOR DE CONFORTO OCULAR / MODO NOTURNO (Livre para todos)
+// ==========================================================================
+const EyeComfortManager = {
+  _autoTimer: null,
+
+  isNightTime() {
+    const h = new Date().getHours();
+    return h >= 19 || h < 7; // Noite: 19h às 07h
+  },
+
+  isAutoEnabled() {
+    return localStorage.getItem('eex_conforto_auto') === '1';
+  },
+
+  setAutoEnabled(enabled) {
+    localStorage.setItem('eex_conforto_auto', enabled ? '1' : '0');
+    if (enabled) {
+      this.checkAutoSchedule();
+      this.startAutoTimer();
+    } else {
+      this.stopAutoTimer();
+    }
+    this.updateUI();
+  },
+
+  isNightActive() {
+    return document.documentElement.classList.contains('theme-night');
+  },
+
+  setNightActive(active) {
+    document.documentElement.classList.toggle('theme-night', !!active);
+    localStorage.setItem('eex_conforto_manual', active ? '1' : '0');
+    this.updateUI();
+  },
+
+  toggle() {
+    const newState = !this.isNightActive();
+    this.setNightActive(newState);
+    return newState;
+  },
+
+  checkAutoSchedule() {
+    if (this.isAutoEnabled()) {
+      const shouldBeNight = this.isNightTime();
+      document.documentElement.classList.toggle('theme-night', shouldBeNight);
+      this.updateUI();
+    }
+  },
+
+  startAutoTimer() {
+    if (this._autoTimer) clearInterval(this._autoTimer);
+    this._autoTimer = setInterval(() => {
+      if (this.isAutoEnabled()) {
+        this.checkAutoSchedule();
+      }
+    }, 60 * 1000);
+  },
+
+  stopAutoTimer() {
+    if (this._autoTimer) {
+      clearInterval(this._autoTimer);
+      this._autoTimer = null;
+    }
+  },
+
+  updateUI() {
+    const badge = document.getElementById('badgeNightStatus');
+    const chk = document.getElementById('chkAutoNightMode');
+    const isNight = this.isNightActive();
+    if (badge) {
+      badge.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
+      badge.style.background = isNight ? '#ffd700' : '#e2e8f0';
+      badge.style.color = isNight ? '#000' : '#475569';
+    }
+    if (chk) {
+      chk.checked = this.isAutoEnabled();
+    }
+  },
+
+  init() {
+    const isAuto = this.isAutoEnabled();
+    if (isAuto) {
+      this.checkAutoSchedule();
+      this.startAutoTimer();
+    } else {
+      const savedManual = localStorage.getItem('eex_conforto_manual');
+      if (savedManual === '1') {
+        document.documentElement.classList.add('theme-night');
+      } else {
+        document.documentElement.classList.remove('theme-night');
+      }
+    }
+    this.updateUI();
+  }
+};
+
+// ==========================================================================
+// EEX+ — GERENCIADOR DE ASSINATURA PREMIUM (Legado / Oculto)
 // Dois planos: Mensal (R$4,99) e Vitalício (R$19,99 = ~4 meses)
 // Ativação via código gerado na coleção Firestore `eex_codes`
 // ==========================================================================
@@ -768,49 +875,31 @@ const EEXPlusManager = {
   },
 
   applyNightMode(force) {
-    if (!this.isPremium()) {
-      this._nightMode = false;
-      document.documentElement.classList.remove('theme-night');
-      localStorage.setItem('eex_night_manual', '0');
+    if (typeof EyeComfortManager !== 'undefined') {
+      if (force !== undefined) {
+        EyeComfortManager.setNightActive(force);
+      } else {
+        EyeComfortManager.toggle();
+      }
       return;
     }
-    const shouldBeNight = force !== undefined ? force : (this.isPremium() && this.isNightTime());
+    const shouldBeNight = force !== undefined ? force : this.isNightTime();
     this._nightMode = shouldBeNight;
     document.documentElement.classList.toggle('theme-night', shouldBeNight);
-    localStorage.setItem('eex_night_manual', shouldBeNight ? '1' : '0');
   },
 
   startDayNightCycle() {
-    if (!this.isPremium()) {
-      this.applyNightMode(false);
-      return;
-    }
-    // Aplica imediatamente e verifica a cada 5 min
-    this.applyNightMode();
-    if (this._nightTimer) clearInterval(this._nightTimer);
-    this._nightTimer = setInterval(() => {
-      if (this.isPremium()) {
-        this.applyNightMode();
-      } else {
-        this.stopDayNightCycle();
-      }
-    }, 5 * 60 * 1000);
+    // Delegado ao EyeComfortManager
   },
 
   stopDayNightCycle() {
-    if (this._nightTimer) { clearInterval(this._nightTimer); this._nightTimer = null; }
-    this.applyNightMode(false);
+    // Delegado ao EyeComfortManager
   },
 
   // ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
 
   async init() {
     await this.loadStatus();
-    if (this.isPremium()) {
-      this.startDayNightCycle();
-    } else {
-      this.applyNightMode(false);
-    }
   }
 };
 
@@ -2794,20 +2883,20 @@ const ThemeManager = {
       id: 'azul-arcanico',
       name: 'Azul Arcânico',
       icon: '🌌',
-      premium: true,
-      price: 0,
+      premium: false,
+      price: 750,
       quotes: [
         'Das profundezas de Nova Arcanis, o azul dimensional te envolve! 🌌',
         'Azul profundo com centelhas de laranja — a cor do portal interdimensional! ✨',
-        'Exclusivo para Agentes de Elite da Rede EEX! 🔒'
+        'Para Agentes de Elite da Rede EEX! ⚡'
       ]
     },
     'ouro-providentico': {
       id: 'ouro-providentico',
       name: 'Ouro Providêntico',
       icon: '👑',
-      premium: true,
-      price: 0,
+      premium: false,
+      price: 750,
       quotes: [
         'A C.E.O. Providente aprova pessoalmente este tema! 👑',
         'Ouro, elegância e poder — o tema da diretora executiva de Nova Amerit!',
@@ -2882,9 +2971,9 @@ const ThemeManager = {
   isThemeUnlocked(themeId, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
     if (!themeId || themeId === 'rosa-express') return true;
 
-    // Temas EEX+
-    if (themeId === 'azul-arcanico' || themeId === 'ouro-providentico') {
-      return typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
+    // Se o usuário tiver status EEX+ ativo, continua desbloqueado
+    if ((themeId === 'azul-arcanico' || themeId === 'ouro-providentico') && typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium()) {
+      return true;
     }
 
     // Exceção pedrinho.express.com para Verde Magáfico (liberado sem pagar)
@@ -3400,9 +3489,9 @@ const LojaEEXManager = {
         name: 'Azul Arcânico',
         icon: '🌌',
         tagline: 'Portal Interdimensional',
-        desc: 'Azul dimensional profundo com centelhas de laranja cósmico. Exclusivo EEX+.',
-        type: 'premium',
-        price: 0,
+        desc: 'Azul dimensional profundo com centelhas de laranja cósmico.',
+        type: 'shells',
+        price: 750,
         swatchClass: 'swatch-azul'
       },
       {
@@ -3410,9 +3499,9 @@ const LojaEEXManager = {
         name: 'Ouro Providêntico',
         icon: '👑',
         tagline: 'Gabinete da C.E.O.',
-        desc: 'Ouro, nobreza e distinção máxima da diretoria executiva de Nova Amerit. Exclusivo EEX+.',
-        type: 'premium',
-        price: 0,
+        desc: 'Ouro, nobreza e distinção máxima da diretoria executiva de Nova Amerit.',
+        type: 'shells',
+        price: 750,
         swatchClass: 'swatch-ouro'
       }
     ];
@@ -4619,18 +4708,31 @@ const PWAManager = {
         navigator.serviceWorker.register('./sw.js')
           .then((reg) => {
             console.log('PWA Service Worker ativo:', reg.scope);
+
+            if (reg.waiting && navigator.serviceWorker.controller) {
+              UpdateManager._showWebUpdateBanner('Nova rota detectada', reg.waiting);
+            }
+
             reg.addEventListener('updatefound', () => {
               const newWorker = reg.installing;
               if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    UpdateManager._showWebUpdateBanner('Nova rota detectada');
+                    UpdateManager._showWebUpdateBanner('Nova rota detectada', newWorker);
                   }
                 });
               }
             });
           })
           .catch((err) => console.warn('PWA SW registro falhou:', err));
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       });
     }
 
@@ -4753,10 +4855,6 @@ const PomodoroManager = {
   _currentPhase() { return this.PHASES[this._phase]; },
 
   start() {
-    if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
-      if (typeof AppUI !== 'undefined') AppUI.showToast('🔒 O Relógio Pomodoro é exclusivo do EEX+! ✨');
-      return;
-    }
     if (this._running) return;
     this._running = true;
     this._timer = setInterval(() => this._tick(), 1000);
@@ -4796,14 +4894,14 @@ const PomodoroManager = {
     // Notificação (Capacitor nativo ou browser)
     this._notify(phase);
 
-    // Bônus de conchas no EEX+ ao completar foco
+    // Bônus de conchas ao completar foco (liberado para todos os usuários!)
     if (phase.id === 'focus') {
       this._cycleCount++;
-      if (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium()) {
-        ShellsManager.addShells(10, '🍅 Pomodoro EEX+ concluído!');
+      if (typeof ShellsManager !== 'undefined') {
+        ShellsManager.addShells(10, '🍅 Pomodoro concluído!');
       }
       if (typeof AppUI !== 'undefined') {
-        AppUI.showToast('🍅 Foco concluído! +' + (EEXPlusManager?.isPremium() ? '10 conchas' : 'Ótimo trabalho') + '!');
+        AppUI.showToast('🍅 Foco concluído! +10 conchas!');
       }
     }
 
@@ -5647,11 +5745,62 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     localStorage.removeItem('elgaly_tudum_personality');
   },
 
+  getDailyUsage() {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const raw = localStorage.getItem('elgaly_tudum_daily_usage');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.date === today) {
+          return parsed.count || 0;
+        }
+      }
+    } catch (e) {}
+    return 0;
+  },
+
+  incrementDailyUsage() {
+    const today = new Date().toISOString().slice(0, 10);
+    const current = this.getDailyUsage();
+    const next = current + 1;
+    try {
+      localStorage.setItem('elgaly_tudum_daily_usage', JSON.stringify({ date: today, count: next }));
+    } catch (e) {}
+    this.updateQuotaUI();
+    return next;
+  },
+
+  getRemainingDailyMessages() {
+    const limit = 10;
+    const used = this.getDailyUsage();
+    return Math.max(0, limit - used);
+  },
+
+  canSendMessage() {
+    return this.getRemainingDailyMessages() > 0;
+  },
+
+  updateQuotaUI() {
+    const badge = document.getElementById('tudumQuotaBadge');
+    const remaining = this.getRemainingDailyMessages();
+    if (badge) {
+      badge.textContent = `⚡ ${remaining}/10 hoje`;
+      if (remaining === 0) {
+        badge.classList.add('depleted');
+        badge.title = 'Limite diário de 10 mensagens atingido. Volta amanhã!';
+      } else {
+        badge.classList.remove('depleted');
+        badge.title = `${remaining} mensagens restantes hoje`;
+      }
+    }
+  },
+
   init() {
     // Personalidade padrão oficial da Tudum para todos os agentes
     localStorage.removeItem('elgaly_tudum_personality');
     this.loadHistory();
     this.renderHistory();
+    this.updateQuotaUI();
   },
 
   loadHistory() {
@@ -5689,22 +5838,12 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   },
 
   checkEexPlusAccess() {
-    const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
-    if (!isPrem) {
-      const modalLock = document.getElementById('modalTudumPlusLock');
-      if (modalLock) {
-        modalLock.classList.add('active');
-      } else if (typeof AppUI !== 'undefined') {
-        AppUI.showToast('🔒 A Tudum é exclusiva para assinantes EEX+!');
-      }
-      return false;
-    }
-    return true;
+    return true; // Liberada para todos os usuários com cota diária de 10 mensagens!
   },
 
   open() {
-    if (!this.checkEexPlusAccess()) return;
     document.body.classList.add('tudum-open');
+    this.updateQuotaUI();
     const input = document.getElementById('tudumInput');
     if (input) {
       const placeholders = [
@@ -6096,8 +6235,35 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
 
   async sendMessage(text) {
     if (!text || !text.trim() || this.isThinking) return;
-    if (!this.checkEexPlusAccess()) return;
+
+    if (!this.canSendMessage()) {
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('⚡ Cota diária atingida! O limite é de 10 mensagens por dia para a Tudum.');
+      }
+      this.playSound('answer');
+      this.history.push({
+        role: 'model',
+        text: 'chefia, gastei todas as minhas 10 mensagens de hoje!! 🎀 preciso recarregar as energias da central de despacho. volto amanhã com tudo, belesma? descansa um pouco também! ☕✨',
+        cleanText: 'chefia, gastei todas as minhas 10 mensagens de hoje!! 🎀 preciso recarregar as energias da central de despacho. volto amanhã com tudo, belesma? descansa um pouco também! ☕✨',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      });
+      this.renderHistory();
+      this.updateQuotaUI();
+      return;
+    }
+
     this.isThinking = true;
+    const sendBtn = document.getElementById('btnSendTudum');
+    const input = document.getElementById('tudumInput');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.classList.add('disabled');
+    }
+    if (input) {
+      input.disabled = true;
+    }
+
+    this.incrementDailyUsage();
 
     const userText = text.trim();
     this.playSound('sent');
@@ -6113,7 +6279,6 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
 
     this.renderHistory();
 
-    const input = document.getElementById('tudumInput');
     if (input) {
       input.value = '';
       input.style.height = 'auto';
@@ -6156,7 +6321,16 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
       this.saveHistory();
     } finally {
       this.isThinking = false;
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('disabled');
+      }
+      if (input) {
+        input.disabled = false;
+        setTimeout(() => input.focus(), 100);
+      }
       if (typing) typing.style.display = 'none';
+      this.updateQuotaUI();
       this.renderHistory();
     }
   }
@@ -6511,16 +6685,16 @@ const AppUI = {
       return;
     }
 
-    // Cronograma OBRIGATÓRIO de 3 segundos (3000ms):
-    // 1. Aos 2100ms: Fade-out do logotipo
+    // Cronograma OBRIGATÓRIO Neo-Brutalista de 3 segundos (3000ms):
+    // 1. Aos 2050ms: Lançamento mecânico / pop dimensional do logotipo
     setTimeout(() => {
-      if (logoWrap) logoWrap.classList.add('fade-out');
-    }, 2100);
+      if (logoWrap) logoWrap.classList.add('neo-launch');
+    }, 2050);
 
-    // 2. Aos 2550ms: Fade-out do fundo da tela splash
+    // 2. Aos 2350ms: Transição com Wipe Dimensional mecânico para cima (comporta de despacho)
     setTimeout(() => {
-      splash.classList.add('fade-out');
-    }, 2550);
+      splash.classList.add('neo-wipe-out');
+    }, 2350);
 
     // 3. Aos 3000ms: Oculta o splash completamente e revela o sistema
     setTimeout(() => {
@@ -6540,8 +6714,8 @@ const AppUI = {
     const splash = document.getElementById('eexSplashScreen');
     const logoWrap = document.getElementById('eexSplashLogoWrap');
     if (!splash) return;
-    splash.classList.remove('hidden', 'fade-out');
-    if (logoWrap) logoWrap.classList.remove('fade-out');
+    splash.classList.remove('hidden', 'fade-out', 'neo-wipe-out');
+    if (logoWrap) logoWrap.classList.remove('fade-out', 'neo-launch');
   },
 
   hideSplash() {
@@ -6601,6 +6775,7 @@ const AppUI = {
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.init();
     if (typeof TudumManager !== 'undefined') TudumManager.init();
+    if (typeof EyeComfortManager !== 'undefined') EyeComfortManager.init();
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
     if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.init();
     if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
@@ -7356,14 +7531,9 @@ const AppUI = {
       });
     });
 
-    // ---- RELÓGIO POMODORO EEX+ ----
+    // ---- RELÓGIO POMODORO (LIBERADO PARA TODOS) ----
     const modalPomodoro = document.getElementById('modalPomodoro');
     const openPomodoro = () => {
-      if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
-        this.showToast('🔒 O Relógio Pomodoro é exclusivo do Elgaly Express+! ✨');
-        openEexPlus();
-        return;
-      }
       if (modalPomodoro) {
         modalPomodoro.classList.add('active');
         PomodoroManager._renderUI();
@@ -7602,35 +7772,25 @@ const AppUI = {
       });
     }
 
-    // ---- MODO NOTURNO (EEX+) ----
+    // ---- CONFORTO OCULAR / MODO NOTURNO (LIVRE PARA TODOS) ----
     const btnToggleNightMode = document.getElementById('btnToggleNightMode');
-    const badgeNightStatus = document.getElementById('badgeNightStatus');
-    const updateNightBadge = () => {
-      if (!badgeNightStatus) return;
-      if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.isPremium()) {
-        badgeNightStatus.textContent = '🔒 BLOQUEADO';
-        badgeNightStatus.style.background = '#fef2f2';
-        badgeNightStatus.style.color = '#ef4444';
-        return;
-      }
-      const isNight = document.documentElement.classList.contains('theme-night');
-      badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
-      badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
-      badgeNightStatus.style.color = isNight ? '#000' : '#475569';
-    };
+    const chkAutoNightMode = document.getElementById('chkAutoNightMode');
+
     if (btnToggleNightMode) {
       btnToggleNightMode.addEventListener('click', () => {
-        if (typeof EEXPlusManager === 'undefined' || !EEXPlusManager.isPremium()) {
-          this.showToast('🔒 O Conforto Ocular e Ciclo Dia & Noite são exclusivos do EEX+! ✨');
-          openEexPlus();
-          return;
-        }
-        const current = document.documentElement.classList.contains('theme-night');
-        EEXPlusManager.applyNightMode(!current);
-        updateNightBadge();
-        this.showToast(!current ? '🌙 Conforto ocular noturno ativado!' : '☀️ Conforto noturno desativado!');
+        const newState = EyeComfortManager.toggle();
+        this.showToast(newState ? '🌙 Conforto ocular noturno ativado!' : '☀️ Conforto noturno desativado!');
       });
-      updateNightBadge();
+    }
+
+    if (chkAutoNightMode) {
+      chkAutoNightMode.addEventListener('change', (e) => {
+        EyeComfortManager.setAutoEnabled(e.target.checked);
+        this.showToast(e.target.checked ? '⏰ Modo noturno automático ativado (19h às 07h)!' : '⏰ Modo noturno automático desativado.');
+      });
+    }
+    if (typeof EyeComfortManager !== 'undefined') {
+      EyeComfortManager.updateUI();
     }
 
     // ---- RELATÓRIOS: DIAS PERSONALIZADOS (EEX+) ----
@@ -7747,7 +7907,7 @@ const AppUI = {
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
-          if (overlay.id === 'modalOnboarding') return; // Onboarding obrigatório não fecha ao clicar fora!
+          if (overlay.id === 'modalOnboarding' || overlay.id === 'modalPinLogin') return; // Onboarding e EEX-PASS obrigatórios não fecham ao clicar fora!
           if (overlay.id === 'modalUpdateAvailable') {
             const audio = document.getElementById('audioUpdateWaiting');
             if (audio) {
@@ -8596,6 +8756,7 @@ const AppUI = {
     if (tudumForm && tudumInput) {
       tudumForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (TudumManager.isThinking) return;
         const val = tudumInput.value;
         if (val && val.trim()) {
           TudumManager.sendMessage(val);
@@ -8605,6 +8766,7 @@ const AppUI = {
       tudumInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
+          if (TudumManager.isThinking) return;
           tudumForm.requestSubmit();
         }
       });
@@ -8617,6 +8779,7 @@ const AppUI = {
 
     document.querySelectorAll('.tudum-chip').forEach(chip => {
       chip.addEventListener('click', () => {
+        if (TudumManager.isThinking) return;
         const prompt = chip.dataset.prompt;
         if (prompt) {
           TudumManager.sendMessage(prompt);
@@ -8671,6 +8834,39 @@ const AppUI = {
           this.initLandingAnimations();
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // ========================================================================
+    // MODAL "SOBRE O EEX" (@un.dashed & FATEC Itapetininga)
+    // ========================================================================
+    const modalAbout = document.getElementById('modalAboutEex');
+    document.querySelectorAll('.action-open-about').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (modalAbout) modalAbout.classList.add('active');
+      });
+    });
+
+    const btnCloseAboutModal = document.getElementById('btnCloseAboutModal');
+    if (btnCloseAboutModal) {
+      btnCloseAboutModal.addEventListener('click', () => {
+        if (modalAbout) modalAbout.classList.remove('active');
+      });
+    }
+
+    const btnDoneAboutModal = document.getElementById('btnDoneAboutModal');
+    if (btnDoneAboutModal) {
+      btnDoneAboutModal.addEventListener('click', () => {
+        if (modalAbout) modalAbout.classList.remove('active');
+      });
+    }
+
+    if (modalAbout) {
+      modalAbout.addEventListener('click', (e) => {
+        if (e.target === modalAbout) {
+          modalAbout.classList.remove('active');
+        }
       });
     }
 
@@ -9370,40 +9566,28 @@ const AppUI = {
     const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
     const planLabel = isPrem ? EEXPlusManager.getPlanLabel() : null;
 
-    // Botão Pomodoro na Navbar, no Drawer e na Barra Inferior Mobile
+    // Botão Pomodoro na Navbar, no Drawer e na Barra Inferior Mobile (Livre para todos)
     const btnNavPomodoro = document.getElementById('btnNavPomodoro');
     const btnDrawerPomodoro = document.getElementById('btnDrawerPomodoro');
     const btnBottomPomodoro = document.getElementById('btnBottomPomodoro');
 
     if (btnNavPomodoro) {
       btnNavPomodoro.style.display = 'inline-flex';
-      btnNavPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+      btnNavPomodoro.classList.remove('eexplus-lustroso');
     }
     if (btnDrawerPomodoro) {
       btnDrawerPomodoro.style.display = 'flex';
-      btnDrawerPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+      btnDrawerPomodoro.classList.remove('eexplus-lustroso');
     }
     if (btnBottomPomodoro) {
       btnBottomPomodoro.style.display = 'flex';
-      btnBottomPomodoro.classList.toggle('eexplus-lustroso', !isPrem);
+      btnBottomPomodoro.classList.remove('eexplus-lustroso');
     }
 
-    // Se o usuário não for premium, esconde também o balãozinho flutuante e pausa o timer
-    const floatingWidget = document.getElementById('pomodoroFloatingWidget');
-    if (floatingWidget && !isPrem) {
-      floatingWidget.style.display = 'none';
-      if (typeof PomodoroManager !== 'undefined' && PomodoroManager._running) {
-        PomodoroManager.pause();
-      }
-    }
-
-    // Botão no Header
+    // Botão no Header (oculto)
     const btnHeaderEexPlus = document.getElementById('btnHeaderEexPlus');
-    const headerText = document.getElementById('headerEexPlusText');
     if (btnHeaderEexPlus) {
-      btnHeaderEexPlus.classList.toggle('is-active', isPrem);
-      btnHeaderEexPlus.classList.toggle('eexplus-lustroso', !isPrem);
-      if (headerText) headerText.textContent = isPrem ? 'EEX+ ✨' : 'EEX+';
+      btnHeaderEexPlus.style.setProperty('display', 'none', 'important');
     }
 
     // Botão de relatório personalizado: efeito lustroso para free
@@ -9487,29 +9671,9 @@ const AppUI = {
       containerModalEexPlusTestMode.style.setProperty('display', isKotun ? 'block' : 'none', 'important');
     }
 
-    // Badge e controle noturno (Ciclo Dia & Noite / Conforto Ocular EEX+)
-    const badgeNightStatus = document.getElementById('badgeNightStatus');
-    const btnToggleNightMode = document.getElementById('btnToggleNightMode');
-    if (!isPrem) {
-      document.documentElement.classList.remove('theme-night');
-      if (badgeNightStatus) {
-        badgeNightStatus.textContent = '🔒 BLOQUEADO';
-        badgeNightStatus.style.background = '#fef2f2';
-        badgeNightStatus.style.color = '#ef4444';
-      }
-      if (btnToggleNightMode) {
-        btnToggleNightMode.classList.add('eexplus-lustroso');
-      }
-    } else {
-      if (btnToggleNightMode) {
-        btnToggleNightMode.classList.remove('eexplus-lustroso');
-      }
-      if (badgeNightStatus) {
-        const isNight = document.documentElement.classList.contains('theme-night');
-        badgeNightStatus.textContent = isNight ? 'ATIVADO' : 'DESLIGADO';
-        badgeNightStatus.style.background = isNight ? '#ffd700' : '#e2e8f0';
-        badgeNightStatus.style.color = isNight ? '#000' : '#475569';
-      }
+    // Conforto Ocular (Livre para todos)
+    if (typeof EyeComfortManager !== 'undefined') {
+      EyeComfortManager.updateUI();
     }
   },
 
