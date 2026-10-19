@@ -203,11 +203,20 @@ const FirebaseService = {
             const localUser = AuthManager.getCurrentUser();
             const localAchievements = (localUser && Array.isArray(localUser.unlockedAchievements)) ? localUser.unlockedAchievements : [];
             const cloudAchievements = Array.isArray(cloudProfile.unlockedAchievements) ? cloudProfile.unlockedAchievements : [];
-            const mergedAchievements = Array.from(new Set([...localAchievements, ...cloudAchievements]));
+            const mergedAchievements = Array.from(new Set([...localAchievements, ...cloudAchievements]))
+              .filter(id => id !== 'express-total');
 
             userData = { ...userData, ...cloudProfile };
-            if (mergedAchievements.length > 0) {
-              userData.unlockedAchievements = mergedAchievements;
+            userData.unlockedAchievements = mergedAchievements;
+            userData.isEexPlus = false;
+            userData.eexPlusActive = false;
+
+            if (cloudAchievements.includes('express-total') || cloudProfile.isEexPlus || cloudProfile.eexPlusActive) {
+              this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({
+                unlockedAchievements: mergedAchievements,
+                isEexPlus: false,
+                eexPlusActive: false
+              }, { merge: true }).catch(() => {});
             }
 
             if (cloudProfile.purchasedThemes && typeof ThemeManager !== 'undefined') {

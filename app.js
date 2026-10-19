@@ -219,6 +219,13 @@ const AuthManager = {
             parsed.location = 'São Paulo - SP';
             localStorage.setItem('elgaly_express_current_user', JSON.stringify(parsed));
           }
+          // Desativação global do EEX+ e limpeza da conquista express-total
+          if (parsed.isEexPlus) parsed.isEexPlus = false;
+          if (parsed.eexPlusActive) parsed.eexPlusActive = false;
+          if (Array.isArray(parsed.unlockedAchievements) && parsed.unlockedAchievements.includes('express-total')) {
+            parsed.unlockedAchievements = parsed.unlockedAchievements.filter(id => id !== 'express-total');
+            localStorage.setItem('elgaly_express_current_user', JSON.stringify(parsed));
+          }
           this.currentUser = parsed;
           const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + parsed.id);
           this.isEexPassVerified = (sessionVerified === 'true');
@@ -617,236 +624,88 @@ const EEXPlusManager = {
            email.includes('kotundashed') || email.includes('lana');
   },
 
-  // ── STATUS ───────────────────────────────────────────────────────────────
+  // ── STATUS (EEX+ TEMPORARIAMENTE DESATIVADO PARA TODOS) ─────────────────────
 
   isPremium() {
-    if (!this._premium) return false;
-    // O modo de teste 'lifetime' é restrito exclusivamente para kotundashed.express.com
-    if (this._premium.plan === 'lifetime') {
-      return this.isKotunUser();
-    }
-    if (this._premium.plan === 'monthly' && this._premium.expiresAt) {
-      return new Date(this._premium.expiresAt) > new Date();
-    }
     return false;
   },
 
-  getPlan() { return this._premium ? this._premium.plan : null; },
-
-  getExpiresAt() {
-    if (!this._premium || !this._premium.expiresAt) return null;
-    return new Date(this._premium.expiresAt);
+  isSubscribed(user) {
+    return false;
   },
+
+  getPlan() { return null; },
+
+  getExpiresAt() { return null; },
 
   // Retorna label bonitinho para UI
   getPlanLabel() {
-    if (!this.isPremium()) return null;
-    if (this._premium.plan === 'lifetime') return 'Modo Teste VIP 🧪';
-    const exp = this.getExpiresAt();
-    if (!exp) return 'Mensal';
-    return 'Mensal (até ' + exp.toLocaleDateString('pt-BR') + ')';
+    return null;
   },
 
   // ── CARREGAR / SALVAR STATUS ──────────────────────────────────────────────
 
   async loadStatus() {
+    this._premium = null;
+    localStorage.removeItem('elgaly_eexplus_status');
     const user = AuthManager.getCurrentUser();
-    const uid = user?.id;
-    const isKotun = this.isKotunUser(user);
+    const uid = user?.id || user?.uid;
+    if (uid) {
+      localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
+    }
 
-    // Se NÃO for kotundashed, limpa qualquer resquício de teste local imediatamente!
-    if (!isKotun) {
-      this._premium = null;
-      localStorage.removeItem('elgaly_eexplus_status');
-      if (uid) localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
-    } else {
-      const local = (uid ? localStorage.getItem(`elgaly_eexplus_status_${uid}`) : null) || localStorage.getItem('elgaly_eexplus_status');
-      if (local) {
-        try {
-          this._premium = JSON.parse(local);
-        } catch (e) {
-          this._premium = null;
+    // Desativa flags EEX+ no usuário local se existirem e limpa conquista express-total
+    if (user) {
+      let changed = false;
+      if (user.isEexPlus) { user.isEexPlus = false; changed = true; }
+      if (user.eexPlusActive) { user.eexPlusActive = false; changed = true; }
+      if (Array.isArray(user.unlockedAchievements) && user.unlockedAchievements.includes('express-total')) {
+        user.unlockedAchievements = user.unlockedAchievements.filter(id => id !== 'express-total');
+        changed = true;
+      }
+      if (changed) {
+        AuthManager.currentUser = user;
+        AuthManager.saveCurrent();
+        if (typeof FirebaseService !== 'undefined' && FirebaseService.db && uid) {
+          FirebaseService.saveProfileToCloud({
+            isEexPlus: false,
+            eexPlusActive: false,
+            unlockedAchievements: user.unlockedAchievements
+          }).catch(() => {});
         }
       }
     }
 
-    if (!uid || !FirebaseService.db) return;
+    if (!uid || typeof FirebaseService === 'undefined' || !FirebaseService.db) return;
     try {
-      const doc = await FirebaseService.db
+      await FirebaseService.db
         .collection('users').doc(uid)
-        .collection('system').doc('eexplus').get();
-      if (doc.exists) {
-        const data = doc.data();
-        if (data && data.plan === 'lifetime' && !isKotun) {
-          // Se uma conta não-kotun tiver documento de teste, limpa no Firestore
-          this._premium = null;
-          await FirebaseService.db.collection('users').doc(uid).collection('system').doc('eexplus').delete().catch(() => {});
-        } else {
-          this._premium = data;
-          if (uid) localStorage.setItem(`elgaly_eexplus_status_${uid}`, JSON.stringify(this._premium));
-        }
-      } else if (!isKotun) {
-        this._premium = null;
-      }
+        .collection('system').doc('eexplus').delete().catch(() => {});
     } catch (e) {
-      console.warn('EEX+: erro ao carregar status:', e);
+      // ignorar
     }
   },
 
   async _saveStatus(data) {
+    this._premium = null;
+    localStorage.removeItem('elgaly_eexplus_status');
     const uid = AuthManager.getCurrentUser()?.id;
-    this._premium = data;
-    if (data) {
-      localStorage.setItem('elgaly_eexplus_status', JSON.stringify(data));
-      if (uid) localStorage.setItem(`elgaly_eexplus_status_${uid}`, JSON.stringify(data));
-    } else {
-      localStorage.removeItem('elgaly_eexplus_status');
-      if (uid) localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
-    }
-
-    if (!uid || !FirebaseService.db) return;
-    try {
-      await FirebaseService.db
-        .collection('users').doc(uid)
-        .collection('system').doc('eexplus').set(data || {}, { merge: true });
-    } catch (e) {
-      console.warn('EEX+: erro ao salvar no Firestore:', e);
+    if (uid) {
+      localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
     }
   },
 
   toggleTestMode() {
-    const currentUser = AuthManager.getCurrentUser();
-    if (!this.isKotunUser(currentUser)) {
-      if (typeof AppUI !== 'undefined') AppUI.showToast('⚠️ Apenas a conta kotundashed.express.com pode ativar o modo teste!');
-      return false;
+    if (typeof AppUI !== 'undefined') {
+      AppUI.showToast('ℹ️ O serviço EEX+ e o modo teste estão desativados temporariamente.');
     }
-    if (this.isPremium()) {
-      this._saveStatus(null);
-      return false;
-    } else {
-      const testData = {
-        plan: 'lifetime',
-        activatedAt: new Date().toISOString(),
-        expiresAt: null,
-        codeUsed: 'MODO-TESTE-VIP'
-      };
-      this._saveStatus(testData);
-
-      // Desbloqueia conquista permanente "100% Express"
-      const user = AuthManager.getCurrentUser();
-      if (user) {
-        const existing = user.unlockedAchievements || [];
-        if (!existing.includes('express-total')) {
-          user.unlockedAchievements = [...existing, 'express-total'];
-          AuthManager.currentUser = user;
-          AuthManager.saveCurrent();
-        }
-      }
-      return true;
-    }
+    return false;
   },
 
-  // ── ATIVAÇÃO POR CÓDIGO ───────────────────────────────────────────────────
+  // ── ATIVAÇÃO POR CÓDIGO (DESATIVADO) ───────────────────────────────────────
 
   async activate(rawCode) {
-    const code = (rawCode || '').trim().toUpperCase();
-    if (!code) return { ok: false, msg: 'Código inválido.' };
-
-    const uid = AuthManager.getCurrentUser()?.id;
-
-    // Códigos rápidos de demonstração / teste
-    const TEST_CODES = ['TESTE', 'EEXPLUS', 'PLUS', 'VIP', 'VITALICIO', 'PROMO499'];
-    if (TEST_CODES.includes(code)) {
-      const plan = (code === 'PROMO499') ? 'monthly' : 'lifetime';
-      let expiresAt = null;
-      if (plan === 'monthly') {
-        const exp = new Date();
-        exp.setMonth(exp.getMonth() + 1);
-        expiresAt = exp.toISOString();
-      }
-      const premiumData = {
-        plan: plan,
-        activatedAt: new Date().toISOString(),
-        expiresAt: expiresAt,
-        codeUsed: code
-      };
-      await this._saveStatus(premiumData);
-
-      const user = AuthManager.getCurrentUser();
-      if (user) {
-        const existing = user.unlockedAchievements || [];
-        if (!existing.includes('express-total')) {
-          user.unlockedAchievements = [...existing, 'express-total'];
-          AuthManager.currentUser = user;
-          AuthManager.saveCurrent();
-        }
-      }
-      return { ok: true, plan: plan };
-    }
-
-    if (!FirebaseService.db) return { ok: false, msg: 'Sem conexão com Firebase.' };
-    if (!uid) return { ok: false, msg: 'Você precisa estar logado.' };
-
-    try {
-      // Busca o código na coleção
-      const snap = await FirebaseService.db
-        .collection('eex_codes')
-        .where('code', '==', code)
-        .limit(1).get();
-
-      if (snap.empty) return { ok: false, msg: 'Código não encontrado. Verifique e tente novamente.' };
-
-      const codeDoc = snap.docs[0];
-      const codeData = codeDoc.data();
-
-      if (codeData.used) return { ok: false, msg: 'Este código já foi utilizado.' };
-
-      // Marca o código como usado
-      await codeDoc.ref.update({
-        used: true,
-        usedBy: uid,
-        usedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      // Calcula expiração para plano mensal
-      let expiresAt = null;
-      if (codeData.plan === 'monthly') {
-        const exp = new Date();
-        exp.setMonth(exp.getMonth() + 1);
-        expiresAt = exp.toISOString();
-      }
-
-      const premiumData = {
-        plan: codeData.plan || 'monthly',
-        activatedAt: new Date().toISOString(),
-        expiresAt: expiresAt,
-        codeUsed: code
-      };
-
-      await this._saveStatus(premiumData);
-
-      // Desbloqueia conquista "100% Express" permanentemente
-      const user = AuthManager.getCurrentUser();
-      if (user) {
-        const existing = user.unlockedAchievements || [];
-        if (!existing.includes('express-total')) {
-          user.unlockedAchievements = [...existing, 'express-total'];
-          AuthManager.currentUser = user;
-          AuthManager.saveCurrent();
-          if (FirebaseService.db) {
-            await FirebaseService.db.collection('users').doc(uid).set(
-              { unlockedAchievements: user.unlockedAchievements },
-              { merge: true }
-            );
-          }
-        }
-      }
-
-      return { ok: true, plan: codeData.plan };
-    } catch (e) {
-      console.error('EEX+: erro ao ativar:', e);
-      return { ok: false, msg: 'Erro ao validar o código. Tente novamente.' };
-    }
+    return { ok: false, msg: 'O serviço EEX+ está temporariamente desativado.' };
   },
 
   // ── LIMITE DE HÁBITOS ─────────────────────────────────────────────────────
@@ -10018,7 +9877,7 @@ const AppUI = {
 
   unlockAchievement(achId) {
     const user = AuthManager.getCurrentUser();
-    if (!user) return;
+    if (!user || achId === 'express-total') return;
     const list = Array.isArray(user.unlockedAchievements) ? [...user.unlockedAchievements] : [];
     if (!list.includes(achId)) {
       list.push(achId);
@@ -10036,9 +9895,19 @@ const AppUI = {
     const effectiveUser  = targetUser || currentUser;
     const isTargetFriend = !!targetUser && (targetUser.uid !== (currentUser && currentUser.uid));
 
-    const unlockedList   = (effectiveUser && Array.isArray(effectiveUser.unlockedAchievements))
-      ? [...effectiveUser.unlockedAchievements]
+    let unlockedList   = (effectiveUser && Array.isArray(effectiveUser.unlockedAchievements))
+      ? effectiveUser.unlockedAchievements.filter(id => id !== 'express-total')
       : [];
+
+    // Limpa a conquista express-total do usuário atual se ainda estiver gravada
+    if (!isTargetFriend && currentUser && Array.isArray(currentUser.unlockedAchievements) && currentUser.unlockedAchievements.includes('express-total')) {
+      currentUser.unlockedAchievements = currentUser.unlockedAchievements.filter(id => id !== 'express-total');
+      AuthManager.currentUser = currentUser;
+      AuthManager.saveCurrent();
+      if (typeof FirebaseService !== 'undefined' && FirebaseService.db && currentUser.id) {
+        FirebaseService.saveProfileToCloud({ unlockedAchievements: currentUser.unlockedAchievements }).catch(() => {});
+      }
+    }
 
     const streak         = typeof stats.streak === 'number' ? stats.streak : (effectiveUser?.streak || 0);
     const completedTasks = typeof stats.completedTasks === 'number' ? stats.completedTasks : (effectiveUser?.completedTasksCount || 0);
@@ -10047,13 +9916,9 @@ const AppUI = {
     const radioStatus    = !!stats.radioStatus;
     const shells         = typeof stats.shells === 'number' ? stats.shells : (effectiveUser?.shells || 0);
 
-    const isSubscribed   = effectiveUser && (
-      effectiveUser.isEexPlus === true ||
-      effectiveUser.eexPlusActive === true ||
-      (typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isSubscribed && EEXPlusManager.isSubscribed(effectiveUser))
-    );
+    const isSubscribed   = false;
 
-    // Conquistas disponíveis (incluindo Ato Immemorial e 100% Express)
+    // Conquistas disponíveis (express-total removida)
     const list = [
       {
         id: 'primeira-missao',
@@ -10117,14 +9982,6 @@ const AppUI = {
         title: 'Frequência Aberta',
         desc: 'Transmitiu aviso de status no Rádio Comunicador',
         unlocked: unlockedList.includes('frequencia-aberta') || radioStatus
-      },
-      {
-        id: 'express-total',
-        icon: '✨',
-        title: '100% Express',
-        desc: 'Ativou o EEX+ uma vez — Agente de Elite da Frota!',
-        unlocked: unlockedList.includes('express-total') || isSubscribed,
-        exclusive: true // marca visual EEX+
       }
     ];
 
