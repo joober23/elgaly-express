@@ -10953,6 +10953,28 @@ body.tudum-open .tudum-sidebar {
   background: var(--green-mint, #4ade80);
   box-shadow: 0 0 6px var(--green-mint, #4ade80);
   display: inline-block;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tudum-dot.status-ready {
+  background: #4ade80 !important;
+  box-shadow: 0 0 6px #4ade80 !important;
+}
+
+.tudum-dot.status-busy {
+  background: #facc15 !important;
+  box-shadow: 0 0 8px #facc15 !important;
+  animation: tudumDotPulse 0.8s ease-in-out infinite alternate;
+}
+
+.tudum-dot.status-error {
+  background: #ef4444 !important;
+  box-shadow: 0 0 6px #ef4444 !important;
+}
+
+@keyframes tudumDotPulse {
+  from { opacity: 0.6; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.2); }
 }
 
 .tudum-header-actions {
@@ -11085,10 +11107,10 @@ body.tudum-open .tudum-sidebar {
   border-radius: 14px 14px 4px 14px;
   padding: 6px 12px 5px;
   font-size: 0.84rem;
-  line-height: 1.35;
+  line-height: 1.32;
   box-shadow: 2px 2px 0 var(--black);
   word-break: break-word;
-  white-space: pre-wrap;
+  white-space: normal;
   width: fit-content;
   max-width: 100%;
 }
@@ -11108,16 +11130,20 @@ body.tudum-open .tudum-sidebar {
   font-size: 0.85rem;
   box-shadow: 2px 2px 0 var(--black);
   word-break: break-word;
-  line-height: 1.38;
+  line-height: 1.35;
+  white-space: normal;
   width: fit-content;
   max-width: 100%;
 }
 
 .tudum-bubble p {
-  margin: 0 0 2px 0;
+  margin: 0;
+  padding: 0;
+  line-height: 1.35;
 }
-.tudum-bubble p:last-child {
-  margin-bottom: 0;
+
+.tudum-bubble p + p {
+  margin-top: 4px;
 }
 
 .tudum-bubble ul, .tudum-bubble ol {

@@ -5780,6 +5780,33 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     return this.getRemainingDailyMessages() > 0;
   },
 
+  hasUsedFreeChip() {
+    return localStorage.getItem('elgaly_tudum_free_chip_used') === 'true';
+  },
+
+  markFreeChipUsed() {
+    localStorage.setItem('elgaly_tudum_free_chip_used', 'true');
+  },
+
+  setStatus(status) {
+    const dot = document.getElementById('tudumDot');
+    const text = document.getElementById('tudumStatusText');
+    if (!dot || !text) return;
+
+    dot.classList.remove('status-ready', 'status-busy', 'status-error');
+
+    if (status === 'busy') {
+      dot.classList.add('status-busy');
+      text.textContent = 'Despachando...';
+    } else if (status === 'error') {
+      dot.classList.add('status-error');
+      text.textContent = 'Fora do Ar!';
+    } else {
+      dot.classList.add('status-ready');
+      text.textContent = 'Pronta para despachar';
+    }
+  },
+
   updateQuotaUI() {
     const badge = document.getElementById('tudumQuotaBadge');
     const remaining = this.getRemainingDailyMessages();
@@ -5801,6 +5828,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     this.loadHistory();
     this.renderHistory();
     this.updateQuotaUI();
+    this.setStatus('ready');
   },
 
   loadHistory() {
@@ -5844,6 +5872,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   open() {
     document.body.classList.add('tudum-open');
     this.updateQuotaUI();
+    this.setStatus('ready');
     const input = document.getElementById('tudumInput');
     if (input) {
       const placeholders = [
@@ -5952,7 +5981,10 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   renderMessageBubble(msg) {
     const isUser = msg.role === 'user';
     const timeStr = msg.time || '';
-    const formattedContent = this.formatMarkdown(msg.cleanText || msg.text);
+    const rawContent = (msg.cleanText || msg.text || '').trim();
+    const formattedContent = isUser 
+      ? rawContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+      : this.formatMarkdown(rawContent);
 
     let actionsHtml = '';
     if (msg.actionsResult && msg.actionsResult.length > 0) {
@@ -5973,15 +6005,8 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
       `;
     }
 
-    return `
-      <div class="tudum-msg ${isUser ? 'tudum-msg-user' : 'tudum-msg-bot'}">
-        <div class="tudum-bubble">
-          ${formattedContent}
-          ${actionsHtml}
-          ${timeStr ? `<span class="tudum-bubble-time">${timeStr}</span>` : ''}
-        </div>
-      </div>
-    `;
+    const timeHtml = timeStr ? `<span class="tudum-bubble-time">${timeStr}</span>` : '';
+    return `<div class="tudum-msg ${isUser ? 'tudum-msg-user' : 'tudum-msg-bot'}"><div class="tudum-bubble">${formattedContent}${actionsHtml}${timeHtml}</div></div>`;
   },
 
   async executeActions(actions) {
@@ -6233,10 +6258,12 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     throw lastError || new Error('Não foi possível se conectar à Tudum no momento.');
   },
 
-  async sendMessage(text) {
+  async sendMessage(text, isChip = false) {
     if (!text || !text.trim() || this.isThinking) return;
 
-    if (!this.canSendMessage()) {
+    const isFreeChipUse = isChip && !this.hasUsedFreeChip();
+
+    if (!isFreeChipUse && !this.canSendMessage()) {
       if (typeof AppUI !== 'undefined') {
         AppUI.showToast('⚡ Cota diária atingida! O limite é de 10 mensagens por dia para a Tudum.');
       }
@@ -6253,6 +6280,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     }
 
     this.isThinking = true;
+    this.setStatus('busy');
     const sendBtn = document.getElementById('btnSendTudum');
     const input = document.getElementById('tudumInput');
     if (sendBtn) {
@@ -6263,7 +6291,14 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
       input.disabled = true;
     }
 
-    this.incrementDailyUsage();
+    if (isFreeChipUse) {
+      this.markFreeChipUsed();
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('🎁 Mensagem pré-pronta gratuita (não consumiu cota)!');
+      }
+    } else {
+      this.incrementDailyUsage();
+    }
 
     const userText = text.trim();
     this.playSound('sent');
@@ -6288,6 +6323,8 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     if (typing) typing.style.display = 'inline-flex';
     this.scrollToBottom();
 
+    let hasError = false;
+
     try {
       const botRawResponse = await this.callGemini(userText);
       const { cleanText, actions } = this.parseResponse(botRawResponse);
@@ -6310,7 +6347,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
 
       this.saveHistory();
     } catch (err) {
+      hasError = true;
       console.error('Erro na Tudum IA:', err);
+      this.setStatus('error');
       this.playSound('answer');
       this.history.push({
         role: 'model',
@@ -6330,6 +6369,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
         setTimeout(() => input.focus(), 100);
       }
       if (typing) typing.style.display = 'none';
+      if (!hasError) {
+        this.setStatus('ready');
+      }
       this.updateQuotaUI();
       this.renderHistory();
     }
@@ -8782,7 +8824,7 @@ const AppUI = {
         if (TudumManager.isThinking) return;
         const prompt = chip.dataset.prompt;
         if (prompt) {
-          TudumManager.sendMessage(prompt);
+          TudumManager.sendMessage(prompt, true);
         }
       });
     });
