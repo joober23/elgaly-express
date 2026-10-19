@@ -12685,3 +12685,156 @@ body.tudum-open .tudum-sidebar {
   background: var(--purple-main);
   border-radius: 4px;
 }
+
+/* ==========================================================================
+   SEGURANÇA & PROTEÇÃO ANTI-CÓPIA (MOBILE & BLINDAGEM DE IMAGENS)
+   ========================================================================== */
+@media (max-width: 900px) {
+  body,
+  body *:not(input):not(textarea):not([contenteditable="true"]) {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+}
+
+/* Blindagem absoluta de imagens em todo o sistema contra abertura em outras guias */
+img {
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+  user-drag: none !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* ==========================================================================
+   HUMOR OPERACIONAL & BIO APRIMORADA DO AGENTE
+   ========================================================================== */
+.agent-mood-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  border: 1.5px solid var(--mood-color, #ffd700);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  box-shadow: 2px 2px 0 var(--black);
+  text-transform: uppercase;
+}
+
+.agent-mood-tag .mood-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.mood-selector-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 10px 0;
+}
+
+.mood-chip-btn {
+  background: var(--card-bg, #ffffff);
+  border: 2px solid var(--black);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  box-shadow: 2px 2px 0 var(--black);
+}
+
+.mood-chip-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+.mood-chip-btn.active {
+  background: var(--yellow-bright);
+  color: var(--black);
+  border-color: var(--black);
+  transform: scale(1.05);
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+.bio-emoji-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.bio-quick-emoji {
+  background: var(--card-bg, #fff);
+  border: 1.5px solid var(--black);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 1px 1px 0 var(--black);
+  transition: transform 0.1s;
+}
+
+.bio-quick-emoji:hover {
+  transform: scale(1.15);
+  background: var(--yellow-bright);
+}
+
+.bio-char-counter {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #6b7280;
+  text-align: right;
+  display: block;
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   AÇÕES DO MODAL DE ZOOM DA FOTO (SALVAR FOTO)
+   ========================================================================== */
+.photo-zoom-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.btn-save-zoom-photo {
+  background: var(--yellow-bright) !important;
+  color: var(--black) !important;
+  border: 3px solid var(--black) !important;
+  font-weight: 900 !important;
+  padding: 10px 20px !important;
+  border-radius: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-shadow: 4px 4px 0 var(--black) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s !important;
+}
+
+.btn-save-zoom-photo:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0 var(--black) !important;
+}
+
+.btn-save-zoom-photo:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0 var(--black) !important;
+}

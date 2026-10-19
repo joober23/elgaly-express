@@ -18,7 +18,7 @@
 
   
   <!-- Folha de Estilos Modular -->
-  <link rel="stylesheet" href="style.css?v=1.0.8">
+  <link rel="stylesheet" href="style.css?v=1.0.7">
 
   <!-- Metadados PWA & Mobile -->
   <link rel="manifest" href="./manifest.webmanifest">
@@ -1386,10 +1386,39 @@
           <input type="text" id="editProfileLocation" required placeholder="Ex: Nova Amerit - NA (Nova Arcanis)">
         </div>
 
+        <!-- Humor Operacional do Agente -->
         <div class="form-group">
-          <label for="editProfileBio">📝 Bio do Agente (Descrição do Crachá):</label>
-          <textarea id="editProfileBio" maxlength="160" rows="3" placeholder="Escreva algo sobre você, suas rotinas ou sua missão na Frota EEX..." style="width: 100%; border: 2.5px solid var(--black); border-radius: 12px; padding: 10px; font-family: inherit; font-size: 0.9rem; resize: none;"></textarea>
-          <small style="color: #6b7280; font-size: 0.75rem; font-weight: 700;">Máximo de 160 caracteres.</small>
+          <label>⚡ Humor / Status Operacional:</label>
+          <input type="hidden" id="editProfileMood" value="foco">
+          <div class="mood-selector-grid" id="moodSelectorGrid">
+            <button type="button" class="mood-chip-btn active" data-mood="foco" data-emoji="⚡" data-color="#eab308">⚡ Hiperfoco</button>
+            <button type="button" class="mood-chip-btn" data-mood="cafe" data-emoji="☕" data-color="#f97316">☕ A Cafeína</button>
+            <button type="button" class="mood-chip-btn" data-mood="zen" data-emoji="🌸" data-color="#ec4899">🌸 Modo Zen</button>
+            <button type="button" class="mood-chip-btn" data-mood="despacho" data-emoji="📦" data-color="#10b981">📦 Despachando</button>
+            <button type="button" class="mood-chip-btn" data-mood="luz" data-emoji="🚀" data-color="#06b6d4">🚀 Na Luz</button>
+            <button type="button" class="mood-chip-btn" data-mood="dormindo" data-emoji="😴" data-color="#8b5cf6">😴 Bateria 1%</button>
+            <button type="button" class="mood-chip-btn" data-mood="game" data-emoji="🎮" data-color="#3b82f6">🎮 Pausa Gamer</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label for="editProfileBio" style="margin-bottom: 0;">📝 Bio do Agente (Descrição do Crachá):</label>
+            <div class="bio-emoji-bar">
+              <button type="button" class="bio-quick-emoji" title="Inserir ✨">✨</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir 📦">📦</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir ☕">☕</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir 💜">💜</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir ⚡">⚡</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir 🚀">🚀</button>
+              <button type="button" class="bio-quick-emoji" title="Inserir 🔥">🔥</button>
+            </div>
+          </div>
+          <textarea id="editProfileBio" maxlength="180" rows="3" placeholder="Escreva algo sobre você, seu lema de despacho ou rotina..." style="width: 100%; border: 2.5px solid var(--black); border-radius: 12px; padding: 10px; font-family: inherit; font-size: 0.9rem; resize: none;"></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px;">
+            <small style="color: #6b7280; font-size: 0.75rem; font-weight: 700;">Visível no seu crachá e na rede EEX.</small>
+            <span class="bio-char-counter" id="editBioCounter">0 / 180</span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -1705,6 +1734,11 @@
         <div class="photo-zoom-subtitle" id="photoZoomCaption">Legenda da foto</div>
         <small id="photoZoomDate" style="font-weight: 700; color: var(--purple-main); display: block; margin-top: 4px;"></small>
       </div>
+      <div class="photo-zoom-actions">
+        <button type="button" class="btn-save-zoom-photo" id="btnDownloadZoomPhoto">
+          <span>📥</span> <span>Salvar Foto no Aparelho</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1859,9 +1893,9 @@
   <script src="./sp-cities.js"></script>
 
   <!-- Módulos da Aplicação -->
-  <script src="./firebase-service.js?v=1.0.8"></script>
-  <script src="./report.js?v=1.0.8"></script>
-  <script src="./app.js?v=1.0.8"></script>
+  <script src="./firebase-service.js?v=1.0.7"></script>
+  <script src="./report.js?v=1.0.7"></script>
+  <script src="./app.js?v=1.0.7"></script>
 
   <!-- MODAL DE ONBOARDING DA REDE EEX (Primeiro acesso após Google login) -->
   <div class="modal-overlay" id="modalOnboarding">

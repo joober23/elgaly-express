@@ -3,7 +3,7 @@
  * Suporte offline, cache inteligente de recursos e notificações
  */
 
-const CACHE_NAME = 'elgaly-express-pwa-v1.0.8';
+const CACHE_NAME = 'elgaly-express-pwa-v1.0.7';
 
 const STATIC_ASSETS = [
   './',

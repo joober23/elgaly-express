@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.6';
+const EEX_APP_VERSION = '1.0.7';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -248,6 +248,7 @@ const AuthManager = {
         name: this.currentUser.name,
         location: this.currentUser.location,
         bio: this.currentUser.bio || '',
+        agentMood: this.currentUser.agentMood || 'foco',
         avatar: this.currentUser.avatar,
         banner: this.currentUser.banner || '',
         eexEmail: this.currentUser.eexEmail,
@@ -1641,6 +1642,7 @@ const FriendsManager = {
         avatar: user.avatar,
         banner: user.banner || '',
         bio: user.bio || '',
+        agentMood: user.agentMood || 'foco',
         equippedStrip: user.equippedStrip || 'strip-padrao',
         location: user.location,
         streak: stats.streak,
@@ -2011,6 +2013,12 @@ const FriendsManager = {
                 ` : ''}
               </div>
               <div class="friend-badge-eex">@${friend.eexEmail || (friend.nickname + '.express.com')}</div>
+              ${friend.agentMood && typeof EEX_MOODS !== 'undefined' && EEX_MOODS[friend.agentMood] ? `
+                <div class="agent-mood-tag" style="--mood-color: ${EEX_MOODS[friend.agentMood].color}; margin: 4px 0 6px 0;">
+                  <span class="mood-emoji">${EEX_MOODS[friend.agentMood].emoji}</span>
+                  <span>${EEX_MOODS[friend.agentMood].label}</span>
+                </div>
+              ` : ''}
               ${friend.bio ? `
                 <div class="friend-badge-bio">
                   <span class="bio-quote-icon">“</span>
@@ -2298,15 +2306,37 @@ const FriendsManager = {
 // ==========================================================================
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
-  latestVersion: 'v3.1',
+  latestVersion: 'v3.2',
 
   editions: [
+    {
+      version: 'v3.2',
+      date: 'Outubro / 2026',
+      headline: 'BLINDAGEM OPERACIONAL EEX, DOWNLOAD DE FOTOS DE ROTINA E STATUS DE HUMOR NO CRACHÁ!',
+      subheadline: 'Decreto de Proteção de Conteúdo, Preservação de Memórias & Identidade Operacional // Autorizado por Providente C.E.O.',
+      badge: 'EDIÇÃO ATUAL',
+      happy: {
+        title: 'Baixe suas memórias de rotina & Exiba seu Humor Operacional! 📥⚡',
+        text: 'Duas super novidades solicitadas pelos agentes chegaram à Frota: agora, ao abrir qualquer foto de rotina concluída no mural, você tem um botão direto para salvar a imagem no seu celular ou PC com um único clique! Além disso, o seu crachá agora exibe seu Humor Operacional do dia (Hiperfoco, Cafeína, Modo Zen, Despachando Tudo, e mais) e a edição da sua Bio ganhou atalhos rápidos de emojis e contador dinâmico!',
+        tags: ['Salvar Fotos de Rotina 📥', 'Humor Operacional ⚡', 'Bio Aprimorada', 'Download Fácil']
+      },
+      sad: {
+        title: 'Chega de arrastar imagens ou abrir em novas guias!',
+        text: 'A C.E.O. Providente detectou tentativas de desvio de material visual da frota. A partir desta versão, todas as imagens do sistema estão blindadas: clique com botão direito, long-press para salvar em nova guia e arraste de fotos foram terminantemente desativados!',
+        tags: ['Imagens Blindadas 🛡️', 'Zero Vazamentos', 'Segurança EEX']
+      },
+      angry: {
+        title: 'Providente ordenou proteção de cópia de textos no mobile!',
+        text: 'Para garantir total foco nas entregas e evitar cópias desautorizadas ou acidentais pelo celular, a seleção e cópia de textos da interface foram bloqueadas no mobile. Campos de preenchimento e notas continuam normais — apenas a carcaça do sistema agora é indecifrável para mãos curiosas!',
+        tags: ['Anti-Cópia Mobile 🔒', 'Confidencialidade EEX', 'Inspeção da C.E.O.']
+      }
+    },
     {
       version: 'v3.1',
       date: 'Outubro / 2026',
       headline: 'CRACHÁ REFORMULADO, TUDUM DESBLOQUEADA NO CELULAR E FITAS COM PATENTE REAL!',
       subheadline: 'Decreto de Refinamento Operacional & Correção de Sistemas Críticos // Autorizado por Providente C.E.O.',
-      badge: 'EDIÇÃO ATUAL',
+      badge: 'HISTÓRICO',
       happy: {
         title: 'Fitas Holográficas agora exibem sua Patente de verdade! 🎖️✨',
         text: 'Um erro histórico foi finalmente corrigido nos arquivos da Central de Despacho: as fitas holográficas do seu crachá, tanto no seu perfil quanto no Passaporte dos Parceiros, agora exibem o nome REAL da sua patente de carreira — "🌿 CRIATURA DA MATA 🌿", "★ EEX RECRUTA ★", "🚀 EEX DIMENSIONAL 🚀" e assim por diante! As cores das fitas na Loja EEX permanecem intactas: você escolhe a paleta de cores, a Providente escolhe o texto de prestígio que vai nela!',
@@ -3057,6 +3087,19 @@ const HologramStripsCatalog = [
   { id: 'strip-manto-sagrado', name: 'Manto Sagrado', tagline: 'Carmesim Real & Ouro da C.E.O.', desc: 'O mais distinto tecido cerimonial da cúpula de despacho interdimensional.', price: 320, className: 'holo-strip-manto-sagrado', text: '• MANTO SAGRADO •', colors: ['#991b1b', '#ffd700'] },
   { id: 'strip-olho-supremo', name: 'O Olho Supremo', tagline: 'Púrpura Celestial & Ouro Divino', desc: 'A consagração máxima da Providente. Apenas a nata da Frota EEX tem acesso.', price: 350, className: 'holo-strip-olho-supremo', text: '• PROVIDENTE SUPREMO •', colors: ['#ffd700', '#581c87'] }
 ];
+
+// ==========================================================================
+// HUMORES OPERACIONAIS DO AGENTE (Status do Crachá EEX)
+// ==========================================================================
+const EEX_MOODS = {
+  foco: { emoji: '⚡', label: 'Modo Hiperfoco', color: '#eab308' },
+  cafe: { emoji: '☕', label: 'Movido a Cafeína', color: '#f97316' },
+  zen: { emoji: '🌸', label: 'Modo Zen', color: '#ec4899' },
+  despacho: { emoji: '📦', label: 'Despachando Tudo', color: '#10b981' },
+  luz: { emoji: '🚀', label: 'Velocidade da Luz', color: '#06b6d4' },
+  dormindo: { emoji: '😴', label: 'Bateria em 1%', color: '#8b5cf6' },
+  game: { emoji: '🎮', label: 'Pausa pro Game', color: '#3b82f6' }
+};
 
 // ==========================================================================
 // GERENCIADOR DA LOJA EEX (LojaEEXManager — Bazar do Correio)
@@ -6413,6 +6456,43 @@ const AppUI = {
     modal.classList.add('active');
   },
 
+  async downloadPhoto(src, filename) {
+    try {
+      if (!src) return;
+      const cleanFilename = filename || `eex_rotina_${Date.now()}.jpg`;
+
+      if (src.startsWith('data:')) {
+        const a = document.createElement('a');
+        a.href = src;
+        a.download = cleanFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = cleanFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      }
+      this.showToast('📥 Foto salva com sucesso no seu aparelho!');
+    } catch (err) {
+      const a = document.createElement('a');
+      a.href = src;
+      a.download = filename || 'eex_foto_rotina.jpg';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      this.showToast('📥 Download iniciado!');
+    }
+  },
+
   isMobileDevice() {
     return (
       (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
@@ -6965,10 +7045,12 @@ const AppUI = {
         const newName = document.getElementById('editProfileName').value;
         const newLocation = document.getElementById('editProfileLocation').value;
         const newBio = document.getElementById('editProfileBio') ? document.getElementById('editProfileBio').value.trim() : '';
+        const newMood = document.getElementById('editProfileMood') ? document.getElementById('editProfileMood').value : 'foco';
         const updateData = {
           name: newName.trim(),
           location: newLocation.trim(),
-          bio: newBio
+          bio: newBio,
+          agentMood: newMood
         };
         if (this.editAvatarBase64) {
           updateData.avatar = this.editAvatarBase64;
@@ -6982,6 +7064,43 @@ const AppUI = {
         this.renderAll();
         this.showToast('Crachá e informações atualizadas!');
       });
+
+      // Seletor de Humor Operacional
+      const moodGrid = document.getElementById('moodSelectorGrid');
+      const moodHidden = document.getElementById('editProfileMood');
+      if (moodGrid && moodHidden) {
+        moodGrid.querySelectorAll('.mood-chip-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            moodGrid.querySelectorAll('.mood-chip-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            moodHidden.value = btn.dataset.mood;
+          });
+        });
+      }
+
+      // Emojis Rápidos e Contador de Caracteres da Bio
+      const editBioInput = document.getElementById('editProfileBio');
+      const editBioCounter = document.getElementById('editBioCounter');
+      if (editBioInput) {
+        document.querySelectorAll('.bio-quick-emoji').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const emoji = btn.textContent.trim();
+            const start = editBioInput.selectionStart ?? editBioInput.value.length;
+            const end = editBioInput.selectionEnd ?? editBioInput.value.length;
+            const cur = editBioInput.value;
+            if (cur.length + emoji.length <= 180) {
+              editBioInput.value = cur.slice(0, start) + emoji + cur.slice(end);
+              editBioInput.selectionStart = editBioInput.selectionEnd = start + emoji.length;
+              editBioInput.focus();
+              if (editBioCounter) editBioCounter.textContent = `${editBioInput.value.length} / 180`;
+            }
+          });
+        });
+
+        editBioInput.addEventListener('input', () => {
+          if (editBioCounter) editBioCounter.textContent = `${editBioInput.value.length} / 180`;
+        });
+      }
     }
 
     // 6. Filtros de Tarefas
@@ -7931,6 +8050,18 @@ const AppUI = {
       });
     }
 
+    // Botão de Download / Salvar Foto no Aparelho
+    const btnDownloadZoomPhoto = document.getElementById('btnDownloadZoomPhoto');
+    if (btnDownloadZoomPhoto) {
+      btnDownloadZoomPhoto.addEventListener('click', async () => {
+        const img = document.getElementById('photoZoomImage');
+        if (!img || !img.src) return;
+        const title = document.getElementById('photoZoomTitle')?.textContent || 'rotina';
+        const cleanName = title.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+        await this.downloadPhoto(img.src, `eex_rotina_${cleanName}_${Date.now()}.jpg`);
+      });
+    }
+
     // Delegação global para fotos clicáveis (abrir zoom)
     document.addEventListener('click', (e) => {
       const targetImg = e.target.closest('.memory-polaroid-img, .friend-polaroid-img');
@@ -8544,6 +8675,52 @@ const AppUI = {
     }
 
     this.initLandingAnimations();
+
+    // ==========================================================================
+    // SISTEMA DE SEGURANÇA E BLINDAGEM DE CONTEÚDO (MOBILE & IMAGENS)
+    // ==========================================================================
+    // 1. Blindagem de Menu de Contexto (Impede clique direito / long-press em imagens para abrir em outra guia)
+    document.addEventListener('contextmenu', (e) => {
+      const isImg = e.target && (e.target.tagName === 'IMG' || e.target.closest('img'));
+      if (isImg) {
+        e.preventDefault();
+        return false;
+      }
+      // No mobile, impede menu de contexto em áreas de texto protegidas
+      const isInput = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
+      if (!isInput && window.innerWidth <= 900) {
+        e.preventDefault();
+        return false;
+      }
+    }, { passive: false });
+
+    // 2. Impede arrastar imagens (impede arrastar para barra de abas ou área de trabalho)
+    document.addEventListener('dragstart', (e) => {
+      if (e.target && (e.target.tagName === 'IMG' || e.target.closest('img'))) {
+        e.preventDefault();
+        return false;
+      }
+    }, { passive: false });
+
+    // 3. Impede clique com botão do meio (scroll click) que abre imagens/links em nova guia
+    document.addEventListener('auxclick', (e) => {
+      if (e.target && (e.target.tagName === 'IMG' || e.target.closest('img'))) {
+        e.preventDefault();
+        return false;
+      }
+    }, { passive: false });
+
+    // 4. Bloqueia evento de cópia no mobile fora de inputs/textareas
+    document.addEventListener('copy', (e) => {
+      const isInput = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
+      if (!isInput && window.innerWidth <= 900) {
+        e.preventDefault();
+        if (typeof AppUI !== 'undefined') {
+          AppUI.showToast('🔒 Proteção ativa: cópia de texto restrita no mobile!');
+        }
+        return false;
+      }
+    });
   },
 
   initLandingAnimations() {
@@ -9966,6 +10143,12 @@ const AppUI = {
 
             <div class="grand-badge-meta-column">
               <div class="grand-agent-meta">
+                ${user.agentMood && typeof EEX_MOODS !== 'undefined' && EEX_MOODS[user.agentMood] ? `
+                  <div class="agent-mood-tag" style="--mood-color: ${EEX_MOODS[user.agentMood].color};">
+                    <span class="mood-emoji">${EEX_MOODS[user.agentMood].emoji}</span>
+                    <span>${EEX_MOODS[user.agentMood].label}</span>
+                  </div>
+                ` : ''}
                 ${user.bio ? `
                   <div class="grand-agent-bio">
                     <span class="bio-quote-icon">“</span>
@@ -10238,6 +10421,24 @@ const AppUI = {
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
     if (bioInput) bioInput.value = user.bio || '';
     if (avatarPreview) avatarPreview.src = user.avatar || 'images/elgalylogo.png';
+
+    const currentMood = user.agentMood || 'foco';
+    const moodHidden = document.getElementById('editProfileMood');
+    if (moodHidden) moodHidden.value = currentMood;
+    const moodGrid = document.getElementById('moodSelectorGrid');
+    if (moodGrid) {
+      moodGrid.querySelectorAll('.mood-chip-btn').forEach(btn => {
+        if (btn.dataset.mood === currentMood) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    const bioCounter = document.getElementById('editBioCounter');
+    if (bioCounter) bioCounter.textContent = `${(user.bio || '').length} / 180`;
+
     this.editAvatarBase64 = null;
     this.editBannerBase64 = null;
 
