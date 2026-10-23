@@ -161,6 +161,7 @@ const FirebaseService = {
   setupAuthStateListener() {
 
     this.auth.onAuthStateChanged(async (firebaseUser) => {
+      let cloudProfileData = null;
       if (firebaseUser) {
         const email = firebaseUser.email || '';
         const defaultNick = email ? email.split('@')[0] : (firebaseUser.displayName || 'agente').toLowerCase().replace(/\s+/g, '.');
@@ -189,6 +190,7 @@ const FirebaseService = {
           const profileDoc = await this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').get();
           if (profileDoc.exists) {
             const cloudProfile = profileDoc.data();
+            cloudProfileData = cloudProfile;
             if (cloudProfile.joinedAt) {
               const cloudDate = new Date(cloudProfile.joinedAt);
               const todayStr = new Date().toLocaleDateString('en-CA');
@@ -220,15 +222,7 @@ const FirebaseService = {
               }, { merge: true }).catch(() => {});
             }
 
-            if (cloudProfile.purchasedThemes && typeof ThemeManager !== 'undefined') {
-              ThemeManager.syncPurchasedThemes(cloudProfile.purchasedThemes);
-            }
-            if (cloudProfile.preferredTheme && typeof ThemeManager !== 'undefined') {
-              const targetTheme = ThemeManager.isThemeUnlocked(cloudProfile.preferredTheme, userData)
-                ? cloudProfile.preferredTheme
-                : 'rosa-express';
-              ThemeManager.setTheme(targetTheme, false, false);
-            }
+// Temas sincronizados logo abaixo após AuthManager.saveCurrent()
           } else {
             this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
           }
@@ -243,6 +237,21 @@ const FirebaseService = {
 
         AuthManager.currentUser = userData;
         AuthManager.saveCurrent();
+
+        // Sincroniza temas adquiridos e preferência após ter AuthManager.currentUser preenchido
+        try {
+          if (cloudProfileData && cloudProfileData.purchasedThemes && typeof ThemeManager !== 'undefined') {
+            ThemeManager.syncPurchasedThemes(cloudProfileData.purchasedThemes);
+          }
+          if (cloudProfileData && cloudProfileData.preferredTheme && typeof ThemeManager !== 'undefined') {
+            const targetTheme = ThemeManager.isThemeUnlocked(cloudProfileData.preferredTheme, userData)
+              ? cloudProfileData.preferredTheme
+              : 'rosa-express';
+            ThemeManager.setTheme(targetTheme, false, false);
+          }
+        } catch (e) {
+          console.warn('Erro ao sincronizar temas da nuvem:', e);
+        }
 
         // Primeiro acesso: onboarding obrigatório
         if (!userData.onboardingDone) {

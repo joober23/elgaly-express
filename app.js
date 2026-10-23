@@ -3009,11 +3009,18 @@ const ThemeManager = {
   },
 
   isPedrinho(user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
+    if (!user) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('elgaly_express_current_user') || 'null');
+        if (saved) user = saved;
+      } catch {}
+    }
     if (!user) return false;
     const nick = (user.nickname || '').toLowerCase().trim();
     const eex = (user.eexEmail || '').toLowerCase().trim();
     const email = (user.email || '').toLowerCase().trim();
-    return nick === 'pedrinho' || eex.includes('pedrinho') || email.includes('pedrinho');
+    const name = (user.name || '').toLowerCase().trim();
+    return nick.includes('pedrinho') || eex.includes('pedrinho') || email.includes('pedrinho') || name.includes('pedrinho');
   },
 
   getPurchasedThemes(user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
@@ -3024,14 +3031,51 @@ const ThemeManager = {
       } catch (e) {}
     }
     const uid = user ? (user.id || user.uid) : 'default';
-    let local = [];
-    try {
-      local = JSON.parse(localStorage.getItem(`elgaly_purchased_themes_${uid}`) || '[]');
-    } catch { local = []; }
-    if (user && Array.isArray(user.purchasedThemes)) {
-      return Array.from(new Set([...local, ...user.purchasedThemes]));
+    const allPurchased = new Set();
+
+    // 1. Chave específica deste UID
+    if (uid && uid !== 'default') {
+      try {
+        const list = JSON.parse(localStorage.getItem(`elgaly_purchased_themes_${uid}`) || '[]');
+        if (Array.isArray(list)) list.forEach(t => allPurchased.add(t));
+      } catch {}
     }
-    return local;
+
+    // 2. Chaves padrão e legadas locais deste aparelho
+    try {
+      const def = JSON.parse(localStorage.getItem('elgaly_purchased_themes_default') || '[]');
+      if (Array.isArray(def)) def.forEach(t => allPurchased.add(t));
+    } catch {}
+    try {
+      const leg = JSON.parse(localStorage.getItem('elgaly_purchased_themes') || '[]');
+      if (Array.isArray(leg)) leg.forEach(t => allPurchased.add(t));
+    } catch {}
+
+    // 3. Qualquer outra chave de temas comprados no localStorage deste navegador
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('elgaly_purchased_themes_')) {
+          const val = JSON.parse(localStorage.getItem(key) || '[]');
+          if (Array.isArray(val)) val.forEach(t => allPurchased.add(t));
+        }
+      }
+    } catch {}
+
+    // 4. Perfil do usuário (memória/nuvem)
+    if (user && Array.isArray(user.purchasedThemes)) {
+      user.purchasedThemes.forEach(t => allPurchased.add(t));
+    }
+
+    // 5. Se o tema salvo ou ativo for um dos temas válidos, garante que esteja na lista
+    try {
+      const savedTheme = localStorage.getItem('elgaly_theme');
+      if (savedTheme && savedTheme !== 'rosa-express' && this.themes[savedTheme]) {
+        allPurchased.add(savedTheme);
+      }
+    } catch {}
+
+    return Array.from(allPurchased);
   },
 
   savePurchasedThemes(list, user = (typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null)) {
@@ -3042,7 +3086,11 @@ const ThemeManager = {
       } catch (e) {}
     }
     const uid = user ? (user.id || user.uid) : 'default';
-    localStorage.setItem(`elgaly_purchased_themes_${uid}`, JSON.stringify(list));
+    if (uid && uid !== 'default') {
+      localStorage.setItem(`elgaly_purchased_themes_${uid}`, JSON.stringify(list));
+    }
+    localStorage.setItem('elgaly_purchased_themes_default', JSON.stringify(list));
+    localStorage.setItem('elgaly_purchased_themes', JSON.stringify(list));
     if (user) {
       user.purchasedThemes = list;
       if (typeof AuthManager !== 'undefined') {
@@ -3057,13 +3105,12 @@ const ThemeManager = {
     const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
     const current = this.getPurchasedThemes(user);
     const merged = Array.from(new Set([...current, ...cloudList]));
-    // Evita loop e re-renderizações se os temas não mudaram
-    if (merged.length === current.length && current.every(t => cloudList.includes(t))) {
-      return;
-    }
     this.savePurchasedThemes(merged, user);
     if (typeof LojaEEXManager !== 'undefined') LojaEEXManager.render();
     if (typeof AppUI !== 'undefined') {
+      if (typeof AppUI.renderThemeCards === 'function') {
+        AppUI.renderThemeCards();
+      }
       const cfgView = document.getElementById('view-configuracoes');
       if (cfgView && cfgView.classList.contains('active-view')) {
         AppUI.renderConfiguracoes();
@@ -3145,11 +3192,13 @@ const ThemeManager = {
     if (saved === 'light') saved = 'rosa-express';
     if (saved === 'dark')  saved = 'roxo-numetalico';
     if (!this.themes[saved]) saved = 'rosa-express';
-    // Se tema não for desbloqueado pelo usuário, volta imediatamente pro padrão: Rosa Express
-    if (!this.isThemeUnlocked(saved)) {
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+    if (user && !this.isThemeUnlocked(saved, user)) {
       saved = 'rosa-express';
     }
-    this.setTheme(saved, false, false);
+    this.current = saved;
+    document.documentElement.setAttribute('data-theme', saved);
+    this.updateQuoteBox(saved);
   },
 
   cycle() {
@@ -3195,9 +3244,13 @@ const ThemeManager = {
       }
 
       // Atualiza os cartões seletores na tela de configurações
-      document.querySelectorAll('.theme-pick-card').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.themeId === themeId);
-      });
+      if (typeof AppUI !== 'undefined' && AppUI.renderThemeCards) {
+        AppUI.renderThemeCards();
+      } else {
+        document.querySelectorAll('.theme-pick-card').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.themeId === themeId);
+        });
+      }
 
       // Atualiza a caixinha de mensagem com frases do tema apenas se mudou
       if (themeChanged) {
@@ -7747,6 +7800,13 @@ const AppUI = {
       }
     };
 
+    const btnSettingsOpenLojaTemas = document.getElementById('btnSettingsOpenLojaTemas');
+    if (btnSettingsOpenLojaTemas) {
+      btnSettingsOpenLojaTemas.addEventListener('click', () => {
+        openLoja();
+      });
+    }
+
     const headerShellsPill = document.getElementById('headerShellsPill');
     if (headerShellsPill) {
       headerShellsPill.addEventListener('click', () => {
@@ -9668,6 +9728,32 @@ const AppUI = {
     renderToContainer(homeContainer, 3);
   },
 
+  renderThemeCards() {
+    const user = typeof AuthManager !== 'undefined' ? AuthManager.getCurrentUser() : null;
+
+    document.querySelectorAll('.theme-pick-card').forEach(card => {
+      const themeId = card.dataset.themeId;
+      const themeObj = ThemeManager.themes[themeId];
+      if (!themeObj) return;
+
+      const isUnlocked = ThemeManager.isThemeUnlocked(themeId, user);
+      if (!isUnlocked) {
+        card.style.display = 'none';
+        card.classList.remove('active');
+      } else {
+        card.style.display = 'flex';
+        card.classList.remove('theme-locked', 'eexplus-lustroso');
+        card.classList.toggle('active', themeId === ThemeManager.current);
+        const lockBadge = card.querySelector('.theme-lock-badge');
+        if (lockBadge) lockBadge.style.display = 'none';
+      }
+    });
+
+    if (typeof ThemeManager !== 'undefined' && ThemeManager.updateQuoteBox) {
+      ThemeManager.updateQuoteBox(ThemeManager.current);
+    }
+  },
+
   renderConfiguracoes() {
     const user = AuthManager.getCurrentUser();
     if (!user) return;
@@ -9686,10 +9772,8 @@ const AppUI = {
     if (eexEl) eexEl.textContent = user.eexEmail;
     if (locInput) locInput.value = user.location || 'Nova Amerit - NA (Nova Arcanis)';
 
-    // Atualiza estado visual dos cartões de tema nas configurações
-    document.querySelectorAll('.theme-pick-card').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.themeId === ThemeManager.current);
-    });
+    // Atualiza estado visual e visibilidade de cada cartão de tema nas configurações
+    this.renderThemeCards();
 
     // Status do Modo Profissão
     const workStatus = document.getElementById('cfgWorkModeStatus');
@@ -9787,22 +9871,8 @@ const AppUI = {
       }
     }
 
-    // Exibe apenas os temas que o usuário possui/desbloqueou (temas não adquiridos ficam ocultos das configurações)
-    document.querySelectorAll('.theme-pick-card').forEach(card => {
-      const themeId = card.dataset.themeId;
-      const themeObj = ThemeManager.themes[themeId];
-      if (!themeObj) return;
-
-      const isUnlocked = ThemeManager.isThemeUnlocked(themeId);
-      if (!isUnlocked) {
-        card.style.display = 'none';
-      } else {
-        card.style.display = 'flex';
-        card.classList.remove('theme-locked', 'eexplus-lustroso');
-        const lockBadge = card.querySelector('.theme-lock-badge');
-        if (lockBadge) lockBadge.style.display = 'none';
-      }
-    });
+    // Atualiza cartões de tema
+    this.renderThemeCards();
 
     // Atualiza badge de limite de hábitos na rotina
     const routineLimitBadge = document.getElementById('routineLimitBadge');
