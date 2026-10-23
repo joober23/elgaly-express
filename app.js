@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.9';
+const EEX_APP_VERSION = '1.1.0';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -1265,6 +1265,35 @@ const HabitManager = {
     const todayKey = this.getTodayKey();
     const list = this.history[todayKey] || [];
     return list.includes(id);
+  },
+
+  async updateHabit(id, updatedFields) {
+    const idx = this.habits.findIndex(h => h.id === id);
+    if (idx === -1) return null;
+    this.habits[idx] = { ...this.habits[idx], ...updatedFields };
+    this.saveHabitsLocally();
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveHabitToCloud) {
+      try {
+        await FirebaseService.saveHabitToCloud(this.habits[idx]);
+      } catch (e) {
+        console.warn('Erro ao atualizar hábito no Firestore:', e);
+      }
+    }
+
+    if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
+      try {
+        FriendsManager.syncMyPublicProfile();
+      } catch (e) {}
+    }
+
+    try {
+      if (typeof WidgetManager !== 'undefined' && WidgetManager.update) {
+        WidgetManager.update();
+      }
+    } catch (e) {}
+
+    return this.habits[idx];
   },
 
   async addHabit(title, category, days = [0, 1, 2, 3, 4, 5, 6]) {
@@ -6870,18 +6899,29 @@ const AppUI = {
     });
   },
 
-  openPhotoZoom(src, title, caption, date) {
+  openPhotoZoom(src, title, caption, date, isOwn = false) {
     const modal = document.getElementById('modalPhotoZoom');
     const img = document.getElementById('photoZoomImage');
     const titleEl = document.getElementById('photoZoomTitle');
     const captionEl = document.getElementById('photoZoomCaption');
     const dateEl = document.getElementById('photoZoomDate');
+    const downloadBtn = document.getElementById('btnDownloadZoomPhoto');
+    const actionsBox = modal ? modal.querySelector('.photo-zoom-actions') : null;
 
     if (!modal || !img) return;
     img.src = src;
     if (titleEl) titleEl.textContent = title || 'Momento da Rotina';
     if (captionEl) captionEl.textContent = caption || '';
     if (dateEl) dateEl.textContent = date ? `📅 ${date}` : '';
+
+    this._currentPhotoZoomIsOwn = isOwn;
+    if (downloadBtn) {
+      downloadBtn.style.display = isOwn ? 'inline-flex' : 'none';
+    }
+    if (actionsBox) {
+      actionsBox.style.display = isOwn ? 'flex' : 'none';
+    }
+
     modal.classList.add('active');
   },
 
@@ -7188,9 +7228,16 @@ const AppUI = {
   },
 
   bindEvents() {
-    // 1. Upload de Foto na Edição do Perfil
+    // 1. Upload de Foto na Edição do Perfil (Clique no quadrado ou botão)
     const editAvatarInput = document.getElementById('editAvatarInput');
     const editAvatarPreview = document.getElementById('editAvatarPreview');
+    const editAvatarPreviewBox = document.getElementById('editAvatarPreviewBox');
+    const btnTriggerAvatarUpload = document.getElementById('btnTriggerAvatarUpload');
+
+    const triggerAvatarPick = () => { if (editAvatarInput) editAvatarInput.click(); };
+    if (editAvatarPreviewBox) editAvatarPreviewBox.addEventListener('click', triggerAvatarPick);
+    if (btnTriggerAvatarUpload) btnTriggerAvatarUpload.addEventListener('click', triggerAvatarPick);
+
     if (editAvatarInput) {
       editAvatarInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -7204,11 +7251,21 @@ const AppUI = {
       });
     }
 
-    // 1.1 Upload de Banner na Edição do Perfil
+    // 1.1 Upload de Banner na Edição do Perfil (Clique no retângulo ou botão)
     const editBannerInput = document.getElementById('editBannerInput');
     const editBannerPreview = document.getElementById('editBannerPreview');
+    const editBannerPreviewBox = document.getElementById('editBannerPreviewBox');
     const editBannerPlaceholder = document.getElementById('editBannerPlaceholder');
+    const btnTriggerBannerUpload = document.getElementById('btnTriggerBannerUpload');
     const btnRemoveBanner = document.getElementById('btnRemoveBanner');
+
+    const triggerBannerPick = (e) => {
+      if (e && e.target && e.target.closest('#btnRemoveBanner')) return;
+      if (editBannerInput) editBannerInput.click();
+    };
+    if (editBannerPreviewBox) editBannerPreviewBox.addEventListener('click', triggerBannerPick);
+    if (btnTriggerBannerUpload) btnTriggerBannerUpload.addEventListener('click', triggerBannerPick);
+
     if (editBannerInput) {
       editBannerInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -7624,7 +7681,7 @@ const AppUI = {
       });
     });
 
-    // 10. Botões de Novo Hábito (delegação — botões podem ser renderizados dinamicamente)
+    // 10. Botões de Novo/Editar Hábito
     const modalHabit = document.getElementById('modalHabit');
     const formHabit = document.getElementById('formHabit');
     const modalHabitClose = document.getElementById('modalHabitClose');
@@ -7638,14 +7695,9 @@ const AppUI = {
           if (modal) modal.classList.add('active');
           return;
         }
-        const habitTitleEl = document.getElementById('habitTitle');
-        if (habitTitleEl) habitTitleEl.value = '';
-        // Reseta todos os dias como ativos por padrão
-        document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => b.classList.add('active'));
-        if (modalHabit) modalHabit.classList.add('active');
+        this.openHabitModal(null);
       }
     });
-
 
     if (modalHabitClose && modalHabit) {
       modalHabitClose.addEventListener('click', () => {
@@ -7656,27 +7708,39 @@ const AppUI = {
     if (formHabit) {
       formHabit.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const title = document.getElementById('habitTitle').value;
+        const habitId = (document.getElementById('habitId')?.value || '').trim();
+        const title = (document.getElementById('habitTitle').value || '').trim();
         const cat = document.getElementById('habitCategory').value;
         const selectedDays = [];
         document.querySelectorAll('#habitDaysPicker .weekday-btn.active').forEach(b => {
           selectedDays.push(parseInt(b.dataset.day, 10));
         });
+        const daysToSave = selectedDays.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6];
 
         if (title) {
-          // Limite de hábitos: 12 para free, ilimitado para EEX+
-          if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.canAddHabit()) {
-            modalHabit.classList.remove('active');
-            AppUI.showToast(`🔒 Limite de ${EEXPlusManager.HABIT_LIMIT_FREE} hábitos atingido! Assine o EEX+ para hábitos ilimitados ✨`);
-            return;
+          if (habitId) {
+            // Editando hábito existente (ativo hoje ou em descanso!)
+            await HabitManager.updateHabit(habitId, {
+              title: title,
+              category: cat,
+              days: daysToSave
+            });
+            this.showToast(`✏️ Rotina "${title}" atualizada com sucesso!`);
+          } else {
+            // Criando novo hábito
+            if (typeof EEXPlusManager !== 'undefined' && !EEXPlusManager.canAddHabit()) {
+              modalHabit.classList.remove('active');
+              AppUI.showToast(`🔒 Limite de ${EEXPlusManager.HABIT_LIMIT_FREE} hábitos atingido! Assine o EEX+ para hábitos ilimitados ✨`);
+              return;
+            }
+            await HabitManager.addHabit(title, cat, daysToSave);
+            this.showToast('☀️ Novo hábito registrado no check-in!');
           }
-          await HabitManager.addHabit(title, cat, selectedDays.length ? selectedDays : [0, 1, 2, 3, 4, 5, 6]);
 
           modalHabit.classList.remove('active');
           this.renderDailyRoutine();
           this.renderHomeOverview();
           ReportEngine.renderReportPreview();
-          this.showToast('Novo hábito registrado no check-in!');
         }
       });
     }
@@ -8477,6 +8541,10 @@ const AppUI = {
     const btnDownloadZoomPhoto = document.getElementById('btnDownloadZoomPhoto');
     if (btnDownloadZoomPhoto) {
       btnDownloadZoomPhoto.addEventListener('click', async () => {
+        if (!this._currentPhotoZoomIsOwn) {
+          AppUI.showToast('🔒 Você só pode baixar fotos das suas próprias rotinas.');
+          return;
+        }
         const img = document.getElementById('photoZoomImage');
         if (!img || !img.src) return;
         const title = document.getElementById('photoZoomTitle')?.textContent || 'rotina';
@@ -8493,7 +8561,9 @@ const AppUI = {
         const caption = parentCard?.querySelector('.memory-polaroid-caption, .friend-polaroid-caption')?.textContent || targetImg.alt || '';
         const title = parentCard?.querySelector('.memory-polaroid-habit')?.textContent || 'Momento da Rotina EEX';
         const date = parentCard?.querySelector('.memory-polaroid-date')?.textContent || '';
-        this.openPhotoZoom(targetImg.src, title, caption, date);
+        // Apenas memórias próprias (.memory-polaroid-item) permitem download
+        const isOwn = !!targetImg.closest('.memory-polaroid-item');
+        this.openPhotoZoom(targetImg.src, title, caption, date, isOwn);
       }
     });
 
@@ -9519,7 +9589,8 @@ const AppUI = {
           </div>
         </div>
         <div class="habit-actions">
-          <button class="habit-btn-delete" title="Remover Hábito" data-id="${habit.id}">✕</button>
+          <button type="button" class="habit-btn-edit" title="Editar Rotina" data-id="${habit.id}">✏️</button>
+          <button type="button" class="habit-btn-delete" title="Remover Hábito" data-id="${habit.id}">✕</button>
         </div>
       `;
 
@@ -9542,6 +9613,14 @@ const AppUI = {
         this.openMomentCaptureModal(habit);
       });
 
+      const editBtn = card.querySelector('.habit-btn-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.openHabitModal(habit);
+        });
+      }
+
       const delBtn = card.querySelector('.habit-btn-delete');
       delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -9556,21 +9635,54 @@ const AppUI = {
       container.appendChild(card);
     });
 
-    // Se houver hábitos programados para outros dias (descanso hoje)
+    // Se houver hábitos programados para outros dias (descanso hoje / dormindo)
     if (restHabits.length > 0) {
       const restBox = document.createElement('div');
       restBox.className = 'rest-habits-box';
       restBox.style.gridColumn = '1 / -1';
       restBox.innerHTML = `
         <div class="rest-habits-title">🛌 Rotinas em Descanso Hoje (${restHabits.length} programados para outros dias)</div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           ${restHabits.map(h => `
-            <span style="background: var(--card-bg); border: 2px solid var(--purple-main); border-radius: 10px; padding: 6px 12px; font-size: 0.85rem; font-weight: 700; color: var(--purple-dark);">
-              ${h.title} <small style="color: var(--purple-main);">(${formatDaysBadge(h.days)})</small>
-            </span>
+            <div class="rest-habit-card" data-id="${h.id}">
+              <div class="rest-habit-info">
+                <span class="rest-habit-title">${h.title}</span>
+                <span class="rest-habit-badge">${formatDaysBadge(h.days)}</span>
+              </div>
+              <div class="rest-habit-actions">
+                <button type="button" class="habit-btn-edit rest-btn-edit" title="Editar Rotina" data-id="${h.id}">✏️</button>
+                <button type="button" class="habit-btn-delete rest-btn-delete" title="Remover Rotina" data-id="${h.id}">✕</button>
+              </div>
+            </div>
           `).join('')}
         </div>
       `;
+
+      // Eventos de editar e remover nos hábitos em descanso
+      restBox.querySelectorAll('.rest-btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const hId = btn.dataset.id;
+          const targetHabit = habits.find(h => h.id === hId);
+          if (targetHabit) this.openHabitModal(targetHabit);
+        });
+      });
+
+      restBox.querySelectorAll('.rest-btn-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const hId = btn.dataset.id;
+          const targetHabit = habits.find(h => h.id === hId);
+          const title = targetHabit ? targetHabit.title : 'esta rotina';
+          if (confirm(`Remover "${title}" da sua lista de rotinas?`)) {
+            await HabitManager.deleteHabit(hId);
+            this.renderDailyRoutine();
+            this.renderHomeOverview();
+            ReportEngine.renderReportPreview();
+          }
+        });
+      });
+
       container.appendChild(restBox);
     }
 
@@ -10918,6 +11030,42 @@ const AppUI = {
       }
       if (bannerPlaceholder) bannerPlaceholder.style.display = 'block';
       if (btnRemoveBanner) btnRemoveBanner.style.display = 'none';
+    }
+
+    if (modal) modal.classList.add('active');
+  },
+
+    openHabitModal(habit = null) {
+    const modal = document.getElementById('modalHabit');
+    const titleEl = document.getElementById('modalHabitTitle') || modal?.querySelector('h2');
+    const descEl = document.getElementById('modalHabitDesc');
+    const idInput = document.getElementById('habitId');
+    const titleInput = document.getElementById('habitTitle');
+    const catInput = document.getElementById('habitCategory');
+    const submitBtn = document.getElementById('btnSubmitHabit') || document.querySelector('#formHabit button[type="submit"]');
+
+    if (habit) {
+      if (titleEl) titleEl.textContent = '✏️ Editar Rotina Diária';
+      if (descEl) descEl.textContent = 'Altere o nome, categoria ou dias de frequência desta rotina.';
+      if (idInput) idInput.value = habit.id;
+      if (titleInput) titleInput.value = habit.title;
+      if (catInput) catInput.value = habit.category || 'pessoal';
+      if (submitBtn) submitBtn.textContent = '💾 Salvar Alterações';
+
+      const habitDays = Array.isArray(habit.days) && habit.days.length > 0 ? habit.days : [0, 1, 2, 3, 4, 5, 6];
+      document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => {
+        const d = parseInt(b.dataset.day, 10);
+        b.classList.toggle('active', habitDays.includes(d));
+      });
+    } else {
+      if (titleEl) titleEl.textContent = '☀️ Novo Hábito Diário';
+      if (descEl) descEl.textContent = 'Adicione uma rotina diária para acompanhar sua sequência (streak).';
+      if (idInput) idInput.value = '';
+      if (titleInput) titleInput.value = '';
+      if (catInput) catInput.value = 'pessoal';
+      if (submitBtn) submitBtn.textContent = 'Adicionar à Rotina Diária';
+
+      document.querySelectorAll('#habitDaysPicker .weekday-btn').forEach(b => b.classList.add('active'));
     }
 
     if (modal) modal.classList.add('active');

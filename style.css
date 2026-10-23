@@ -13638,3 +13638,111 @@ img {
 .carga-providente-hero-img:hover {
   transform: scale(1.08) rotate(-2deg);
 }
+
+/* ==========================================================================
+   ESTILOS DE UPLOAD CLICÁVEL & HÁBITOS EDITÁVEIS (v1.1.0)
+   ========================================================================== */
+.clickable-upload {
+  cursor: pointer !important;
+  position: relative !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.clickable-upload:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--black) !important;
+}
+
+.clickable-upload:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--black) !important;
+}
+
+.avatar-upload-overlay,
+.banner-upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  border-radius: inherit;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.clickable-upload:hover .avatar-upload-overlay,
+.clickable-upload:hover .banner-upload-overlay {
+  opacity: 1;
+}
+
+/* Ações de Hábitos e Hábitos em Descanso */
+.habit-actions,
+.rest-habit-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.habit-btn-edit {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  opacity: 0.65;
+  transition: opacity 0.15s, transform 0.15s;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.habit-btn-edit:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.rest-habit-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--card-bg, #fff);
+  border: 2px solid var(--purple-main, #3a154d);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--purple-dark, #1e092b);
+  box-shadow: 2px 2px 0 var(--black, #11220e);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.rest-habit-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 var(--black, #11220e);
+}
+
+.rest-habit-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rest-habit-title {
+  color: var(--purple-dark, #1e092b);
+}
+
+.rest-habit-badge {
+  font-size: 0.72rem;
+  color: var(--purple-main, #3a154d);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
