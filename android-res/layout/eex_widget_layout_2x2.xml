@@ -2,86 +2,125 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="3dp">
 
-    <!-- Fundo artístico dos Agentes da EEX -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/widget_bg_pattern"
-        android:scaleType="centerCrop"
-        android:contentDescription="Fundo EEX" />
-
-    <!-- Camada de contraste e borda neo-brutalista -->
+    <!-- Card Neo-Brutalista com Sombra Rígida -->
     <FrameLayout
+        android:id="@+id/widget_card_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/eex_widget_card_overlay" />
+        android:background="@drawable/eex_widget_card_pending">
 
-    <!-- Conteúdo Compacto 2x2 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="8dp">
-
-        <!-- Mascote Dinâmico: Midnight ou Brave -->
-        <ImageView
-            android:id="@+id/widget_mascot_img"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_marginBottom="4dp"
-            android:src="@drawable/widget_agent_midnight"
-            android:scaleType="fitCenter"
-            android:contentDescription="Agente EEX" />
-
-        <!-- Linha da Chama e Sequência -->
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
 
-            <ImageView
-                android:id="@+id/widget_fire_icon"
-                android:layout_width="18dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="4dp"
-                android:src="@drawable/widget_fire_off"
-                android:scaleType="fitCenter"
-                android:contentDescription="Chama" />
-
-            <TextView
-                android:id="@+id/widget_streak_text"
+            <!-- Topo: Pill de Streak em Chamas -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0 DIAS"
-                android:textColor="#ffeb3b"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-black" />
+                android:background="@drawable/eex_widget_badge_streak"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="7dp"
+                android:paddingEnd="9dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="2dp"
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:id="@+id/widget_fire_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="4dp"
+                    android:src="@drawable/widget_fire_off"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Chama" />
+
+                <TextView
+                    android:id="@+id/widget_streak_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 DIAS"
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/darumadrop_one" />
+            </LinearLayout>
+
+            <!-- Mascote Central -->
+            <ImageView
+                android:id="@+id/widget_mascot_img"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginBottom="3dp"
+                android:src="@drawable/widget_agent_midnight"
+                android:scaleType="fitCenter"
+                android:contentDescription="Mascote EEX" />
+
+            <!-- ViewFlipper com Status Alternando -->
+            <ViewFlipper
+                android:id="@+id/widget_view_flipper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoStart="true"
+                android:flipInterval="3200">
+
+                <!-- Frame 1: Status Rota -->
+                <TextView
+                    android:id="@+id/widget_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="ROTA PENDENTE!"
+                    android:textColor="#ffffff"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/darumadrop_one"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Frame 2: Contador Hábitos -->
+                <TextView
+                    android:id="@+id/widget_progress_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="⏳ FALTAM HÁBITOS"
+                    android:textColor="#ffeb3b"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/darumadrop_one"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Frame 3: Conchas -->
+                <TextView
+                    android:id="@+id/widget_shells_display"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="🐚 0 CONCHAS"
+                    android:textColor="#00f0ff"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/darumadrop_one"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </ViewFlipper>
+
+            <TextView
+                android:id="@+id/widget_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
         </LinearLayout>
 
-        <!-- Status -->
-        <TextView
-            android:id="@+id/widget_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ROTA PENDENTE!"
-            android:textColor="#ffffff"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/widget_subtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
-    </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>

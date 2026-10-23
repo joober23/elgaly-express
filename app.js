@@ -1350,10 +1350,237 @@ const HabitManager = {
 // ==========================================================================
 // GERENCIADOR DE WIDGET (EEX Widget: Agente Midnight & Agente Brave)
 // ==========================================================================
+// ==========================================================================
+// GERENCIADOR DE CARGA MISTERIOSA DA C.E.O. PROVIDENTE
+// ==========================================================================
+const CargaMisteriosaManager = {
+  frasesProvidente: [
+    { autor: 'C.E.O. Providente', texto: 'Aprovado com louvor! O frete dimensional hoje voará sob vento favorável! ✨' },
+    { autor: 'Tudum IA', texto: 'tudum!! despachei seu bônus cósmico! toma essas conchas e arrasa hoje! 🎀' },
+    { autor: 'Agente Brave', texto: 'Força máxima na rota! Nenhum pacote fica pra trás quando a gente quer! ⚡' },
+    { autor: 'Agente Midnight', texto: 'Ufa... com essas conchas extras eu fico menos desesperada! Vamos entregar tudo! 🐾' },
+    { autor: 'C.E.O. Providente', texto: 'Decreto Oficial nº 77: Todo agente dedicado tem direito a café quentinho e conchas brilhantes! 👑' },
+    { autor: 'Tudum IA', texto: 'socorro de alegria!! abriu o pacote na hora certa, chefia! ✨' },
+    { autor: 'Agente Brave', texto: 'Meta do dia: entregar com estilo e faturar como lenda! 📦' },
+    { autor: 'C.E.O. Providente', texto: 'O Olho de Providente observa sua sequência. Continue firme na rota! 👁️✨' }
+  ],
+
+  getTodayKey() {
+    return new Date().toISOString().slice(0, 10);
+  },
+
+  isAvailable() {
+    const today = this.getTodayKey();
+    const lastDate = localStorage.getItem('elgaly_carga_misteriosa_last_date');
+    return lastDate !== today;
+  },
+
+  getTodayClaimData() {
+    try {
+      const raw = localStorage.getItem('elgaly_carga_misteriosa_data');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  init() {
+    this.renderTrigger();
+    const btnClose = document.getElementById('btnCloseCargaMisteriosa');
+    if (btnClose) {
+      btnClose.addEventListener('click', () => this.closeModal());
+    }
+    const modal = document.getElementById('modalCargaMisteriosa');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) this.closeModal();
+      });
+    }
+  },
+
+  renderTrigger() {
+    const box = document.getElementById('boxCargaMisteriosaTrigger');
+    if (!box) return;
+
+    const available = this.isAvailable();
+    if (available) {
+      box.className = 'carga-misteriosa-banner available';
+      box.innerHTML = `
+        <div class="carga-banner-left">
+          <img src="embalagem_cosmica.png" alt="Carga" class="carga-banner-box-img anim-box-shake">
+          <div>
+            <div class="carga-banner-tag">★ CARGA DIÁRIA DA C.E.O. ★</div>
+            <h4 class="carga-banner-title">Pacote Misterioso Disponível!</h4>
+            <p class="carga-banner-sub">A Providente enviou um despacho selado para você hoje. Toque para abrir!</p>
+          </div>
+        </div>
+        <button type="button" class="btn-comic btn-sm carga-banner-btn" onclick="CargaMisteriosaManager.openModal()">
+          🎁 Resgatar Carga
+        </button>
+      `;
+    } else {
+      const data = this.getTodayClaimData();
+      const shells = data ? data.shells : 0;
+      box.className = 'carga-misteriosa-banner claimed';
+      box.innerHTML = `
+        <div class="carga-banner-left">
+          <img src="embalagem_segura.png" alt="Carga Entregue" class="carga-banner-box-img" style="opacity:0.9;">
+          <div>
+            <div class="carga-banner-tag" style="background:#10b981;color:#fff;">✓ CARGA DO DIA RESGATADA</div>
+            <h4 class="carga-banner-title">+${shells} Conchas Faturadas Hoje!</h4>
+            <p class="carga-banner-sub">Próximo pacote dimensional chega amanhã às 00:00.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-comic btn-sm btn-secondary" onclick="CargaMisteriosaManager.openModal()">
+          📜 Ver Bênção
+        </button>
+      `;
+    }
+  },
+
+  openModal() {
+    const modal = document.getElementById('modalCargaMisteriosa');
+    const content = document.getElementById('cargaMisteriosaContent');
+    if (!modal || !content) return;
+
+    const available = this.isAvailable();
+    if (available) {
+      content.innerHTML = `
+        <div style="text-align:center;">
+          <div class="carga-modal-stamp">★ REMETENTE: C.E.O. PROVIDENTE ★</div>
+          <h3 style="font-family:var(--font-main, 'Darumadrop One', cursive);font-size:1.6rem;margin:8px 0 4px;color:var(--purple-dark);">
+            Carga Misteriosa Dimensional
+          </h3>
+          <p style="font-size:0.9rem;color:#4b5563;margin-bottom:16px;">
+            Este pacote foi selado com fita cósmica de segurança. Que surpresas esperam o seu dia de despacho?
+          </p>
+          <div class="carga-box-showcase">
+            <img src="embalagem_cosmica.png" alt="Carga Misteriosa" class="carga-box-big-img anim-box-hover">
+            <span class="carga-box-seal-badge">🔒 LACRADO</span>
+          </div>
+          <div style="margin-top:20px;">
+            <button type="button" class="btn-comic" style="width:100%;font-size:1.1rem;background:#ff3b94;color:#fff;" id="btnAbrirCarga">
+              📦 Rasgar Fita &amp; Despachar!
+            </button>
+          </div>
+        </div>
+      `;
+      const btn = document.getElementById('btnAbrirCarga');
+      if (btn) btn.addEventListener('click', () => this.claimReward());
+    } else {
+      const data = this.getTodayClaimData() || { shells: 5, frase: this.frasesProvidente[0] };
+      content.innerHTML = `
+        <div class="carga-modal-top-hero">
+          <img src="providente-dance.gif" alt="Providente Dançando" class="carga-providente-hero-img">
+        </div>
+        <div style="text-align:center;">
+          <div class="carga-modal-stamp" style="background:#10b981;color:#fff;">★ DESPACHO CONCLUÍDO ★</div>
+          <h3 style="font-family:var(--font-main, 'Darumadrop One', cursive);font-size:1.6rem;margin:8px 0 4px;color:var(--purple-dark);">
+            Carga de Hoje Já Foi Aberta!
+          </h3>
+          <div class="carga-reward-box">
+            <div style="font-size:1.8rem;font-weight:900;color:#0d9488;font-family:var(--font-main);">
+              +${data.shells} 🐚 Conchas EEX
+            </div>
+            <p style="font-size:0.85rem;color:#6b7280;margin:4px 0 12px;">Creditadas na sua conta com sucesso!</p>
+            <div class="carga-quote-box">
+              <span class="carga-quote-author">📜 ${data.frase ? data.frase.autor : 'C.E.O. Providente'}:</span>
+              <p class="carga-quote-text">"${data.frase ? data.frase.texto : 'Despache com estilo e conquiste sua rota!'}"</p>
+            </div>
+          </div>
+          <button type="button" class="btn-comic btn-secondary" style="width:100%;margin-top:16px;" onclick="CargaMisteriosaManager.closeModal()">
+            ✕ Fechar
+          </button>
+        </div>
+      `;
+    }
+
+    modal.classList.add('active');
+  },
+
+  async claimReward() {
+    if (!this.isAvailable()) return;
+
+    const rewardShells = Math.floor(Math.random() * 11) + 5; // 5 a 15 conchas
+    const frase = this.frasesProvidente[Math.floor(Math.random() * this.frasesProvidente.length)];
+    const today = this.getTodayKey();
+
+    if (typeof TudumManager !== 'undefined') {
+      TudumManager.playSound('done');
+    }
+
+    localStorage.setItem('elgaly_carga_misteriosa_last_date', today);
+    localStorage.setItem('elgaly_carga_misteriosa_data', JSON.stringify({ shells: rewardShells, frase, date: today }));
+
+    if (typeof ShellsManager !== 'undefined') {
+      await ShellsManager.addShells(rewardShells, '🎁 Carga Misteriosa da Providente!');
+    }
+
+    if (typeof AppUI !== 'undefined') {
+      AppUI.unlockAchievement('carga-misteriosa');
+    }
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.db && FirebaseService.auth && FirebaseService.auth.currentUser) {
+      try {
+        const uid = FirebaseService.auth.currentUser.uid;
+        FirebaseService.db.collection('users').doc(uid).collection('system').doc('daily_mystery').set({
+          lastDate: today,
+          rewardShells: rewardShells,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => {});
+      } catch (e) {}
+    }
+
+    const content = document.getElementById('cargaMisteriosaContent');
+    if (content) {
+      content.innerHTML = `
+        <div class="carga-modal-top-hero anim-bounce">
+          <img src="providente-dance.gif" alt="Providente Dançando" class="carga-providente-hero-img">
+        </div>
+        <div style="text-align:center;" class="anim-pop-in">
+          <div class="carga-modal-stamp" style="background:#ffeb3b;color:#000;">★ CARGA DESLACRADA! ★</div>
+          <h3 style="font-family:var(--font-main, 'Darumadrop One', cursive);font-size:1.8rem;margin:8px 0 4px;color:var(--magenta-bright);">
+            PARABÉNS, AGENTE!
+          </h3>
+          <div class="carga-reward-box">
+            <div style="font-size:2.2rem;font-weight:900;color:#0d9488;font-family:var(--font-main);">
+              +${rewardShells} 🐚 Conchas EEX!
+            </div>
+            <p style="font-size:0.85rem;color:#6b7280;margin:4px 0 12px;">Depositadas no seu saldo!</p>
+            <div class="carga-quote-box">
+              <span class="carga-quote-author">📜 Bênção de ${frase.autor}:</span>
+              <p class="carga-quote-text">"${frase.texto}"</p>
+            </div>
+          </div>
+          <button type="button" class="btn-comic" style="width:100%;margin-top:16px;background:#10b981;color:#fff;" onclick="CargaMisteriosaManager.closeModal()">
+            ✨ Pegar Conchas &amp; Fechar
+          </button>
+        </div>
+      `;
+    }
+
+    this.renderTrigger();
+    if (typeof AppUI !== 'undefined') {
+      AppUI.showToast(`🎁 Você ganhou +${rewardShells} Conchas EEX na Carga Misteriosa!`);
+    }
+  },
+
+  closeModal() {
+    const modal = document.getElementById('modalCargaMisteriosa');
+    if (modal) modal.classList.remove('active');
+    this.renderTrigger();
+  }
+};
+
 const WidgetManager = {
   update() {
     if (typeof HabitManager === 'undefined') return;
     const stats = HabitManager.getTodayStats();
+    const currentUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const habits = HabitManager.habits || [];
+    const unfinishedHabit = habits.find(h => !h.done);
+    const nextHabitTitle = unfinishedHabit ? (unfinishedHabit.title || unfinishedHabit.name || '') : '';
+    const shellsCount = (typeof ShellsManager !== 'undefined') ? ShellsManager.getShells() : (currentUser?.shells || 0);
 
     const title = stats.allDone 
       ? 'ROTA ENTREGUE! 🚀' 
@@ -1371,9 +1598,14 @@ const WidgetManager = {
         window.Capacitor.Plugins.EexWidget.update({
           streak: stats.streak,
           pending: stats.pendingCount,
+          completed: stats.completedCount,
+          total: stats.scheduledCount,
+          shells: shellsCount,
           allDone: stats.allDone,
           title: title,
-          subtitle: subtitle
+          subtitle: subtitle,
+          nextHabit: nextHabitTitle,
+          agentName: currentUser?.nickname || currentUser?.name || 'Agente'
         });
       } catch (e) {
         console.warn('Erro ao atualizar EexWidget nativo:', e);
@@ -1381,10 +1613,10 @@ const WidgetManager = {
     }
 
     // 2. Renderiza Widget no Início do App
-    this.renderInAppWidget(stats, title, subtitle);
+    this.renderInAppWidget(stats, title, subtitle, nextHabitTitle, shellsCount);
   },
 
-  renderInAppWidget(stats, title, subtitle) {
+  renderInAppWidget(stats, title, subtitle, nextHabit, shells) {
     const container = document.getElementById('eexMascotWidget');
     if (!container) return;
 
@@ -1393,6 +1625,7 @@ const WidgetManager = {
     const agentName = isDone ? 'Agente Brave' : 'Agente Midnight';
     const fireIcon = isDone ? 'images/fireon.png' : 'images/fireoff.png';
     const streakText = `${stats.streak} ${stats.streak === 1 ? 'DIA' : 'DIAS'} DE SEQUÊNCIA`;
+    const shellsDisplay = typeof shells === 'number' ? shells : 0;
 
     container.className = `eex-mascot-widget ${isDone ? 'widget-mood-done' : 'widget-mood-pending'}`;
     container.innerHTML = `
@@ -1406,14 +1639,25 @@ const WidgetManager = {
             <img src="${fireIcon}" alt="Fogo" style="width:16px;height:22px;object-fit:contain;">
             ${streakText}
           </span>
-          <span class="mascot-widget-counter">${isDone ? '✅ 100% Concluído' : `⏳ ${stats.completedCount}/${stats.scheduledCount} Hábitos`}</span>
+          <span class="mascot-widget-badge" style="background:#00f0ff;color:#000000;box-shadow:2px 2px 0 #000;">
+            ${isDone ? '✅ 100% Concluído' : `⏳ ${stats.completedCount}/${stats.scheduledCount} Hábitos`}
+          </span>
+          <span class="mascot-widget-badge" style="background:#ff3b94;color:#ffffff;box-shadow:2px 2px 0 #000;">
+            🐚 ${shellsDisplay} Conchas
+          </span>
         </div>
-        <h3 class="mascot-widget-title">${title}</h3>
-        <p class="mascot-widget-desc">${subtitle}</p>
-        <div class="mascot-widget-footer">
+        <div class="mascot-widget-bubble">
+          <h3 class="mascot-widget-bubble-title">${title}</h3>
+          <p class="mascot-widget-bubble-desc">${subtitle}</p>
+          ${!isDone && nextHabit ? `<div class="mascot-widget-next-pill">🎯 <strong>Próximo:</strong> ${nextHabit}</div>` : ''}
+        </div>
+        <div class="mascot-widget-footer" style="display:flex;gap:8px;flex-wrap:wrap;">
           <a href="#rotina" class="btn-comic btn-sm ${isDone ? 'btn-secondary' : ''}">
             ${isDone ? '✨ Ver Rotina Feita' : '⚡ Despachar Hábitos Agora'}
           </a>
+          <button type="button" class="btn-comic btn-sm btn-purple" onclick="if(typeof TudumManager !== 'undefined') TudumManager.open();">
+            🤖 Falar com a Tudum
+          </button>
         </div>
       </div>
     `;
@@ -4498,6 +4742,7 @@ const ImpressoraManager = {
           stampEl.innerHTML = '★ APROVADO ★<br>C.E.O. PROVIDENTE<br>FROTA EEX AUTORIZA';
           receiptEl.appendChild(stampEl);
           this.playStampSound();
+          if (typeof AppUI !== 'undefined') AppUI.unlockAchievement('manifesto-emitido');
           if (paperWrap) setTimeout(() => { paperWrap.scrollTo({ top: paperWrap.scrollHeight, behavior: 'smooth' }); }, 100);
           setTimeout(() => {
             if (actionsEl) actionsEl.style.display = 'flex';
@@ -4761,6 +5006,7 @@ const PomodoroManager = {
       }
       if (typeof AppUI !== 'undefined') {
         AppUI.showToast('🍅 Foco concluído! +10 conchas!');
+        AppUI.unlockAchievement('foco-pomodoro');
       }
     }
 
@@ -5604,6 +5850,26 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
     localStorage.removeItem('elgaly_tudum_personality');
   },
 
+  onCloudUsageUpdated(cloudData) {
+    if (!cloudData) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (cloudData.date === today) {
+      const localUsed = this.getDailyUsage();
+      const cloudUsed = typeof cloudData.count === 'number' ? cloudData.count : 0;
+      const finalCount = Math.max(localUsed, cloudUsed);
+      try {
+        localStorage.setItem('elgaly_tudum_daily_usage', JSON.stringify({ date: today, count: finalCount }));
+      } catch (e) {}
+      if (cloudData.freeChipUsed) {
+        localStorage.setItem('elgaly_tudum_free_chip_used', 'true');
+      }
+      this.updateQuotaUI();
+      if (localUsed > cloudUsed && typeof FirebaseService !== 'undefined') {
+        FirebaseService.syncTudumUsage(today, finalCount, this.hasUsedFreeChip());
+      }
+    }
+  },
+
   getDailyUsage() {
     const today = new Date().toISOString().slice(0, 10);
     try {
@@ -5626,6 +5892,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
       localStorage.setItem('elgaly_tudum_daily_usage', JSON.stringify({ date: today, count: next }));
     } catch (e) {}
     this.updateQuotaUI();
+    if (typeof FirebaseService !== 'undefined') {
+      FirebaseService.syncTudumUsage(today, next, this.hasUsedFreeChip());
+    }
     return next;
   },
 
@@ -5645,6 +5914,11 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
 
   markFreeChipUsed() {
     localStorage.setItem('elgaly_tudum_free_chip_used', 'true');
+    const today = new Date().toISOString().slice(0, 10);
+    const count = this.getDailyUsage();
+    if (typeof FirebaseService !== 'undefined') {
+      FirebaseService.syncTudumUsage(today, count, true);
+    }
   },
 
   setStatus(status) {
@@ -6679,6 +6953,7 @@ const AppUI = {
     if (typeof EyeComfortManager !== 'undefined') EyeComfortManager.init();
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
     if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.init();
+    if (typeof CargaMisteriosaManager !== 'undefined') CargaMisteriosaManager.init();
     if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
     if (typeof TerminalTelemetryManager !== 'undefined') TerminalTelemetryManager.init();
 
@@ -9080,6 +9355,7 @@ const AppUI = {
     }
 
     WidgetManager.update();
+    if (typeof CargaMisteriosaManager !== 'undefined') CargaMisteriosaManager.renderTrigger();
     this.renderEvents();
   },
 
@@ -9982,6 +10258,27 @@ const AppUI = {
         title: 'Frequência Aberta',
         desc: 'Transmitiu aviso de status no Rádio Comunicador',
         unlocked: unlockedList.includes('frequencia-aberta') || radioStatus
+      },
+      {
+        id: 'carga-misteriosa',
+        icon: '🎁',
+        title: 'Carga Resgatada',
+        desc: 'Abriu sua primeira Carga Misteriosa da C.E.O. Providente!',
+        unlocked: unlockedList.includes('carga-misteriosa')
+      },
+      {
+        id: 'manifesto-emitido',
+        icon: '🖨️',
+        title: 'Manifesto de Carga',
+        desc: 'Emitiu uma nota fiscal diária na Impressora Térmica EEX!',
+        unlocked: unlockedList.includes('manifesto-emitido')
+      },
+      {
+        id: 'foco-pomodoro',
+        icon: '🍅',
+        title: 'Foco Absoluto',
+        desc: 'Concluiu um ciclo completo no Relógio Pomodoro Dimensional!',
+        unlocked: unlockedList.includes('foco-pomodoro')
       }
     ];
 

@@ -2,103 +2,281 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="4dp">
 
-    <!-- Fundo artístico dos Agentes da EEX -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/widget_bg_pattern"
-        android:scaleType="centerCrop"
-        android:contentDescription="Fundo EEX" />
-
-    <!-- Camada de contraste e borda neo-brutalista (FrameLayout é permitido por RemoteViews) -->
+    <!-- Card Principal Neo-Brutalista com Sombra Rígida 3D e Borda Grossa -->
     <FrameLayout
+        android:id="@+id/widget_card_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/eex_widget_card_overlay" />
+        android:background="@drawable/eex_widget_card_pending">
 
-    <!-- Conteúdo em primeiro plano -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
-
-        <!-- Mascote Dinâmico: Midnight ou Brave -->
-        <ImageView
-            android:id="@+id/widget_mascot_img"
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/widget_agent_midnight"
-            android:scaleType="fitCenter"
-            android:contentDescription="Agente EEX" />
-
-        <!-- Coluna de Informações -->
+        <!-- Conteúdo Interno -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_vertical">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp">
 
-            <!-- Linha da Chama de Streak (fireon/fireoff) -->
+            <!-- Coluna da Esquerda: Mascote + Tag do Personagem -->
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="2dp">
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginEnd="12dp">
 
                 <ImageView
-                    android:id="@+id/widget_fire_icon"
-                    android:layout_width="22dp"
-                    android:layout_height="28dp"
-                    android:layout_marginEnd="6dp"
-                    android:src="@drawable/widget_fire_off"
+                    android:id="@+id/widget_mascot_img"
+                    android:layout_width="82dp"
+                    android:layout_height="82dp"
+                    android:src="@drawable/widget_agent_midnight"
                     android:scaleType="fitCenter"
-                    android:contentDescription="Status da Chama" />
+                    android:contentDescription="Mascote EEX" />
 
                 <TextView
-                    android:id="@+id/widget_streak_text"
+                    android:id="@+id/widget_agent_tag"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 DIAS"
-                    android:textColor="#ffeb3b"
-                    android:textSize="17sp"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/eex_widget_badge_pink"
+                    android:paddingStart="7dp"
+                    android:paddingEnd="7dp"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="2dp"
+                    android:text="MIDNIGHT"
+                    android:textColor="#ffffff"
+                    android:textSize="10sp"
                     android:textStyle="bold"
-                    android:fontFamily="sans-serif-black" />
+                    android:fontFamily="@font/darumadrop_one" />
             </LinearLayout>
 
-            <!-- Título do Status -->
-            <TextView
-                android:id="@+id/widget_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ROTA PENDENTE!"
-                android:textColor="#ffffff"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-black"
-                android:maxLines="1"
-                android:ellipsize="end" />
+            <!-- Coluna da Direita: Badges, ViewFlipper Animadinho e Ações -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_vertical">
 
-            <!-- Subtítulo / Diálogo dos Agentes -->
-            <TextView
-                android:id="@+id/widget_subtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Midnight em pânico! Complete todos os hábitos hoje!"
-                android:textColor="#f5d0fe"
-                android:textSize="11sp"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                <!-- Barra Superior de Badges: Streak de Fogo + Selo Dimensional -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="6dp">
+
+                    <!-- Pill de Fogo com Darumadrop One -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_badge_streak"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="1dp"
+                        android:paddingBottom="2dp"
+                        android:layout_marginEnd="6dp">
+
+                        <ImageView
+                            android:id="@+id/widget_fire_icon"
+                            android:layout_width="15dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/widget_fire_off"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="Chama" />
+
+                        <TextView
+                            android:id="@+id/widget_streak_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 DIAS"
+                            android:textColor="#000000"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/darumadrop_one" />
+                    </LinearLayout>
+
+                    <!-- Selo de Status EEX -->
+                    <TextView
+                        android:id="@+id/widget_header_tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_badge_cyan"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="1dp"
+                        android:paddingBottom="2dp"
+                        android:text="★ FROTA EEX ★"
+                        android:textColor="#000000"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/darumadrop_one" />
+
+                </LinearLayout>
+
+                <!-- VIEWFLIPPER ANIMADINHO (Alterna automaticamente no Home Screen) -->
+                <ViewFlipper
+                    android:id="@+id/widget_view_flipper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autoStart="true"
+                    android:flipInterval="3800">
+
+                    <!-- Frame 1: Balão de Quadrinhos com Fala do Agente -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_speech_bubble"
+                        android:orientation="vertical"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="9dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="6dp">
+
+                        <TextView
+                            android:id="@+id/widget_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ROTA PENDENTE! 🚨"
+                            android:textColor="#000000"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/widget_subtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Midnight em pânico: faltam hábitos hoje!"
+                            android:textColor="#331133"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="2"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                    <!-- Frame 2: Expediente e Próxima Missão -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_speech_bubble"
+                        android:orientation="vertical"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="9dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="6dp">
+
+                        <TextView
+                            android:id="@+id/widget_progress_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏳ HÁBITOS: 0 PENDENTES"
+                            android:textColor="#9d174d"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/widget_next_habit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🎯 PRÓXIMA ROTINA: Check-in diário"
+                            android:textColor="#000000"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                    <!-- Frame 3: Recado da Tudum IA -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_speech_bubble"
+                        android:orientation="vertical"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="9dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="6dp">
+
+                        <TextView
+                            android:id="@+id/widget_tudum_pill"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🤖 TUDUM IA — 10 MSGS HOJE"
+                            android:textColor="#0284c7"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/widget_tudum_quote"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="tudum!! bora fatiar tudo pra não surtar! ✨"
+                            android:textColor="#000000"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/darumadrop_one"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                </ViewFlipper>
+
+                <!-- Rodapé com Botão Neo-Brutalista de Ação Rápida -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/widget_shells_display"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🐚 0 CONCHAS"
+                        android:textColor="#ffeb3b"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/darumadrop_one" />
+
+                    <TextView
+                        android:id="@+id/widget_btn_action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/eex_widget_btn_action"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="3dp"
+                        android:text="⚡ DESPACHAR"
+                        android:textColor="#ffffff"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/darumadrop_one" />
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>

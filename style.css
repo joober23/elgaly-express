@@ -3206,6 +3206,53 @@ footer {
   line-height: 1.35;
 }
 
+.mascot-widget-bubble {
+  background: #fffef7;
+  color: #000000;
+  border: 3px solid #000000;
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 4px 4px 0px #000000;
+  margin: 6px 0 12px;
+  position: relative;
+}
+
+.mascot-widget-bubble-title {
+  font-family: var(--font-main, 'Darumadrop One', cursive);
+  font-size: 1.25rem;
+  color: #000000;
+  margin: 0 0 4px;
+  line-height: 1.15;
+}
+
+.mascot-widget-bubble-desc {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2b113a;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.mascot-widget-next-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffeb3b;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 6px;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .mascot-widget-bubble {
+  background: #fffef7;
+  color: #000000;
+}
+
 .mascot-widget-footer {
   display: flex;
   gap: 8px;
@@ -13400,4 +13447,194 @@ img {
     align-items: center;
     gap: 10px;
   }
+}
+
+
+/* ==========================================================================
+   CARGA MISTERIOSA DA C.E.O. PROVIDENTE (NOVO RECURSO)
+   ========================================================================== */
+.carga-misteriosa-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: var(--card-bg, #ffffff);
+  border: 3.5px solid var(--black, #000);
+  border-radius: 18px;
+  padding: 14px 18px;
+  margin-top: 14px;
+  margin-bottom: 22px;
+  box-shadow: 6px 6px 0px var(--black, #000);
+  transition: all 0.2s ease;
+}
+
+.carga-misteriosa-banner.available {
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+  border-color: #000000;
+  box-shadow: 6px 6px 0px #ff3b94;
+}
+
+.carga-misteriosa-banner.claimed {
+  background: #f8fafc;
+  opacity: 0.92;
+}
+
+.carga-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.carga-banner-box-img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.3));
+  flex-shrink: 0;
+}
+
+.carga-banner-tag {
+  display: inline-block;
+  font-family: var(--font-main, 'Darumadrop One', cursive);
+  font-size: 0.72rem;
+  background: #ffeb3b;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 6px;
+  padding: 1px 7px;
+  box-shadow: 2px 2px 0px #000000;
+  margin-bottom: 4px;
+}
+
+.carga-banner-title {
+  font-family: var(--font-main, 'Darumadrop One', cursive);
+  font-size: 1.15rem;
+  color: var(--purple-dark, #230d38);
+  margin: 0 0 2px;
+  line-height: 1.15;
+}
+
+.carga-banner-sub {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.anim-box-shake {
+  animation: boxShake 3s ease-in-out infinite;
+}
+
+@keyframes boxShake {
+  0%, 80%, 100% { transform: rotate(0deg) scale(1); }
+  85% { transform: rotate(-8deg) scale(1.08); }
+  90% { transform: rotate(8deg) scale(1.08); }
+  95% { transform: rotate(-4deg) scale(1.05); }
+}
+
+.carga-box-showcase {
+  position: relative;
+  display: inline-block;
+  margin: 10px 0;
+}
+
+.carga-box-big-img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.25));
+}
+
+.carga-box-seal-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #ef4444;
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.carga-modal-stamp {
+  display: inline-block;
+  font-family: var(--font-main, 'Darumadrop One', cursive);
+  font-size: 0.78rem;
+  background: #00f0ff;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 2px 10px;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.carga-reward-box {
+  background: #f0fdf4;
+  border: 3px solid #000;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.carga-quote-box {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: left;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.carga-quote-author {
+  font-family: var(--font-main, 'Darumadrop One', cursive);
+  font-size: 0.85rem;
+  color: #8b5cf6;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.carga-quote-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .carga-misteriosa-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .carga-banner-left {
+    align-items: flex-start;
+  }
+}
+
+.carga-modal-top-hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: -8px auto 10px;
+}
+
+.carga-providente-hero-img {
+  height: 150px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.25));
+  transition: transform 0.2s ease;
+}
+
+.carga-providente-hero-img:hover {
+  transform: scale(1.08) rotate(-2deg);
 }

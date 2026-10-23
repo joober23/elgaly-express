@@ -546,6 +546,11 @@
           <!-- Renderizado dinamicamente pelo WidgetManager -->
         </div>
 
+        <!-- BANNER DE CARGA MISTERIOSA DA C.E.O. PROVIDENTE -->
+        <div id="boxCargaMisteriosaTrigger" class="carga-misteriosa-banner">
+          <!-- Renderizado dinamicamente por CargaMisteriosaManager -->
+        </div>
+
         <!-- Resumo Rápido da Rota -->
         <section class="home-summary-box">
           <div class="home-summary-header">
@@ -2858,6 +2863,18 @@
         <button type="button" class="btn-comic btn-about-done" id="btnDoneAboutModal">
           🚀 Entendido, Bora Organizar!
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL DE CARGA MISTERIOSA DA C.E.O. PROVIDENTE
+       ========================================================================== -->
+  <div class="modal-overlay" id="modalCargaMisteriosa" style="z-index: 10050;">
+    <div class="modal-box" style="max-width: 420px; border: 4px solid var(--black); border-radius: 22px; box-shadow: 8px 8px 0px var(--black); position: relative;">
+      <button type="button" class="btn-comic btn-secondary" id="btnCloseCargaMisteriosa" style="position: absolute; top: 12px; right: 12px; padding: 4px 10px; font-size: 0.9rem; border-radius: 10px;">✕</button>
+      <div id="cargaMisteriosaContent">
+        <!-- Preenchido dinamicamente por CargaMisteriosaManager -->
       </div>
     </div>
   </div>

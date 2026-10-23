@@ -22,6 +22,7 @@ const FirebaseService = {
   unsubscribeHabits: null,
   unsubscribeHistory: null,
   unsubscribeEvents: null,
+  unsubscribeTudumUsage: null,
 
   // VAPID Key publica do Firebase Console:
   // Firebase Console → Projeto → Cloud Messaging → Web Push certificates → Gerar par de chaves
@@ -577,6 +578,15 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar notas do Firestore:', err);
     });
+
+    // 12. Escuta uso diário da Tudum em tempo real (sincroniza PC e Celular)
+    this.unsubscribeTudumUsage = userDoc.collection('system').doc('tudum_usage').onSnapshot(doc => {
+      if (doc.exists && typeof TudumManager !== 'undefined') {
+        TudumManager.onCloudUsageUpdated(doc.data());
+      }
+    }, err => {
+      console.warn('Erro ao escutar uso da Tudum do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
@@ -591,11 +601,27 @@ const FirebaseService = {
     if (this.unsubscribePokes) { this.unsubscribePokes(); this.unsubscribePokes = null; }
     if (this.unsubscribePackages) { this.unsubscribePackages(); this.unsubscribePackages = null; }
     if (this.unsubscribeProfile) { this.unsubscribeProfile(); this.unsubscribeProfile = null; }
+    if (this.unsubscribeTudumUsage) { this.unsubscribeTudumUsage(); this.unsubscribeTudumUsage = null; }
   },
 
   // ========================================================
   // OPERAÇÕES DE ESCRITA NO FIRESTORE
   // ========================================================
+
+  async syncTudumUsage(date, count, freeChipUsed) {
+    if (!this.db || !this.auth || !this.auth.currentUser) return;
+    try {
+      const uid = this.auth.currentUser.uid;
+      await this.db.collection('users').doc(uid).collection('system').doc('tudum_usage').set({
+        date: date,
+        count: count,
+        freeChipUsed: !!freeChipUsed,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn('Erro ao sincronizar uso da Tudum na nuvem:', e);
+    }
+  },
 
   async saveProfileTheme(themeId) {
     if (!this.auth || !this.auth.currentUser || !this.db) return;

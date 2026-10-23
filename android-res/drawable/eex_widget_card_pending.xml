@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sombra sólida preta neo-brutalista (offset 4dp, 4dp) -->
+    <item android:left="5dp" android:top="5dp" android:right="0dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <!-- Card principal com fundo retro-roxo profundo e borda preta grossa de 3.5dp -->
+    <item android:left="0dp" android:top="0dp" android:right="5dp" android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#230d38" />
+            <stroke android:width="3.5dp" android:color="#000000" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+</layer-list>
