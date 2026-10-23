@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.0.8';
+const EEX_APP_VERSION = '1.0.9';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -826,6 +826,10 @@ const ShellsManager = {
     return isNaN(val) ? 0 : val;
   },
 
+  getShells() {
+    return this.getBalance();
+  },
+
   async addShells(amount, reason = '') {
     if (!amount || amount <= 0) return 0;
     const current = this.getBalance();
@@ -1217,8 +1221,12 @@ const HabitManager = {
       }
       if (typeof ShellsManager !== 'undefined') {
         const conchas = Math.floor(Math.random() * 11) + 10; // 10 a 20 conchas
-        await ShellsManager.rewardWithProtection(id, 'habit', conchas, 'Rotina cumprida!');
-        if (typeof EEXPlusManager !== 'undefined') EEXPlusManager.applyShellBonus(conchas, id, 'habit');
+        try {
+          await ShellsManager.rewardWithProtection(id, 'habit', conchas, 'Rotina cumprida!');
+          if (typeof EEXPlusManager !== 'undefined') EEXPlusManager.applyShellBonus(conchas, id, 'habit');
+        } catch (e) {
+          console.warn('Erro ao premiar conchas no hábito:', e);
+        }
       }
 
     } else {
@@ -1226,15 +1234,28 @@ const HabitManager = {
     }
 
     this.saveHistoryLocally();
-    WidgetManager.update();
 
-    if (typeof FirebaseService !== 'undefined') {
-      await FirebaseService.saveHabitHistoryToCloud(this.history);
+    try {
+      if (typeof WidgetManager !== 'undefined' && WidgetManager.update) {
+        WidgetManager.update();
+      }
+    } catch (e) {
+      console.warn('Erro ao atualizar widget no toggleHabit:', e);
+    }
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveHabitHistoryToCloud) {
+      try {
+        await FirebaseService.saveHabitHistoryToCloud(this.history);
+      } catch (e) {
+        console.warn('Erro ao salvar histórico de hábitos no Firestore:', e);
+      }
     }
 
     // SINCRONIZAÇÃO EM TEMPO REAL COM AMIGOS:
     if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
-      FriendsManager.syncMyPublicProfile();
+      try {
+        FriendsManager.syncMyPublicProfile();
+      } catch (e) {}
     }
 
     return this.isCompletedToday(id);
@@ -1574,46 +1595,52 @@ const CargaMisteriosaManager = {
 
 const WidgetManager = {
   update() {
-    if (typeof HabitManager === 'undefined') return;
-    const stats = HabitManager.getTodayStats();
-    const currentUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
-    const habits = HabitManager.habits || [];
-    const unfinishedHabit = habits.find(h => !h.done);
-    const nextHabitTitle = unfinishedHabit ? (unfinishedHabit.title || unfinishedHabit.name || '') : '';
-    const shellsCount = (typeof ShellsManager !== 'undefined') ? ShellsManager.getShells() : (currentUser?.shells || 0);
+    try {
+      if (typeof HabitManager === 'undefined') return;
+      const stats = (typeof HabitManager.getTodayStats === 'function')
+        ? HabitManager.getTodayStats()
+        : { allDone: false, pendingCount: 0, completedCount: 0, scheduledCount: 0, streak: 0 };
+      const currentUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+      const habits = HabitManager.habits || [];
+      const unfinishedHabit = habits.find(h => !HabitManager.isCompletedToday(h.id));
+      const nextHabitTitle = unfinishedHabit ? (unfinishedHabit.title || '') : '';
+      const shellsCount = (typeof ShellsManager !== 'undefined') ? ShellsManager.getBalance() : (currentUser?.shells || 0);
 
-    const title = stats.allDone 
-      ? 'ROTA ENTREGUE! 🚀' 
-      : (stats.pendingCount > 0 ? 'ROTA PENDENTE! 🚨' : 'CENTRAL EM ESPERA');
+      const title = stats.allDone 
+        ? 'ROTA ENTREGUE! 🚀' 
+        : (stats.pendingCount > 0 ? 'ROTA PENDENTE! 🚨' : 'CENTRAL EM ESPERA');
 
-    const subtitle = stats.allDone
-      ? 'Agente Brave comemora: rotina 100% cumprida! Você é uma lenda!'
-      : (stats.pendingCount > 0
-          ? `Agente Midnight em pânico: faltam ${stats.pendingCount} hábito(s) hoje!`
-          : 'Agente Midnight ansiosa: faça seu check-in dimensional!');
+      const subtitle = stats.allDone
+        ? 'Agente Brave comemora: rotina 100% cumprida! Você é uma lenda!'
+        : (stats.pendingCount > 0
+            ? `Agente Midnight em pânico: faltam ${stats.pendingCount} hábito(s) hoje!`
+            : 'Agente Midnight ansiosa: faça seu check-in dimensional!');
 
-    // 1. Atualiza Widget Nativo Android via plugin Capacitor (se estiver no APK)
-    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.EexWidget) {
-      try {
-        window.Capacitor.Plugins.EexWidget.update({
-          streak: stats.streak,
-          pending: stats.pendingCount,
-          completed: stats.completedCount,
-          total: stats.scheduledCount,
-          shells: shellsCount,
-          allDone: stats.allDone,
-          title: title,
-          subtitle: subtitle,
-          nextHabit: nextHabitTitle,
-          agentName: currentUser?.nickname || currentUser?.name || 'Agente'
-        });
-      } catch (e) {
-        console.warn('Erro ao atualizar EexWidget nativo:', e);
+      // 1. Atualiza Widget Nativo Android via plugin Capacitor (se estiver no APK)
+      if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.EexWidget) {
+        try {
+          window.Capacitor.Plugins.EexWidget.update({
+            streak: stats.streak || 0,
+            pending: stats.pendingCount || 0,
+            completed: stats.completedCount || 0,
+            total: stats.scheduledCount || 0,
+            shells: shellsCount,
+            allDone: !!stats.allDone,
+            title: title,
+            subtitle: subtitle,
+            nextHabit: nextHabitTitle,
+            agentName: currentUser?.nickname || currentUser?.name || 'Agente'
+          });
+        } catch (e) {
+          console.warn('Erro ao atualizar EexWidget nativo:', e);
+        }
       }
-    }
 
-    // 2. Renderiza Widget no Início do App
-    this.renderInAppWidget(stats, title, subtitle, nextHabitTitle, shellsCount);
+      // 2. Renderiza Widget no Início do App
+      this.renderInAppWidget(stats, title, subtitle, nextHabitTitle, shellsCount);
+    } catch (err) {
+      console.warn('Erro ao atualizar WidgetManager:', err);
+    }
   },
 
   renderInAppWidget(stats, title, subtitle, nextHabit, shells) {
