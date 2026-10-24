@@ -1631,7 +1631,9 @@ const WidgetManager = {
         : { allDone: false, pendingCount: 0, completedCount: 0, scheduledCount: 0, streak: 0 };
       const currentUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
       const habits = HabitManager.habits || [];
-      const unfinishedHabit = habits.find(h => !HabitManager.isCompletedToday(h.id));
+      const todayDowWidget = new Date().getDay();
+      const todayHabits = habits.filter(h => !h.days || h.days.includes(todayDowWidget));
+      const unfinishedHabit = todayHabits.find(h => !HabitManager.isCompletedToday(h.id));
       const nextHabitTitle = unfinishedHabit ? (unfinishedHabit.title || '') : '';
       const shellsCount = (typeof ShellsManager !== 'undefined') ? ShellsManager.getBalance() : (currentUser?.shells || 0);
 
