@@ -1,11 +1,9 @@
-/**
- * ELGALY EXPRESS - FIREBASE CLOUD FUNCTIONS
- * Dispara notificacoes push via FCM quando eventos ocorrem no Firestore:
- *   - Nova encomenda recebida
- *   - Convite de amizade (Friend Request)
- *   - Buzina (Poke) recebida
- *   - Lembretes de habitos pendentes (a cada 3h: 08, 11, 14, 17, 20 BRT)
- */
+// elgaly express — cloud functions
+// dispara notificações push via FCM quando eventos rolam no firestore:
+//   - nova encomenda recebida
+//   - convite de amizade
+//   - buzina (poke) recebida
+//   - lembretes de hábitos pendentes (08, 11, 14, 17, 20 BRT)
 
 const functions = require('firebase-functions');
 const admin     = require('firebase-admin');
@@ -13,9 +11,7 @@ const admin     = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 
-// ============================================================
-// HELPER: busca o token FCM do usuario e envia a notificacao
-// ============================================================
+// --- helper: manda FCM pra um usuário ---
 async function sendFcmToUser(toUid, title, body, data) {
   try {
     const userDoc = await db.collection('users').doc(toUid).get();
@@ -55,7 +51,7 @@ async function sendFcmToUser(toUid, title, body, data) {
     const response = await admin.messaging().send(message);
     console.log('Notificacao enviada com sucesso:', response);
   } catch (err) {
-    // Token invalido ou expirado — remove do usuario
+    // token inválido ou expirado — remove do usuário
     if (err.code === 'messaging/registration-token-not-registered' ||
         err.code === 'messaging/invalid-registration-token') {
       console.warn('Token FCM invalido, removendo para uid:', toUid);
@@ -66,10 +62,8 @@ async function sendFcmToUser(toUid, title, body, data) {
   }
 }
 
-// ============================================================
-// TRIGGER 1: Nova encomenda recebida
+// --- trigger: nova encomenda ---
 // users/{recipientUid}/packages/{packageId}
-// ============================================================
 exports.onPackageReceived = functions
   .region('southamerica-east1')
   .firestore
@@ -78,7 +72,7 @@ exports.onPackageReceived = functions
     const pkg          = snap.data();
     const recipientUid = context.params.recipientUid;
 
-    // Nao notifica se o remetente e o proprio destinatario
+    // não notifica se o remetente é o próprio destinatário
     if (pkg.fromUid === recipientUid) return null;
 
     const senderName = pkg.fromName || 'Um agente da Frota';
@@ -96,10 +90,8 @@ exports.onPackageReceived = functions
     return null;
   });
 
-// ============================================================
-// TRIGGER 2: Convite de amizade recebido
+// --- trigger: convite de amizade ---
 // friend_requests/{toUid}/incoming/{fromUid}
-// ============================================================
 exports.onFriendRequestReceived = functions
   .region('southamerica-east1')
   .firestore
@@ -119,10 +111,8 @@ exports.onFriendRequestReceived = functions
     return null;
   });
 
-// ============================================================
-// TRIGGER 3: Buzina (Poke) recebida
+// --- trigger: buzina (poke) ---
 // users/{recipientUid}/pokes/{pokeId}
-// ============================================================
 exports.onPokeReceived = functions
   .region('southamerica-east1')
   .firestore
@@ -144,25 +134,22 @@ exports.onPokeReceived = functions
     return null;
   });
 
-// ============================================================
-// SCHEDULED FUNCTION: Lembretes de habitos pendentes
-// Roda a cada hora nos horarios 08, 11, 14, 17, 20 (BRT)
-// Notifica usuarios com habitos pendentes no dia via FCM
-// ============================================================
+// --- scheduled: lembretes de hábitos pendentes ---
+// roda nos horários 08, 11, 14, 17, 20 (BRT)
 exports.sendHabitReminders = functions
   .region('southamerica-east1')
   .pubsub
   .schedule('0 8,11,14,17,20 * * *')
   .timeZone('America/Sao_Paulo')
   .onRun(async (context) => {
-    // Data de hoje no fuso America/Sao_Paulo (UTC-3)
+    // data de hoje em BRT (UTC-3)
     const nowBRT = new Date(Date.now() - 3 * 60 * 60 * 1000);
     const todayStr = nowBRT.toISOString().substring(0, 10); // YYYY-MM-DD
     const dayOfWeek = nowBRT.getUTCDay(); // 0=Dom ... 6=Sab
 
     console.log(`[sendHabitReminders] rodando para ${todayStr}, dia ${dayOfWeek}`);
 
-    // Textos neo-brutalistas para o push
+    // variantes neo-brutalistas pro push — sorteia uma por usuário
     const NOTIF_VARIANTS = [
       {
         title: '\uD83D\uDEA8 ROTA PENDENTE, AGENTE!',
@@ -186,7 +173,7 @@ exports.sendHabitReminders = functions
       }
     ];
 
-    // Busca usuarios com fcmToken (limite 500)
+    // busca usuários com fcmToken (limite 500)
     const usersSnap = await db.collection('users')
       .where('fcmToken', '!=', null)
       .limit(500)
@@ -198,24 +185,24 @@ exports.sendHabitReminders = functions
     }
 
     const tokens   = [];
-    const tokenMap = {}; // token -> uid para tratamento de erros
+    const tokenMap = {}; // token -> uid, usado no tratamento de erros
 
     await Promise.all(usersSnap.docs.map(async (userDoc) => {
       const uid      = userDoc.id;
       const fcmToken = userDoc.data().fcmToken;
       if (!fcmToken) return;
 
-      // Busca habitos do dia (days array contendo o numero dayOfWeek)
+      // pega os hábitos do dia (days[] com o número do dayOfWeek)
       const habitsSnap = await db.collection('users').doc(uid).collection('habits').get();
       if (habitsSnap.empty) return;
 
       const pendingHabits = habitsSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(h => {
-          // Filtra pelo dia da semana
+          // filtra pelo dia da semana
           if (!h.days || h.days.length === 0) return true;
           if (!h.days.includes(dayOfWeek)) return false;
-          // Verifica se ja foi concluido hoje via completedDates
+          // ignora se já foi concluído hoje
           if (Array.isArray(h.completedDates) && h.completedDates.includes(todayStr)) return false;
           return true;
         });
@@ -244,7 +231,7 @@ exports.sendHabitReminders = functions
 
     console.log(`Enviando lembretes para ${tokens.length} usuarios.`);
 
-    // Envia em lote via sendEachForMulticast (max 500 tokens)
+    // envia em lote via sendEach (max 500 tokens)
     const messages = tokens.map(t => ({
       token: t.token,
       notification: { title: t.title, body: t.body },
@@ -272,7 +259,7 @@ exports.sendHabitReminders = functions
     const response = await admin.messaging().sendEach(messages);
     console.log(`sendEach: ${response.successCount} ok, ${response.failureCount} erros.`);
 
-    // Trata tokens invalidos
+    // trata tokens inválidos — remove do firestore
     const deleteOps = [];
     response.responses.forEach((res, idx) => {
       if (!res.success) {

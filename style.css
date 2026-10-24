@@ -1,8 +1,4 @@
-/* ==========================================================================
-   ELGALY EXPRESS - SISTEMA DE ROTINA & DESPACHO DIMENSIONAL
-   Paleta de Cores e EstÃ©tica Neo-Brutalista Oficial
-   Navbar Inteligente, Menu Lateral Mobile, Auth Gateway e EdiÃ§Ã£o de Perfil
-   ========================================================================== */
+/* --- elgaly express: configs base e tema --- */
 
 :root {
   --bg-color: #f7a8ca;
@@ -16,7 +12,7 @@
   --font-main: 'Darumadrop One', cursive;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   
-  /* Status & Alertas */
+  /* status e alertas */
   --green-mint: #4ade80;
   --green-dark: #065f46;
   --red-alert: #f87171;
@@ -25,7 +21,7 @@
   --blue-facul: #60a5fa;
   --purple-badge: #c084fc;
 
-  /* Efeitos Brutalistas */
+  /* efeitos brutalistas */
   --border-thick: 4px solid var(--black);
   --border-super: 6px solid var(--black);
   --shadow-sm: 3px 3px 0px var(--black);
@@ -66,9 +62,7 @@ h1, h2, h3, h4, h5, h6,
   letter-spacing: 0.5px;
 }
 
-/* ==========================================================================
-   HEADER & NAVBAR INTELIGENTE (AUTO-HIDE NO DESKTOP)
-   ========================================================================== */
+/* --- header e navbar --- */
 header {
   background: var(--purple-dark);
   border-bottom: 5px solid var(--black);
@@ -85,7 +79,7 @@ header.header-hidden {
   transform: translateY(-100%);
 }
 
-/* Linha Principal do Header (Logotipo Totalmente à Esquerda e Navbar à Direita) */
+/* --- linha principal do header --- */
 .header-main-row {
   display: flex;
   align-items: center;
@@ -142,7 +136,7 @@ header img.logo:hover {
   transform: scale(1.04) rotate(-1.5deg);
 }
 
-/* Ações Rápidas Mobile no Header (Conchas e Gazeta visíveis apenas no celular) */
+/* atalhos mobile no header */
 .mobile-header-actions {
   display: none;
   align-items: center;
@@ -203,8 +197,8 @@ header img.logo:hover {
   background: var(--white);
 }
 
-/* NavegaÃ§Ã£o Desktop (Abas) */
-/* (Regras legadas de nav.desktop-nav substituídas pela NAVEGAÇÃO DESKTOP ESTRUTURADA na linha ~5300) */
+/* abas desktop */
+/* legado de nav desktop */
 
 .nav-cta {
   background: var(--yellow-bright) !important;
@@ -212,9 +206,7 @@ header img.logo:hover {
   font-weight: bold;
 }
 
-/* ==========================================================================
-   MENU LATERAL MOBILE (DRAWER GAVETA DESLIZANTE)
-   ========================================================================== */
+/* --- drawer mobile --- */
 .drawer-overlay {
   display: none;
   position: fixed;
@@ -330,9 +322,7 @@ header img.logo:hover {
   background: #ffeef6;
 }
 
-/* ==========================================================================
-   PORTÃƒO DE AUTENTICAÃ‡ÃƒO OBRIGATÃ“RIO (AUTH GATEWAY)
-   ========================================================================== */
+/* --- auth gateway --- */
 .auth-gateway-container {
   max-width: 980px;
   width: 95%;
@@ -385,7 +375,7 @@ header img.logo:hover {
   animation: fadeInView 0.25s ease;
 }
 
-/* Upload de Avatar Preview */
+/* preview do avatar */
 .avatar-upload-wrap {
   display: flex;
   align-items: center;
@@ -419,7 +409,7 @@ header img.logo:hover {
   font-weight: 700;
 }
 
-/* Chips de UsuÃ¡rios Salvos no Dispositivo */
+/* chips de usuarios salvos */
 .saved-users-list {
   display: flex;
   flex-direction: column;
@@ -468,9 +458,7 @@ header img.logo:hover {
   font-weight: 700;
 }
 
-/* ==========================================================================
-   CONTAINER & VISUALIZAÃ‡Ã•ES SPA (APP-VIEWS)
-   ========================================================================== */
+/* --- views da spa --- */
 .container {
   max-width: 1100px;
   margin: 25px auto 0;
@@ -504,9 +492,7 @@ header img.logo:hover {
   position: relative;
 }
 
-/* ==========================================================================
-   TELA INICIAL (INÃCIO / HERO)
-   ========================================================================== */
+/* --- tela inicial --- */
 .hero {
   background: var(--card-bg);
   border: 5px solid var(--black);
@@ -660,9 +646,7 @@ header img.logo:hover {
   color: var(--purple-dark);
 }
 
-/* ==========================================================================
-   TÃTULOS DE SEÃ‡ÃƒO
-   ========================================================================== */
+/* --- titulos de secao --- */
 .section-header-block {
   text-align: center;
   margin-bottom: 24px;
@@ -690,9 +674,7 @@ header img.logo:hover {
   box-shadow: 3px 3px 0px var(--black);
 }
 
-/* ==========================================================================
-   ROTINA DIÃRIA (CHECK-IN DE HÃBITOS)
-   ========================================================================== */
+/* --- rotina e habitos --- */
 .daily-routine-box {
   background: var(--card-bg);
   border: 5px solid var(--black);
@@ -870,9 +852,7 @@ header img.logo:hover {
   color: var(--red-alert);
 }
 
-/* ==========================================================================
-   ENCOMENDAS COM PRAZO (TAREFAS)
-   ========================================================================== */
+/* --- encomendas e tarefas --- */
 .tasks-control-bar {
   display: flex;
   justify-content: space-between;
@@ -1130,9 +1110,7 @@ header img.logo:hover {
   margin: 0 auto;
 }
 
-/* ==========================================================================
-   CENTRAL DE RELATÃ“RIOS & PDF
-   ========================================================================== */
+/* --- relatorios e pdf --- */
 .report-panel {
   background: var(--card-bg);
   border: 6px solid var(--black);
@@ -1362,9 +1340,7 @@ header img.logo:hover {
   background: #facc15;
 }
 
-/* ==========================================================================
-   PERFIL DO ENTREGADOR (CRACHÃ RETRO ANOS 2000)
-   ========================================================================== */
+/* --- cracha do entregador --- */
 .profile-section-wrap {
   display: flex;
   justify-content: center;
@@ -1481,9 +1457,7 @@ header img.logo:hover {
   text-align: center;
 }
 
-/* ==========================================================================
-   MODAIS E FORMULÃRIOS
-   ========================================================================== */
+/* --- modais e forms --- */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -1712,9 +1686,7 @@ header img.logo:hover {
   opacity: 1;
 }
 
-/* ==========================================================================
-   FOOTER OFICIAL ELGALY EXPRESS
-   ========================================================================== */
+/* --- rodape --- */
 footer {
   text-align: center;
   margin-top: 60px;
@@ -1744,9 +1716,7 @@ footer {
   color: #4b5563;
 }
 
-/* ==========================================================================
-   RESPONSIVIDADE MOBILE & DRAWER LATERAL
-   ========================================================================== */
+/* --- responsivo mobile --- */
 @media (max-width: 768px) {
   header {
     padding: 12px 14px;
@@ -1766,7 +1736,7 @@ footer {
     align-items: center;
   }
 
-  /* No mobile, oculta a pílula do EEX+ e ícone de perfil no header para liberar espaço */
+  /* esconde eex+ e perfil no header mobile */
   .btn-eex-plus-pill,
   .header-user-badge {
     display: none !important;
@@ -1815,7 +1785,6 @@ footer {
     text-align: center;
   }
 
-
   .rank-badge-stamp {
     font-size: 2.2rem;
   }
@@ -1826,9 +1795,7 @@ footer {
   }
 }
 
-/* ==========================================================================
-   REDE EEX â€” AUTH GATEWAY SIMPLIFICADO (Apenas Google)
-   ========================================================================== */
+/* --- login simplificado com google --- */
 .auth-main-login {
   display: flex;
   flex-direction: column;
@@ -1844,9 +1811,7 @@ footer {
   line-height: 1.4;
 }
 
-/* ==========================================================================
-   CRACHÃS SALVOS (Badges para re-login com PIN)
-   ========================================================================== */
+/* --- crachas salvos e pin --- */
 .saved-badges-section {
   margin-top: 8px;
   padding-top: 16px;
@@ -1927,9 +1892,7 @@ footer {
   opacity: 0.65;
 }
 
-/* ==========================================================================
-   AUTOCOMPLETE DE CIDADES
-   ========================================================================== */
+/* --- autocomplete de cidades --- */
 .city-suggestions {
   position: absolute;
   background: var(--white);
@@ -1969,14 +1932,12 @@ footer {
   font-weight: 700;
 }
 
-/* Garante position:relative no form-group para o dropdown funcionar */
+/* relative pro dropdown funcionar */
 .form-group {
   position: relative;
 }
 
-/* ==========================================================================
-   MODAIS DE ONBOARDING E PIN â€” z-index acima de tudo
-   ========================================================================== */
+/* --- modais onboarding e pin no topo --- */
 #modalOnboarding {
   z-index: 9000;
 }
@@ -1985,9 +1946,7 @@ footer {
   z-index: 8500;
 }
 
-/* ==========================================================================
-   MODAL DE ONBOARDING â€” ALTO CONTRASTE & LEGIBILIDADE MÃXIMA
-   ========================================================================== */
+/* --- modal onboarding --- */
 #modalOnboarding .modal-content,
 #modalOnboarding .modal-box {
   background: var(--card-bg) !important;
@@ -2019,9 +1978,7 @@ footer {
   font-weight: 700;
 }
 
-/* ==========================================================================
-   SELETOR DE DIAS DA SEMANA (ROTINAS / HÃBITOS)
-   ========================================================================== */
+/* --- dias da semana na rotina --- */
 .weekday-picker {
   display: flex;
   gap: 6px;
@@ -2109,9 +2066,7 @@ footer {
   margin-bottom: 12px;
 }
 
-/* ==========================================================================
-   SISTEMA DE EVENTOS & LEMBRETES (PROVAS, COMPROMISSOS, REUNIÃ•ES)
-   ========================================================================== */
+/* --- eventos e lembretes --- */
 .events-section-header {
   display: flex;
   justify-content: space-between;
@@ -2249,7 +2204,7 @@ footer {
   transform: scale(1.2);
 }
 
-/* Alternador Encomendas / Eventos (Switch de Terminal EEX) */
+/* switch encomendas vs eventos */
 .subnav-tabs {
   display: flex;
   gap: 6px;
@@ -2320,9 +2275,7 @@ footer {
   }
 }
 
-/* ==========================================================================
-   TELA DE CONFIGURAÃ‡Ã•ES (view-configuracoes)
-   ========================================================================== */
+/* --- configuracoes --- */
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -2410,9 +2363,7 @@ footer {
   box-shadow: 3px 3px 0px var(--black);
 }
 
-/* ==========================================================================
-   MODO ESCURO (DARK MODE) â€” BRUTALISMO CYBERPUNK / COMIC
-   ========================================================================== */
+/* --- tema escuro --- */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) {
   --bg-color: #12071f;
   --card-bg: #230d38;
@@ -2727,11 +2678,9 @@ footer {
   color: #f5d0fe;
 }
 
-/* ==========================================================================
-   CORREÃ‡ÃƒO GLOBAL DE LEGIBILIDADE NO MODO ESCURO
-   ========================================================================== */
+/* --- ajustes legibilidade dark mode --- */
 
-/* TÃ­tulo de seÃ§Ã£o (Passaporte, Rotina, etc.) que ficava escuro sobre escuro */
+/* titulos de secao no dark mode */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .section-title {
   color: var(--yellow-bright) !important;
   text-shadow: 4px 4px 0px var(--black) !important;
@@ -2747,7 +2696,7 @@ footer {
   color: #c4b5fd !important;
 }
 
-/* Passaporte e Perfil EEX */
+/* passaporte e perfil no dark */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .retro-id-badge {
   background: #230d38;
   border-color: var(--black);
@@ -2785,7 +2734,7 @@ footer {
   color: #c4b5fd !important;
 }
 
-/* BotÃ£o Sair da Conta e botÃµes outline */
+/* botao sair e outlines */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .btn-comic.btn-outline {
   background: #2a0f44 !important;
   color: #f5d0fe !important;
@@ -2804,7 +2753,7 @@ footer {
   border-color: var(--black);
 }
 
-/* Textos descritivos nos cards de eventos e encomendas */
+/* textos descritivos em cards */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .event-desc,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .task-desc {
   color: #e9d5ff !important;
@@ -2815,9 +2764,7 @@ footer {
   color: #c4b5fd !important;
 }
 
-/* ==========================================================================
-   BOTTOM NAV BAR — MOBILE (ESTÉTICA NEO-BRUTALISTA OFICIAL EEX)
-   ========================================================================== */
+/* --- bottom nav mobile --- */
 .bottom-nav-container {
   display: none;
 }
@@ -2841,7 +2788,7 @@ footer {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
   }
 
-  /* Mini Fita de Terminal Superior do Console Portátil */
+  /* fita superior do console */
   .bottom-nav-terminal-strip {
     display: flex;
     align-items: center;
@@ -2890,7 +2837,7 @@ footer {
     letter-spacing: 0.6px;
   }
 
-  /* Barra Principal de Navegação Inferior (Mobile Friendly) */
+  /* barra de navegacao inferior */
   .bottom-nav-bar {
     display: flex;
     position: relative;
@@ -2913,7 +2860,7 @@ footer {
     display: none;
   }
 
-  /* Indicativo animado de arrastar / deslizar - Desativado a pedido (mantendo o da própria barra) */
+  /* indicador de swipe desativado */
   .bottom-nav-drag-hint {
     display: none !important;
   }
@@ -2927,7 +2874,7 @@ footer {
     }
   }
 
-  /* Gradiente na borda esquerda e direita para evidenciar continuidade */
+  /* gradiente lateral de scroll */
   .bottom-nav-container::before {
     content: '';
     position: absolute;
@@ -2957,7 +2904,7 @@ footer {
     opacity: 0;
   }
 
-  /* Item Individual da Bottom Bar */
+  /* item da bottom bar */
   .bottom-nav-item {
     display: flex;
     flex-direction: column;
@@ -2980,12 +2927,12 @@ footer {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Feedback tátil imediato no clique com o polegar */
+  /* feedback de clique */
   .bottom-nav-item:active {
     transform: scale(0.92);
   }
 
-  /* Estado ATIVO: Cartucho de Console Amarelo com LED */
+  /* item ativo estilo cartucho */
   .bottom-nav-item.active {
     background: var(--yellow-bright);
     border-color: var(--black);
@@ -3024,24 +2971,24 @@ footer {
     line-height: 1;
   }
 
-  /* Compensa a altura da barra para nÃ£o cobrir conteÃºdo */
+  /* padding pra nao cobrir conteudo */
   body {
     padding-bottom: max(96px, calc(86px + env(safe-area-inset-bottom)));
   }
 
-  /* Esconde o menu hambúrguer no mobile a pedido do usuário */
+  /* esconde hamburguer no mobile */
   .btn-mobile-menu {
     display: none !important;
   }
 
-  /* Balão flutuante do Pomodoro posicionado acima da bottom bar no celular */
+  /* balao pomodoro acima da nav */
   .pomodoro-floating-bubble {
     bottom: calc(75px + max(10px, env(safe-area-inset-bottom))) !important;
     right: 12px !important;
     padding: 8px 14px 8px 10px !important;
   }
 
-  /* Header mobile mais compacto */
+  /* header mobile compacto */
   header {
     padding: 8px 12px;
   }
@@ -3051,13 +2998,13 @@ footer {
     max-width: 140px;
   }
 
-  /* Esconde o rodapÃ© no mobile */
+  /* esconde rodape no mobile */
   footer {
     display: none;
   }
 }
 
-/* Modo escuro para a Bottom Nav */
+/* bottom nav no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .bottom-nav-bar {
   background: #1c0930;
   border-top-color: var(--black);
@@ -3075,9 +3022,7 @@ footer {
   color: var(--black);
 }
 
-/* ==========================================================================
-   WIDGET DOS AGENTES (ESTILO DUOLINGO: MIDNIGHT & BRAVE)
-   ========================================================================== */
+/* --- widget dos mascotes --- */
 .eex-mascot-widget {
   display: flex;
   align-items: center;
@@ -3258,7 +3203,7 @@ footer {
   gap: 8px;
 }
 
-/* Modo escuro para o widget in-app */
+/* mascotes no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eex-mascot-widget.widget-mood-pending {
   background: #240d3a;
   box-shadow: 8px 8px 0px var(--magenta-bright);
@@ -3281,7 +3226,7 @@ footer {
   color: var(--yellow-bright);
 }
 
-/* Responsividade mobile para o widget */
+/* mascotes no mobile */
 @media (max-width: 600px) {
   .eex-mascot-widget {
     flex-direction: column;
@@ -3297,9 +3242,7 @@ footer {
   }
 }
 
-/* ==========================================================================
-   REGISTRO DO MOMENTO BACANA (FOTO + ADESIVOS) & GALERIA DIÃRIA
-   ========================================================================== */
+/* --- registro com foto e stickers --- */
 .moment-creator-box {
   display: flex;
   flex-direction: column;
@@ -3394,7 +3337,7 @@ footer {
   transform: translateY(-2px);
 }
 
-/* Galeria de Registros DiÃ¡rios em RelatÃ³rios */
+/* galeria de registros diarios */
 .daily-memories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3490,7 +3433,7 @@ footer {
   opacity: 1;
 }
 
-/* Modo escuro para galeria de registros */
+/* galeria no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .moment-preview-stage {
   background: #1c0930;
   border-color: var(--black);
@@ -3520,14 +3463,12 @@ footer {
   color: #c4b5fd;
 }
 
-/* ==========================================================================
-   TELA SPLASH OFICIAL EEX (ESTILO NEO-BRUTALISTA DIMENSIONAL)
-   ========================================================================== */
+/* --- splash screen --- */
 .eex-splash-screen {
   position: fixed;
   inset: 0;
   z-index: 999999;
-  background-color: #831843; /* Base de alto contraste */
+  background-color: #831843; /* container base da splash */
   background-image: 
     radial-gradient(circle, rgba(255, 230, 0, 0.22) 2px, transparent 2.5px),
     linear-gradient(135deg, rgba(226, 7, 126, 0.35) 0%, rgba(58, 21, 77, 0.98) 100%);
@@ -3546,7 +3487,7 @@ footer {
   will-change: transform, opacity;
 }
 
-/* Faixa Superior Neo-Brutalista de Alerta */
+/* faixa de alerta superior */
 .eex-splash-screen::before {
   content: '⚡ ELGALY EXPRESS • SISTEMA DE ROTINAS & ENTREGAS ⚡';
   position: absolute;
@@ -3567,7 +3508,7 @@ footer {
   text-transform: uppercase;
 }
 
-/* Faixa Inferior Neo-Brutalista de Alerta */
+/* faixa de alerta inferior */
 .eex-splash-screen::after {
   content: '📦 FOCO, HÁBITOS & PRODUTIVIDADE 📦';
   position: absolute;
@@ -3587,7 +3528,7 @@ footer {
   text-transform: uppercase;
 }
 
-/* Fundo da splash por tema com halftone brutalista */
+/* fundo pontilhado da splash */
 :is(:root, [data-theme="rosa-express"]) .eex-splash-screen {
   background-color: #831843;
   background-image: 
@@ -3630,7 +3571,7 @@ footer {
     linear-gradient(135deg, rgba(234, 179, 8, 0.35) 0%, rgba(35, 24, 4, 0.98) 100%);
 }
 
-/* Transição Neo-Brutalista: Wipe Dimensional para cima (Persiana de Despacho) */
+/* transicao estilo persiana */
 .eex-splash-screen.neo-wipe-out {
   transform: translateY(-100%);
   border-bottom: 9px solid var(--black, #000);
@@ -3662,7 +3603,7 @@ footer {
   will-change: opacity, transform;
 }
 
-/* Lançamento mecânico do logotipo */
+/* animacao de entrada do logo */
 .eex-splash-logo-wrap.neo-launch {
   animation: splashNeoLaunch 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.3) forwards;
 }
@@ -3687,7 +3628,7 @@ footer {
   transform: scale(0.96);
 }
 
-/* Logotipo da Splash: BEM MAIOR e com Sombra Dura Neo-Brutalista */
+/* logo grande com sombra dura */
 .eex-splash-logo {
   width: 285px;
   height: 285px;
@@ -3718,7 +3659,7 @@ footer {
   text-transform: uppercase;
 }
 
-/* Mobile: logotipo no meio centro, tamanho bem maior e proporcional */
+/* logo centralizado no mobile */
 @media (max-width: 768px) {
   .eex-splash-screen {
     justify-content: center;
@@ -3745,9 +3686,7 @@ footer {
   }
 }
 
-/* ==========================================================================
-   EEX-FRIENDS (SISTEMA DE AMIGOS - ENTREGAS COLETIVAS)
-   ========================================================================== */
+/* --- amigos e entregas coletivas --- */
 .friends-teaser-container {
   max-width: 780px;
   margin: 0 auto 36px;
@@ -3873,7 +3812,7 @@ footer {
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Grade de Recursos */
+/* grid de recursos */
 .friends-features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -3925,7 +3864,7 @@ footer {
   font-weight: 800;
 }
 
-/* Card CTA */
+/* card cta */
 .friends-cta-card {
   background: linear-gradient(135deg, var(--purple-dark), #180728);
   color: var(--white);
@@ -3950,7 +3889,7 @@ footer {
   margin: 0 0 8px 0;
 }
 
-/* Modo escuro para EEX-Friends */
+/* amigos no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friends-hero-card,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friends-feature-card {
   background: #240d3a;
@@ -3976,11 +3915,7 @@ footer {
   color: #d1d5db;
 }
 
-
-
-/* ==========================================================================
-   EEX-FRIENDS â€” SISTEMA SOCIAL COMPLETO (Neo-Brutalista)
-   ========================================================================== */
+/* --- social e amigos completo --- */
 
 .friends-app-container {
   display: flex;
@@ -3990,7 +3925,7 @@ footer {
   margin: 0 auto;
 }
 
-/* Hero Card */
+/* card de destaque */
 .friends-hero-card {
   background: var(--purple-dark, #3a154d);
   border: 3px solid var(--black);
@@ -4041,7 +3976,7 @@ footer {
   text-align: center;
 }
 
-/* Mascot bounce/shake */
+/* animacao do mascote */
 @keyframes eexBraveBounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
@@ -4056,7 +3991,7 @@ footer {
 .brave-friend { animation: eexBraveBounce 1.5s ease-in-out infinite; }
 .midnight-friend { animation: eexMidnightShake 1.4s ease-in-out infinite; }
 
-/* ID Express Share Card */
+/* card de share do id */
 .my-eex-share-card {
   display: flex;
   flex-direction: column;
@@ -4090,7 +4025,7 @@ footer {
   font-weight: 900;
 }
 
-/* Tabs Bar */
+/* barra de abas */
 .friends-tabs-bar {
   display: flex;
   gap: 8px;
@@ -4144,14 +4079,14 @@ footer {
   flex-shrink: 0;
 }
 
-/* Subtab panes */
+/* conteudos das sub-abas */
 .friends-subtab-pane { display: none; }
 .friends-subtab-pane.active { display: block; }
 
-/* Friends Grid */
+/* grid de amigos */
 .friends-grid { display: flex; flex-direction: column; gap: 14px; }
 
-/* Friend Card */
+/* card do amigo */
 .friend-card {
   background: var(--card-bg, #f8f0ff);
   border: 3px solid var(--black);
@@ -4187,7 +4122,7 @@ footer {
 }
 .friend-fire-icon { width: 18px; height: 18px; object-fit: contain; }
 
-/* Mascot status strip */
+/* faixa de status do mascote */
 .friend-mascot-status {
   display: flex; align-items: center; gap: 10px;
   background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.1);
@@ -4198,19 +4133,19 @@ footer {
 .friend-status-mascot.shake { animation: eexMidnightShake 1.4s ease-in-out infinite; }
 .friend-status-text { font-size: 0.82rem; font-weight: 700; color: var(--purple-dark, #3a154d); line-height: 1.3; }
 
-/* Card actions */
+/* acoes do card */
 .friend-card-actions { display: flex; gap: 8px; align-items: center; }
 .btn-poke { flex: 1; font-size: 0.85rem; padding: 8px 12px; }
 .btn-del-friend { flex-shrink: 0; padding: 8px 12px; font-size: 0.85rem; min-width: 44px; }
 
-/* Empty state */
+/* estado vazio */
 .friends-empty-box { text-align: center; padding: 32px 20px; color: var(--purple-dark, #3a154d); }
 .friends-empty-box h3, .friends-empty-box h4 {
   font-size: 1.05rem; font-weight: 800; margin: 0 0 8px 0; color: var(--purple-dark, #3a154d);
 }
 .friends-empty-box p { font-size: 0.88rem; font-weight: 600; color: #6b7280; line-height: 1.5; margin: 0; }
 
-/* Search */
+/* busca de amigos */
 .friends-search-box { display: flex; flex-direction: column; gap: 14px; }
 
 .friends-search-intro-card {
@@ -4312,7 +4247,7 @@ footer {
   white-space: nowrap;
 }
 
-/* Dark mode for search */
+/* busca no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friends-search-intro-card {
   background: #1e0a2e;
   border-color: #9c59e0;
@@ -4369,7 +4304,7 @@ footer {
   border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 800; font-family: var(--font-main);
 }
 
-/* Requests */
+/* solicitacoes pendentes */
 .friends-requests-list { display: flex; flex-direction: column; gap: 12px; }
 .friend-request-card {
   display: flex; align-items: center; gap: 12px;
@@ -4391,7 +4326,7 @@ footer {
 .request-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .request-actions .btn-comic { font-size: 0.82rem; padding: 8px 12px; }
 
-/* Dark mode */
+/* solicitacoes no dark */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friend-card,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .search-agent-card,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friend-request-card {
@@ -4419,7 +4354,7 @@ footer {
 }
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .my-eex-share-card { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); }
 
-/* Responsive */
+/* ajustes de tela */
 @media (max-width: 480px) {
   .friends-hero-top { flex-direction: column; text-align: center; }
   .friends-mascots-wrap { justify-content: center; }
@@ -4433,11 +4368,9 @@ footer {
   .search-agent-card { flex-wrap: wrap; }
 }
 
-/* ==========================================================================
-   EEX-FRIENDS: PASSAPORTE DO PARCEIRO, ENCOMENDAS EXPRESS, SOS & RÃDIO
-   ========================================================================== */
+/* --- passaporte, sos e radio --- */
 
-/* Linha de botÃµes do Hero */
+/* botoes do hero */
 .friends-hero-btn-row {
   display: flex;
   gap: 8px;
@@ -4475,7 +4408,7 @@ footer {
   color: #fff;
 }
 
-/* Card SOS no mural */
+/* card de sos */
 .friend-card.friend-card-sos {
   border-color: #ef4444;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 4px 4px 0 #ef4444;
@@ -4494,7 +4427,7 @@ footer {
   animation: pulseSos 1.2s infinite alternate;
 }
 
-/* RÃ¡dio Pill no Card */
+/* pilula de radio no card */
 .friend-radio-pill {
   display: flex;
   align-items: center;
@@ -4509,7 +4442,7 @@ footer {
   font-weight: 700;
 }
 
-/* Modal do Perfil do Parceiro */
+/* modal de perfil do amigo */
 .friend-profile-modal-box {
   max-width: 620px;
   width: 95%;
@@ -4528,7 +4461,7 @@ footer {
   z-index: 10;
 }
 
-/* CrachÃ¡ no Modal */
+/* cracha dentro do modal */
 .friend-badge-inner {
   background: var(--purple-dark, #3a154d);
   border: 3px solid var(--black);
@@ -4607,7 +4540,7 @@ footer {
   color: #fef08a;
 }
 
-/* Abas internas do Perfil do Amigo */
+/* abas internas do perfil */
 .friend-profile-nav {
   display: flex;
   gap: 8px;
@@ -4639,7 +4572,7 @@ footer {
 .friend-tab-section { display: none; }
 .friend-tab-section.active { display: block; }
 
-/* Banner do Mascote no Perfil */
+/* banner do mascote */
 .friend-modal-mascot-card {
   display: flex;
   align-items: center;
@@ -4683,7 +4616,7 @@ footer {
   line-height: 1.3;
 }
 
-/* Lista de HÃ¡bitos do Amigo */
+/* lista de habitos do amigo */
 .friend-habits-list {
   display: flex;
   flex-direction: column;
@@ -4736,7 +4669,7 @@ footer {
   color: var(--black);
 }
 
-/* Galeria de Fotos / Momentos do Amigo */
+/* galeria de fotos do amigo */
 .friend-photos-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -4798,7 +4731,7 @@ footer {
   font-weight: 600;
 }
 
-/* RodapÃ© do Modal */
+/* rodape do modal */
 .friend-modal-footer {
   display: flex;
   gap: 10px;
@@ -4823,7 +4756,7 @@ footer {
 .empty-subtab-box span { font-size: 2rem; display: block; margin-bottom: 6px; }
 .empty-subtab-box p { font-size: 0.85rem; font-weight: 600; margin: 0; }
 
-/* Grid de Selos Postais */
+/* grid de selos */
 .stamp-selector-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -4849,7 +4782,7 @@ footer {
 .stamp-card-inner strong { display: block; font-size: 0.82rem; color: var(--purple-dark, #3a154d); }
 .stamp-card-inner small { font-size: 0.7rem; color: #6b7280; font-weight: 600; }
 
-/* Mensagens RÃ¡pidas Chips */
+/* chips de mensagem rapida */
 .quick-messages-chips {
   display: flex;
   gap: 6px;
@@ -4871,7 +4804,7 @@ footer {
   color: #fff;
 }
 
-/* Modal de Unboxing */
+/* modal de unboxing */
 .package-unboxing-box {
   position: relative;
   overflow: hidden;
@@ -4945,7 +4878,7 @@ footer {
   text-align: right;
 }
 
-/* OpÃ§Ãµes de RÃ¡dio Bip */
+/* opcoes de bip do radio */
 .radio-status-options-grid {
   display: flex;
   flex-direction: column;
@@ -4957,7 +4890,7 @@ footer {
   padding: 10px 14px;
 }
 
-/* Dark mode adjustments */
+/* ajustes dark mode */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .friend-badge-inner {
   background: #1e0a2e;
   border-color: #9c59e0;
@@ -5002,11 +4935,9 @@ footer {
   color: #f5d0fe;
 }
 
-/* ==========================================================================
-   EEX-PROFILE: NOVO PASSAPORTE MONUMENTAL & DOSSIÃŠ DE CARREIRA EEX
-   ========================================================================== */
+/* --- passaporte e perfil do usuario --- */
 
-/* FIX NOME DO AMIGO NO MODAL DE PERFIL */
+/* fix nome do amigo no modal */
 .friend-badge-inner h2.friend-badge-name,
 .friend-profile-modal-box h2.friend-badge-name,
 .friend-badge-name {
@@ -5019,7 +4950,7 @@ footer {
   display: block;
 }
 
-/* Container Geral do Perfil Próprio (Crachá Retrô EEX) */
+/* container do cracha retro */
 .grand-profile-container {
   max-width: 740px;
   margin: 0 auto 40px;
@@ -5029,7 +4960,7 @@ footer {
   transform-origin: top center;
 }
 
-/* Animação do Crachá Caindo Pendurado pelo Cordão */
+/* animacao do cordao caindo */
 .grand-profile-container.badge-hanging-drop {
   animation: badgeDropSwing 0.85s cubic-bezier(0.25, 0.82, 0.4, 1.1) forwards;
 }
@@ -5058,7 +4989,7 @@ footer {
   }
 }
 
-/* --- CORDÃƒO & CLIPE RETRÃ” --- */
+/* cordao e clipe retro */
 .lanyard-ribbon-wrap {
   display: flex;
   flex-direction: column;
@@ -5088,7 +5019,7 @@ footer {
   box-shadow: 2px 2px 0 var(--black);
 }
 
-/* --- SUPER CRACHÃ MASTER (ANOS 2000) --- */
+/* cracha master anos 2000 */
 .grand-badge-card {
   background: #fff;
   border: 3.5px solid var(--black);
@@ -5099,7 +5030,7 @@ footer {
   overflow: hidden;
 }
 
-/* CabeÃ§alho do CrachÃ¡ */
+/* cabecalho do cracha */
 .grand-badge-header {
   display: flex;
   justify-content: space-between;
@@ -5147,7 +5078,7 @@ footer {
   transform: rotate(3deg);
 }
 
-/* Corpo do CrachÃ¡ (Foto + InformaÃ§Ãµes) */
+/* corpo com foto e dados */
 .grand-badge-body {
   display: flex;
   gap: 24px;
@@ -5215,7 +5146,7 @@ footer {
   opacity: 0.9;
 }
 
-/* CÃ³digo de Barras */
+/* codigo de barras */
 .badge-barcode {
   display: flex;
   flex-direction: column;
@@ -5235,7 +5166,7 @@ footer {
   letter-spacing: 0.05em;
 }
 
-/* Coluna de Dados */
+/* coluna de dados */
 .grand-badge-info-column {
   flex: 1;
   min-width: 220px;
@@ -5295,7 +5226,7 @@ footer {
   color: var(--purple-dark, #3a154d);
 }
 
-/* Barra de XP */
+/* barra de xp */
 .badge-xp-bar-wrap {
   display: flex;
   flex-direction: column;
@@ -5322,7 +5253,7 @@ footer {
   transition: width 0.4s ease;
 }
 
-/* RodapÃ© do CrachÃ¡ */
+/* rodape do cracha */
 .grand-badge-footer {
   display: flex;
   gap: 10px;
@@ -5331,7 +5262,7 @@ footer {
   border-top: 2px dashed rgba(0,0,0,0.15);
 }
 
-/* --- QUADRO DE ESTATÃSTICAS --- */
+/* quadro de estatisticas */
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -5371,7 +5302,7 @@ footer {
   letter-spacing: 0.04em;
 }
 
-/* --- SEÃ‡ÃƒO DE CONQUISTAS / MEDALHAS --- */
+/* conquistas e medalhas */
 .profile-achievements-section,
 .profile-memories-section {
   background: #fff;
@@ -5477,14 +5408,14 @@ footer {
   color: #fff;
 }
 
-/* Carrossel / Grid de Fotos Pessoais */
+/* fotos do perfil */
 .profile-memories-carousel {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
 }
 
-/* --- DARK MODE DO NOVO PERFIL --- */
+/* perfil no tema escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .grand-badge-card,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .profile-achievements-section,
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .profile-memories-section {
@@ -5534,7 +5465,7 @@ footer {
   border-color: #9c59e0;
 }
 
-/* Responsivo */
+/* perfil responsivo */
 @media (max-width: 520px) {
   .grand-badge-body {
     flex-direction: column;
@@ -5552,9 +5483,7 @@ footer {
   }
 }
 
-/* ==========================================================================
-   BOTÃƒO DE NOTIFICAÃ‡Ã•ES DA PROVIDENTE (C.E.O. NEWS)
-   ========================================================================== */
+/* --- notificacoes ceo news --- */
 .btn-providente-news {
   position: relative;
   background: var(--yellow-bright);
@@ -5589,9 +5518,7 @@ footer {
   letter-spacing: 0.5px;
 }
 
-/* ==========================================================================
-   NAVEGAÃ‡ÃƒO DESKTOP INTUITIVA & ESTRUTURADA
-   ========================================================================== */
+/* --- navegacao desktop estruturada --- */
 nav.desktop-nav {
   margin-top: 0;
   display: flex;
@@ -5608,20 +5535,20 @@ nav.desktop-nav {
   position: relative;
 }
 
-/* Modo Escuro & Roxo Nu-Metálico */
+/* dark e roxo numetalico */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) nav.desktop-nav {
   background: #140924;
   border-color: var(--black);
   box-shadow: 4px 4px 0px var(--black);
 }
 
-/* Modo Claro Padrão */
+/* tema claro padrao */
 [data-theme="claro"] nav.desktop-nav,
 body:not([data-theme]) nav.desktop-nav {
   background: #221035;
 }
 
-/* Barra Superior de Status do Console de Terminal */
+/* barra de status superior */
 .desktop-nav-terminal-bar {
   display: flex;
   align-items: center;
@@ -5671,7 +5598,7 @@ body:not([data-theme]) nav.desktop-nav {
   transform: translateY(-2px);
 }
 
-/* Cluster à Direita: Conchas > Gazeta (Providente) > Status ONLINE */
+/* cluster a direita do console */
 .terminal-right-cluster {
   display: flex;
   align-items: center;
@@ -5768,7 +5695,7 @@ body:not([data-theme]) nav.desktop-nav {
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* Corpo Principal da Navegação Desktop */
+/* corpo da nav desktop */
 .desktop-nav-body {
   display: flex;
   align-items: center;
@@ -5808,7 +5735,7 @@ body:not([data-theme]) nav.desktop-nav {
   border-left-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Botões das Abas de Navegação (Módulos de Terminal EEX) */
+/* botoes das abas desktop */
 nav.desktop-nav a.nav-link {
   color: var(--white);
   text-decoration: none;
@@ -5838,7 +5765,7 @@ nav.desktop-nav a.nav-link:hover {
   color: var(--white);
 }
 
-/* Aba Ativa (Amarelo Radiante de Destaque com Indicador LED) */
+/* aba ativa com led */
 nav.desktop-nav a.nav-link.active {
   background: var(--yellow-bright);
   color: var(--black);
@@ -5856,7 +5783,7 @@ nav.desktop-nav a.nav-link.active::before {
   line-height: 1;
 }
 
-/* Modo Escuro */
+/* abas no modo escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) nav.desktop-nav a.nav-link {
   background: #4c1d95;
   color: #ffffff;
@@ -5878,7 +5805,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 2px 2px 0px var(--black);
 }
 
-/* Botões de Ação Operacional (+ Encomenda e + Evento) */
+/* botoes de acao rapida */
 .desktop-nav .nav-btn {
   font-size: 0.74rem;
   padding: 4px 8px;
@@ -5898,7 +5825,6 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 2.5px 2.5px 0px var(--black);
 }
 
-
 .desktop-nav .action-new-task {
   background: var(--yellow-bright) !important;
   color: var(--black) !important;
@@ -5914,9 +5840,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 2.5px 2.5px 0px var(--black);
 }
 
-/* ==========================================================================
-   FAIXAS HOLOGRÃFICAS EVOLUTIVAS DA PATENTE (1 A 100 NÃVEIS)
-   ========================================================================== */
+/* --- faixas holograficas por patente --- */
 .hologram-strip {
   position: absolute;
   bottom: 0;
@@ -5938,7 +5862,7 @@ nav.desktop-nav a.nav-link.active::before {
   line-height: 1.15;
 }
 
-/* Padrão Oficial EEX: Rosa com Roxo para todas as patentes */
+/* gradiente base das patentes */
 .holo-padrao,
 .holo-rosa-roxo,
 .holo-strip-padrao {
@@ -5949,7 +5873,7 @@ nav.desktop-nav a.nav-link.active::before {
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.85);
 }
 
-/* Tier 1 (1-9): Arco-Íris Holográfico EEX Original */
+/* tier 1 (1-9): arco-iris holografico */
 .holo-bronze {
   background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ec4899);
   background-size: 200% auto;
@@ -5958,14 +5882,14 @@ nav.desktop-nav a.nav-link.active::before {
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
 }
 
-/* Tier 2 (10-19): Cobre Veloz CÃ³smico */
+/* tier 2 (10-19): cobre veloz */
 .holo-copper {
   background: linear-gradient(90deg, #b45309, #f97316, #06b6d4, #b45309);
   color: #fff;
   text-shadow: 1px 1px 0 #000;
 }
 
-/* Tier 3 (20-29): Prata PrismÃ¡tica Dimensional */
+/* tier 3 (20-29): prata prismatica */
 .holo-silver {
   background: linear-gradient(90deg, #e2e8f0, #38bdf8, #f472b6, #e2e8f0);
   background-size: 200% auto;
@@ -5973,7 +5897,7 @@ nav.desktop-nav a.nav-link.active::before {
   color: #0f172a;
 }
 
-/* Tier 4 (30-39): AÃ§o MeteÃ³rico Estelar */
+/* tier 4 (30-39): aco meteorico */
 .holo-steel {
   background: linear-gradient(90deg, #475569, #818cf8, #c084fc, #475569);
   background-size: 200% auto;
@@ -5982,7 +5906,7 @@ nav.desktop-nav a.nav-link.active::before {
   text-shadow: 1px 1px 0 #000;
 }
 
-/* Tier 5 (40-49): Ouro Lapidado Inspector */
+/* tier 5 (40-49): ouro lapidado */
 .holo-gold {
   background: linear-gradient(90deg, #eab308, #fef08a, #ca8a04, #fef08a, #eab308);
   background-size: 200% auto;
@@ -5991,7 +5915,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 8px rgba(234, 179, 8, 0.5), 1px 1px 0 #000;
 }
 
-/* Tier 6 (50-59): Quartzo Rosa Commander */
+/* tier 6 (50-59): quartzo rosa */
 .holo-rose {
   background: linear-gradient(90deg, #ec4899, #f472b6, #a855f7, #ec4899);
   background-size: 200% auto;
@@ -6001,7 +5925,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 10px rgba(236, 72, 153, 0.6), 1px 1px 0 #000;
 }
 
-/* Tier 7 (60-69): Safira Dimensional Vortex */
+/* tier 7 (60-69): safira dimensional */
 .holo-sapphire {
   background: linear-gradient(90deg, #0284c7, #38bdf8, #06b6d4, #0284c7);
   background-size: 200% auto;
@@ -6011,7 +5935,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 12px rgba(14, 165, 233, 0.6), 1px 1px 0 #000;
 }
 
-/* Tier 8 (70-79): Esmeralda Imperial Marechal */
+/* tier 8 (70-79): esmeralda imperial */
 .holo-emerald {
   background: linear-gradient(90deg, #059669, #34d399, #fde047, #059669);
   background-size: 200% auto;
@@ -6020,7 +5944,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 1px 1px 0 #000;
 }
 
-/* Tier 9 (80-89): Rubi Solar Arauto */
+/* tier 9 (80-89): rubi solar */
 .holo-ruby {
   background: linear-gradient(90deg, #dc2626, #f97316, #fde047, #dc2626);
   background-size: 200% auto;
@@ -6030,7 +5954,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.7), 1px 1px 0 #000;
 }
 
-/* Tier 10 (90-99): Diamante Astral GrÃ£o-Mestre */
+/* tier 10 (90-99): diamante astral */
 .holo-diamond {
   background: linear-gradient(90deg, #a855f7, #38bdf8, #f43f5e, #facc15, #a855f7);
   background-size: 300% auto;
@@ -6041,7 +5965,7 @@ nav.desktop-nav a.nav-link.active::before {
   box-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 2px 2px 0 #000;
 }
 
-/* Tier 11 (NÃVEL 100): O OLHO DE PROVIDENTE (CELESTIAL DIVINO SUPREMO) */
+/* tier 11 (nivel 100): olho de providente */
 .holo-providente {
   background: linear-gradient(90deg, #ffd700, #fff7ed, #f59e0b, #fef08a, #ffd700);
   background-size: 200% auto;
@@ -6070,9 +5994,7 @@ nav.desktop-nav a.nav-link.active::before {
   }
 }
 
-/* ==========================================================================
-   MODAL DA GAZETA DA PROVIDÃŠNCIA (JORNAL RETRÃ” & CARTA DA C.E.O.)
-   ========================================================================== */
+/* --- modal gazeta da providencia --- */
 .gazette-modal-box {
   max-width: 760px !important;
   width: 95% !important;
@@ -6380,7 +6302,7 @@ nav.desktop-nav a.nav-link.active::before {
   border: 1.5px solid var(--black);
 }
 
-/* Card 1: Happy Provident (Novidades) */
+/* card novidades */
 .card-happy {
   background: #ecfdf5;
   border-color: #059669;
@@ -6398,7 +6320,7 @@ nav.desktop-nav a.nav-link.active::before {
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .card-happy .gazette-card-title { color: #a7f3d0; }
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .card-happy .gazette-card-text { color: #ecfdf5; }
 
-/* Card 2: Sad Provident (Avisos / Despedidas) */
+/* card avisos */
 .card-sad {
   background: #f8fafc;
   border-color: #64748b;
@@ -6416,7 +6338,7 @@ nav.desktop-nav a.nav-link.active::before {
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .card-sad .gazette-card-title { color: #cbd5e1; }
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .card-sad .gazette-card-text { color: #f1f5f9; }
 
-/* Card 3: Angry Provident (CorreÃ§Ã£o de Bugs) */
+/* card correcoes e bugs */
 .card-angry {
   background: #fff1f2;
   border-color: #e11d48;
@@ -6521,11 +6443,9 @@ nav.desktop-nav a.nav-link.active::before {
   75% { transform: rotate(3deg); }
 }
 
-/* ==========================================================================
-   SISTEMA DE 3 TEMAS DA FROTA: ROSA EXPRESS, ROXO NUMETÁLICO E VERDE MAGÁFICO
-   ========================================================================== */
+/* --- temas da frota --- */
 
-/* 1. ROSA EXPRESS (Padrão) */
+/* tema rosa express (padrao) */
 :root,
 [data-theme="rosa-express"] {
   --bg-color: #f7a8ca;
@@ -6540,7 +6460,7 @@ nav.desktop-nav a.nav-link.active::before {
   --text-muted: #6b7280;
 }
 
-/* 2. ROXO NUMETÁLICO */
+/* tema roxo numetalico */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) {
   --bg-color: #12071f;
   --card-bg: #230d38;
@@ -6554,7 +6474,7 @@ nav.desktop-nav a.nav-link.active::before {
   --text-muted: #d8b4e2;
 }
 
-/* 3. VERDE MAGÁFICO — VERDE MUSGO RETRÔ & MAGAFUS 💜 */
+/* tema verde magafico */
 [data-theme="verde-magafico"] {
   --bg-color: #3b5832;
   --card-bg: #eaf3e1;
@@ -6642,9 +6562,7 @@ nav.desktop-nav a.nav-link.active::before {
   border-color: var(--black);
 }
 
-/* ==========================================================================
-   CARDS DE SELEÇÃO DE TEMA (TELA DE CONFIGURAÇÕES)
-   ========================================================================== */
+/* --- selecao de tema nas configs --- */
 .settings-theme-card {
   grid-column: 1 / -1;
   background: var(--card-bg);
@@ -6729,7 +6647,7 @@ nav.desktop-nav a.nav-link.active::before {
   background: #360f54;
 }
 
-/* Swatches de Cor (Amostra de Tintas) */
+/* amostras de cores */
 .theme-swatch {
   width: 100%;
   height: 38px;
@@ -6745,22 +6663,22 @@ nav.desktop-nav a.nav-link.active::before {
   height: 100%;
 }
 
-/* Swatch Rosa Express */
+/* swatch rosa express */
 .swatch-rosa .s1 { background: #f7a8ca; }
 .swatch-rosa .s2 { background: #e62b7e; }
 .swatch-rosa .s3 { background: #ffeb3b; }
 
-/* Swatch Roxo NuMetálico */
+/* swatch roxo numetalico */
 .swatch-roxo .s1 { background: #12071f; }
 .swatch-roxo .s2 { background: #9333ea; }
 .swatch-roxo .s3 { background: #ff3b94; }
 
-/* Swatch Verde Magáfico */
+/* swatch verde magafico */
 .swatch-verde .s1 { background: #3b5832; }
 .swatch-verde .s2 { background: #4d8534; }
 .swatch-verde .s3 { background: #8a2be2; }
 
-/* Swatch Vermelho Culposo */
+/* swatch vermelho culposo */
 .swatch-vermelho .s1 { background: #ba4c4c; }
 .swatch-vermelho .s2 { background: #faf5eb; }
 .swatch-vermelho .s3 { background: #211111; }
@@ -6810,9 +6728,7 @@ nav.desktop-nav a.nav-link.active::before {
   display: inline-block;
 }
 
-/* ==========================================================================
-   CAIXINHA DE MENSAGEM TEMÁTICA (BALÃO DE DIÁLOGO NEO-BRUTALISTA)
-   ========================================================================== */
+/* --- balao de mensagem tematico --- */
 .theme-quote-box {
   background: var(--card-bg-light, #ffffff);
   border: 3px solid var(--black);
@@ -6891,9 +6807,7 @@ nav.desktop-nav a.nav-link.active::before {
   100% { transform: scale(1) translateY(0); }
 }
 
-/* ==========================================================================
-   SELO MAGÁFICO 💜 (PEDRINHO & KOTUNDASHED)
-   ========================================================================== */
+/* --- selo magafico --- */
 .agent-name-seal-row {
   display: flex;
   align-items: center;
@@ -6951,7 +6865,7 @@ nav.desktop-nav a.nav-link.active::before {
   100% { transform: scale(1) rotate(0); }
 }
 
-/* Balão de Fala do Coraçãozinho Magáfico */
+/* balao do coracao magafico */
 .magafic-speech-dialog {
   position: absolute;
   left: calc(100% + 14px);
@@ -7064,9 +6978,7 @@ nav.desktop-nav a.nav-link.active::before {
   }
 }
 
-/* ==========================================================================
-   TELA EM BREVE: EEX-FRIENDS
-   ========================================================================== */
+/* --- tela em breve eex-friends --- */
 .friends-coming-soon {
   background: var(--card-bg);
   border: 4px solid var(--black);
@@ -7164,9 +7076,7 @@ nav.desktop-nav a.nav-link.active::before {
   margin-top: 8px;
 }
 
-/* ==========================================================================
-   SAUDAÇÃO ESPECIAL DO CORAÇÃO MAGÁFICO AO ENTRAR (VIP MAGAFUS & JOÃO)
-   ========================================================================== */
+/* --- saudacao especial do coracao magafico --- */
 .magafic-welcome-overlay {
   position: fixed;
   top: 24px;
@@ -7241,9 +7151,7 @@ nav.desktop-nav a.nav-link.active::before {
   color: var(--black);
 }
 
-/* ==========================================================================
-   MODO PROFISSÃO / TRABALHO (ESTILOS VISUAIS & TAGS)
-   ========================================================================== */
+/* --- modo profissao e trabalho --- */
 .task-badge.trabalho,
 .habit-tag.trabalho {
   background: #f97316 !important;
@@ -7258,7 +7166,7 @@ nav.desktop-nav a.nav-link.active::before {
   gap: 6px;
 }
 
-/* Passaporte no card de busca */
+/* passaporte na busca */
 .search-agent-actions {
   display: flex;
   gap: 6px;
@@ -7273,25 +7181,23 @@ nav.desktop-nav a.nav-link.active::before {
   padding: 6px 10px !important;
 }
 
-/* ==========================================================================
-   MICROWIDGET — OVERRIDES PARA TEMAS ESCUROS & VERDE MAGÁFICO
-   ========================================================================== */
+/* --- microwidget overrides --- */
 
-/* Verde Magáfico: widget pendente */
+/* verde magafico: pendente */
 [data-theme="verde-magafico"] .eex-mascot-widget.widget-mood-pending {
   background: #2a4223;
   box-shadow: 8px 8px 0px #4d8534;
   border-color: #11220e;
 }
 
-/* Verde Magáfico: widget concluído */
+/* verde magafico: concluido */
 [data-theme="verde-magafico"] .eex-mascot-widget.widget-mood-done {
   background: #1b3317;
   box-shadow: 8px 8px 0px #facc15;
   border-color: #11220e;
 }
 
-/* Verde Magáfico: textos do widget */
+/* verde magafico: textos */
 [data-theme="verde-magafico"] .mascot-widget-title,
 [data-theme="verde-magafico"] .widget-mood-pending .mascot-widget-title {
   color: #facc15 !important;
@@ -7323,7 +7229,7 @@ nav.desktop-nav a.nav-link.active::before {
   border-color: #4d8534;
 }
 
-/* Roxo NuMetálico: widget */
+/* roxo numetalico: widget */
 [data-theme="roxo-numetalico"] .mascot-widget-title,
 [data-theme="roxo-numetalico"] .widget-mood-pending .mascot-widget-title {
   color: #f9e000 !important;
@@ -7335,7 +7241,7 @@ nav.desktop-nav a.nav-link.active::before {
   border-color: #7c3aed;
 }
 
-/* Garantia: todos os textos de widget ficam legíveis em temas escuros */
+/* contraste dos textos em temas escuros */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="verde-magafico"]) .mascot-widget-body {
   color: inherit;
 }
@@ -7344,9 +7250,7 @@ nav.desktop-nav a.nav-link.active::before {
   border-color: var(--black, #11220e);
 }
 
-/* ==========================================================================
-   SALDO DE CONCHAS EEX (SHELL COINS)
-   ========================================================================== */
+/* --- saldo de conchas --- */
 .header-shells-pill {
   display: inline-flex;
   align-items: center;
@@ -7420,11 +7324,9 @@ nav.desktop-nav a.nav-link.active::before {
   animation: shellBumpAnim 0.45s ease-out;
 }
 
-/* ==========================================================================
-   EEX+ EXCLUSIVE THEMES
-   ========================================================================== */
+/* --- temas exclusivos eex+ --- */
 
-/* 4. AZUL ARCÂNICO — AZUL DIMENSIONAL PROFUNDO & LARANJA CÓSMICO 🌌 */
+/* azul arcanico e laranja cosmico */
 [data-theme="azul-arcanico"] {
   --bg-color: #0b1329;
   --card-bg: #162444;
@@ -7487,7 +7389,7 @@ nav.desktop-nav a.nav-link.active::before {
   color: #030712;
 }
 
-/* Cores dos Menus e Cards em Azul Arcânico */
+/* menus e cards em azul arcanico */
 [data-theme="azul-arcanico"] .settings-card,
 [data-theme="azul-arcanico"] .modal-box,
 [data-theme="azul-arcanico"] .modal-content,
@@ -7642,8 +7544,7 @@ nav.desktop-nav a.nav-link.active::before {
   border-color: var(--black) !important;
 }
 
-
-/* 5. OURO PROVIDÊNTICO — DOURADO NOBRE DA C.E.O. PROVIDENTE 👑 */
+/* ouro providentico */
 [data-theme="ouro-providentico"] {
   --bg-color: #2b1f05;
   --card-bg: #fffdf5;
@@ -7702,10 +7603,7 @@ nav.desktop-nav a.nav-link.active::before {
   color: #170e01;
 }
 
-/* ==========================================================================
-   CICLO DIA / NOITE — CONFORTO OCULAR POTENTE (EEX+)
-   Redução drástica de luz azul e filtro âmbar quente aconchegante
-   ========================================================================== */
+/* --- ciclo dia e noite (filtro ambar) --- */
 html.theme-night {
   filter: sepia(0.68) hue-rotate(-22deg) brightness(0.84) contrast(1.1) !important;
   transition: filter 0.6s ease;
@@ -7725,10 +7623,7 @@ html.theme-night::after {
   mix-blend-mode: multiply;
 }
 
-
-/* ==========================================================================
-   CRACHÁ / PASSAPORTE ARCO-ÍRIS EXCLUSIVO EEX+
-   ========================================================================== */
+/* --- cracha arco-iris eex+ --- */
 .passport-card.passport-eexplus {
   position: relative;
   border-color: transparent !important;
@@ -7761,9 +7656,7 @@ html.theme-night::after {
   box-shadow: 0 0 10px rgba(236, 72, 153, 0.6) !important;
 }
 
-/* ==========================================================================
-   BOTÃO EEX+ NO HEADER
-   ========================================================================== */
+/* --- botao eex+ no header --- */
 .btn-eex-plus-pill {
   display: inline-flex;
   align-items: center;
@@ -7800,9 +7693,7 @@ html.theme-night::after {
   filter: none !important;
 }
 
-/* ==========================================================================
-   MODAL POMODORO
-   ========================================================================== */
+/* --- modal pomodoro --- */
 .pomodoro-box {
   max-width: 440px;
   text-align: center;
@@ -7873,9 +7764,7 @@ html.theme-night::after {
   padding: 6px 10px;
 }
 
-/* ==========================================================================
-   MODAL & CARDS DO ELGALY EXPRESS+ (EEX+)
-   ========================================================================== */
+/* --- modal e cards eex+ --- */
 .eexplus-modal-box {
   max-width: 520px;
   text-align: center;
@@ -7957,7 +7846,7 @@ html.theme-night::after {
   border: 1px solid #000;
 }
 
-/* Swatches dos novos temas */
+/* swatches dos temas novos */
 .swatch-azul {
   background: linear-gradient(135deg, #1e3a8a 33%, #3b82f6 66%, #f97316 100%);
 }
@@ -7966,10 +7855,7 @@ html.theme-night::after {
   background: linear-gradient(135deg, #4d370b 33%, #d97706 66%, #ffd700 100%);
 }
 
-/* ==========================================================================
-   LOGOTIPO EEX+ ESCURO PARA FUNDOS CLAROS
-   Converte o logo branco em roxo/magenta escuro de alta legibilidade
-   ========================================================================== */
+/* --- logo escuro em fundos claros --- */
 .logo-eexplus-dark {
   filter: brightness(0) saturate(100%) invert(14%) sepia(50%) saturate(3500%) hue-rotate(275deg) brightness(85%) contrast(115%) !important;
 }
@@ -7979,7 +7865,7 @@ html.theme-night::after {
   filter: none !important;
 }
 
-/* Modal EEX+ Componentes */
+/* componentes do modal eex+ */
 .eexplus-coming-soon-banner {
   background: linear-gradient(135deg, #fef3c7, #fde68a);
   border: 3px solid #d97706;
@@ -8036,9 +7922,7 @@ html.theme-night::after {
   color: var(--purple-dark);
 }
 
-/* ==========================================================================
-   EEX+ NO TEMA ROXO NUMETÁLICO E TEMAS ESCUROS
-   ========================================================================== */
+/* --- eex+ em temas escuros --- */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .eexplus-modal-box {
   background: #1a062c !important;
   color: #ffffff !important;
@@ -8117,9 +8001,7 @@ html.theme-night::after {
   color: #f3e8ff !important;
 }
 
-/* ==========================================================================
-   CARD EEX+ FORMATO HORIZONTAL (LÁ EMBAIXO DE TUDO — ÚNICO DIFERENCIADO)
-   ========================================================================== */
+/* --- card horizontal do eex+ --- */
 .settings-eexplus-horizontal {
   background: linear-gradient(135deg, #fffcf5 0%, #fff0f6 100%) !important;
   border: 4px solid var(--black) !important;
@@ -8165,9 +8047,7 @@ html.theme-night::after {
   border-radius: 16px;
   padding: 14px;
 }
-/* ==========================================================================
-   EFEITO LUSTROSO / SHIMMER PARA RECURSOS EEX+ (NÃO-ASSINANTES)
-   ========================================================================== */
+/* --- efeito shimmer pra bloqueados --- */
 @keyframes eexLustreShimmer {
   0% {
     transform: translateX(-150%);
@@ -8220,9 +8100,7 @@ html.theme-night::after {
   pointer-events: none !important;
 }
 
-/* ==========================================================================
-   BALÃOZINHO FLUTUANTE DO POMODORO (SEGUNDO PLANO)
-   ========================================================================== */
+/* --- balao flutuante do pomodoro --- */
 @keyframes pomodoroFloat {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-4px); }
@@ -8306,9 +8184,7 @@ html.theme-night::after {
   white-space: nowrap;
 }
 
-/* ==========================================================================
-   BADGE DE LIMITE DE ROTINAS DIÁRIAS
-   ========================================================================== */
+/* --- badge de limite de rotinas --- */
 .habits-limit-badge {
   display: inline-flex;
   align-items: center;
@@ -8328,9 +8204,7 @@ html.theme-night::after {
   color: #b45309;
 }
 
-/* ==========================================================================
-   WIDGET DE CLIMA EM TEMPO REAL (OPEN-METEO)
-   ========================================================================== */
+/* --- widget de clima --- */
 .daily-weather-badge {
   display: inline-flex;
   align-items: center;
@@ -8357,9 +8231,7 @@ html.theme-night::after {
   line-height: 1;
 }
 
-/* ==========================================================================
-   PAINÉIS DE ASSINANTE ATIVO EEX+ (ESCONDER CÓDIGO/COMPRA QUANDO ATIVO)
-   ========================================================================== */
+/* --- paineis de assinante ativo eex+ --- */
 .eexplus-active-box {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   border: 2.5px solid #059669;
@@ -8380,9 +8252,7 @@ html.theme-night::after {
   line-height: 1.4;
 }
 
-/* ==========================================================================
-   BLOQUINHO DE NOTAS EEX (Anotações & Memorandos)
-   ========================================================================== */
+/* --- bloco de notas --- */
 .notes-container {
   display: flex;
   flex-direction: column;
@@ -8550,7 +8420,7 @@ html.theme-night::after {
   align-items: center !important;
 }
 
-/* Modal de Visualização / Edição de Nota */
+/* modal de notas */
 .note-modal-box {
   max-width: 520px !important;
   border: 4px solid var(--black, #11220e) !important;
@@ -8642,9 +8512,7 @@ html.theme-night::after {
   box-shadow: 4px 4px 0px var(--black, #11220e) !important;
 }
 
-/* ==========================================================================
-   STICKERS INTERATIVOS EM QUALQUER CANTO (ARRASTAR & MÚLTIPLOS)
-   ========================================================================== */
+/* --- stickers arrastaveis --- */
 .moment-preview-stage {
   position: relative;
   width: 100%;
@@ -8704,9 +8572,7 @@ html.theme-night::after {
   box-shadow: 1px 1px 0 var(--black);
 }
 
-/* ==========================================================================
-   MODAL DE ZOOM DA FOTO (GRANDE ÂNGULO - SEM SCROLLBARS, FOTO COMPLETA)
-   ========================================================================== */
+/* --- zoom da foto --- */
 #modalPhotoZoom {
   z-index: 999999 !important;
 }
@@ -8767,9 +8633,7 @@ html.theme-night::after {
   margin-top: 4px;
 }
 
-/* ==========================================================================
-   4. TEMA NOVO: VERMELHO CULPOSO (Vermelho Pastel & Bege Clarinho)
-   ========================================================================== */
+/* --- tema vermelho culposo --- */
 [data-theme="vermelho-culposo"] {
   --bg-color: #ba4c4c;
   --card-bg: #f4ecdf;
@@ -8876,9 +8740,7 @@ html.theme-night::after {
   color: #211111;
 }
 
-/* ==========================================================================
-   LOJA EEX — BAZAR DO CORREIO (MODAL POPUP COM CATEGORIAS VERTICAIS À ESQUERDA)
-   ========================================================================== */
+/* --- loja e bazar eex --- */
 .loja-modal-box {
   max-width: 860px;
   width: 95%;
@@ -8969,7 +8831,7 @@ html.theme-night::after {
   min-height: 420px;
 }
 
-/* Menu lateral esquerdo vertical de cima para baixo */
+/* menu lateral da loja */
 .loja-sidebar {
   width: 180px;
   flex-shrink: 0;
@@ -9050,7 +8912,7 @@ html.theme-night::after {
   border-radius: 4px;
 }
 
-/* Área de conteúdo da categoria */
+/* conteudo da categoria */
 .loja-content-area {
   flex: 1;
   padding: 20px;
@@ -9183,7 +9045,7 @@ html.theme-night::after {
   font-family: var(--font-main) !important;
 }
 
-/* Adaptações Dark / NuMetálico para a Loja */
+/* loja nos temas escuros */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .loja-modal-box {
   background: #1a062c !important;
   border-color: var(--black) !important;
@@ -9247,7 +9109,7 @@ html.theme-night::after {
   color: #f3e8ff !important;
 }
 
-/* Responsividade Mobile para a Loja EEX */
+/* loja no mobile */
 @media (max-width: 600px) {
   .loja-modal-box {
     width: 96%;
@@ -9290,15 +9152,13 @@ html.theme-night::after {
   }
 }
 
-/* ==========================================================================
-   BATERIA VOADORA — LOGO ADAPTATIVO & INSTAGRAM
-   ========================================================================== */
+/* --- bateria voadora: logos e links --- */
 .flyingbattery-logo {
   width: 220px;
   max-width: 85%;
   height: auto;
   object-fit: contain;
-  /* Nos temas claros (fundo bege/branco), o logo branco vira roxo/preto escuro nítido */
+  /* logo escuro nos temas claros */
   filter: brightness(0) saturate(100%) invert(12%) sepia(30%) saturate(3000%) hue-rotate(270deg) brightness(85%);
   transition: filter 0.25s ease, transform 0.2s ease;
   cursor: pointer;
@@ -9308,7 +9168,7 @@ html.theme-night::after {
   transform: scale(1.04);
 }
 
-/* Nos temas escuros (card escuro), o logo fica na cor clara/branca original com relevo */
+/* logo claro nos temas escuros */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"], [data-theme="azul-arcanico"]) .flyingbattery-logo {
   filter: brightness(1) drop-shadow(0px 2px 8px rgba(0,0,0,0.6)) !important;
 }
@@ -9340,9 +9200,7 @@ html.theme-night::after {
   box-shadow: 1px 1px 0 var(--black);
 }
 
-/* ==========================================================================
-   BANNER HERO DO CRACHÁ EEX (ENVOLVE AVATAR, NOME E NICK COM CONTRASTE)
-   ========================================================================== */
+/* --- banner do cracha eex --- */
 .grand-badge-hero-banner {
   position: relative;
   width: 100%;
@@ -9380,7 +9238,7 @@ html.theme-night::after {
   z-index: 2;
 }
 
-/* Overlay Protetor Dinâmico */
+/* overlay do banner */
 .hero-banner-overlay {
   position: absolute;
   inset: 0;
@@ -9389,17 +9247,17 @@ html.theme-night::after {
   transition: background 0.3s ease;
 }
 
-/* Tema Escuro do Banner (Padrão ou Imagem Escura) */
+/* banner no tema escuro */
 .grand-badge-hero-banner.banner-theme-dark .hero-banner-overlay {
   background: linear-gradient(180deg, rgba(15, 6, 26, 0.15) 0%, rgba(15, 6, 26, 0.65) 100%);
 }
 
-/* Tema Claro do Banner (Imagem Clara ou com Alta Transparência sobre Fundo Claro) */
+/* banner no tema claro */
 .grand-badge-hero-banner.banner-theme-light .hero-banner-overlay {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.58) 100%);
 }
 
-/* Conteúdo em Primeiro Plano sobre o Banner */
+/* conteudo sobre o banner */
 .hero-banner-foreground {
   position: relative;
   z-index: 2;
@@ -9421,7 +9279,7 @@ html.theme-night::after {
   position: relative;
 }
 
-/* Placa Protetora de Identificação do Agente (Menor e mais Translúcida) */
+/* placa de identificacao */
 .hero-banner-text-plate {
   max-width: fit-content;
   padding: 8px 16px;
@@ -9451,7 +9309,7 @@ html.theme-night::after {
   margin-bottom: 4px;
 }
 
-/* Contraste: Banner Tema Escuro */
+/* contraste com banner escuro */
 .grand-badge-hero-banner.banner-theme-dark .hero-banner-text-plate {
   background: rgba(18, 6, 32, 0.42);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
@@ -9474,7 +9332,7 @@ html.theme-night::after {
   box-shadow: 1px 1px 0 var(--black);
 }
 
-/* Contraste: Banner Tema Claro (Imagens Claras ou Transparentes) */
+/* contraste com banner claro */
 .grand-badge-hero-banner.banner-theme-light .hero-banner-text-plate {
   background: rgba(255, 255, 255, 0.55);
   border: 1.5px solid rgba(0, 0, 0, 0.22);
@@ -9497,7 +9355,7 @@ html.theme-night::after {
   box-shadow: 1px 1px 0 rgba(0,0,0,0.15);
 }
 
-/* Botão Trocar Banner */
+/* botao trocar banner */
 .btn-change-banner-badge {
   position: absolute;
   top: 10px;
@@ -9530,7 +9388,7 @@ html.theme-night::after {
   box-shadow: 1px 1px 0 var(--black);
 }
 
-/* Seção Inferior do Crachá (Código de Barras + Metadados + XP) */
+/* parte de baixo do cracha */
 .grand-badge-lower-section {
   display: flex;
   gap: 20px;
@@ -9556,7 +9414,7 @@ html.theme-night::after {
   min-width: 220px;
 }
 
-/* Banner no Crachá de Amigos */
+/* banner no cracha de amigos */
 .friend-badge-banner {
   width: 100%;
   height: 90px;
@@ -9598,9 +9456,7 @@ html.theme-night::after {
   }
 }
 
-/* ==========================================================================
-   NOVA TELA DE LOGIN REDE EEX (DESPACHO DIMENSIONAL #140622)
-   ========================================================================== */
+/* --- tela de login #140622 --- */
 .auth-gateway-container {
   display: flex;
   flex-direction: row;
@@ -9617,7 +9473,7 @@ html.theme-night::after {
   z-index: 100;
 }
 
-/* Botão fechar modal de login / voltar para Landing */
+/* botao voltar/fechar login */
 .btn-close-auth {
   position: absolute;
   top: 14px;
@@ -9644,9 +9500,7 @@ html.theme-night::after {
   background: var(--red-alert);
 }
 
-/* ==========================================================================
-   LANDING PAGE OFICIAL DO ELGALY EXPRESS (VISITANTES & APRESENTAÇÃO)
-   ========================================================================== */
+/* --- landing page --- */
 .landing-page-container {
   width: 100%;
   max-width: 1140px;
@@ -9654,7 +9508,7 @@ html.theme-night::after {
   padding: 10px 16px 60px;
 }
 
-/* Topo da Landing Page */
+/* topo da landing */
 .landing-nav-bar {
   display: flex;
   align-items: center;
@@ -9700,9 +9554,7 @@ html.theme-night::after {
   box-shadow: 5px 5px 0 var(--black);
 }
 
-/* ==========================================================================
-   HERO GRAND: O CHAMADO DIMENSIONAL DO ELGALY EXPRESS
-   ========================================================================== */
+/* --- hero da landing --- */
 .landing-hero-grand {
   background: var(--card-bg);
   border: 4px solid var(--black);
@@ -9819,7 +9671,7 @@ html.theme-night::after {
   box-shadow: 6px 6px 0 var(--black) !important;
 }
 
-/* Arte do Hero com Backdrop e Badges Flutuantes */
+/* arte e badges flutuantes do hero */
 .landing-hero-art-wrapper {
   flex: 0.9;
   position: relative;
@@ -9924,9 +9776,7 @@ html.theme-night::after {
   50% { transform: translateY(-12px) rotate(5deg); }
 }
 
-/* ==========================================================================
-   SEÇÕES GRANDES (SHOWCASE SECTIONS) - MENOS BOXES, MAIS IMERSÃO
-   ========================================================================== */
+/* --- secoes de showcase --- */
 .landing-showcase-section {
   background: var(--white);
   border: 4px solid var(--black);
@@ -9944,7 +9794,7 @@ html.theme-night::after {
   will-change: opacity, transform;
 }
 
-/* Scroll reveal state */
+/* animacao de scroll reveal */
 .landing-showcase-section,
 .landing-hero-grand,
 .landing-cta-banner {
@@ -10023,9 +9873,7 @@ html.theme-night::after {
   flex-shrink: 0;
 }
 
-/* ==========================================================================
-   SHOWCASE PREVIEW CARDS (MOCKUPS INTERATIVOS DE UI)
-   ========================================================================== */
+/* --- preview mockups --- */
 .showcase-preview-card {
   flex: 0.9;
   min-width: 320px;
@@ -10072,7 +9920,7 @@ html.theme-night::after {
   color: var(--purple-dark);
 }
 
-/* Card 1: Tarefas & Despacho Preview */
+/* preview tarefas e despacho */
 .preview-task-item {
   background: var(--white);
   border: 2.5px solid var(--black);
@@ -10150,9 +9998,7 @@ html.theme-night::after {
   box-shadow: 2px 2px 0 var(--black);
 }
 
-/* ==========================================================================
-   SEÇÃO 2: TUDUM IA SPOTLIGHT
-   ========================================================================== */
+/* --- spotlight tudum ia --- */
 .tudum-spotlight {
   background: linear-gradient(135deg, #fff7fd 0%, #f9edff 100%);
   border-color: var(--purple-dark);
@@ -10270,9 +10116,7 @@ html.theme-night::after {
   padding: 4px 8px;
 }
 
-/* ==========================================================================
-   SEÇÃO 3: STREAKS & LOJA DE RECOMPENSAS
-   ========================================================================== */
+/* --- streaks e loja --- */
 .card-streaks .preview-concha-counter {
   margin-left: auto;
   background: var(--purple-dark);
@@ -10359,9 +10203,7 @@ html.theme-night::after {
   font-size: 0.72rem;
 }
 
-/* ==========================================================================
-   CALL TO ACTION FINAL (BANNER GIGANTE)
-   ========================================================================== */
+/* --- cta final --- */
 .landing-cta-banner {
   background: var(--purple-dark);
   color: var(--white);
@@ -10413,9 +10255,7 @@ html.theme-night::after {
   box-shadow: 10px 10px 0 var(--black) !important;
 }
 
-/* ==========================================================================
-   RODAPÉ DA LANDING PAGE: BATERIA VOADORA
-   ========================================================================== */
+/* --- rodape da landing --- */
 .landing-footer-bateria {
   background: var(--card-bg) !important;
   border: 4px solid var(--black) !important;
@@ -10449,9 +10289,7 @@ html.theme-night::after {
   margin-top: 6px;
 }
 
-/* ==========================================================================
-   RESPONSIVIDADE DA LANDING PAGE
-   ========================================================================== */
+/* --- responsividade da landing --- */
 @media (max-width: 900px) {
   .landing-hero-grand {
     flex-direction: column;
@@ -10521,7 +10359,7 @@ html.theme-night::after {
   }
 }
 
-/* Showcase da Caixa Ilustrada à Esquerda */
+/* caixa ilustrada a esquerda */
 .auth-box-showcase {
   flex: 1.1;
   background: #140622;
@@ -10549,7 +10387,7 @@ html.theme-night::after {
   max-height: 480px;
   object-fit: contain;
   display: block;
-  /* Sem sombras pesadas para manter a arte plana, limpa e nítida */
+  /* sombras limpas na arte */
   filter: none;
   transition: transform 0.3s ease;
 }
@@ -10579,7 +10417,7 @@ html.theme-night::after {
   text-transform: uppercase;
 }
 
-/* Lado Direito do Formulário */
+/* lado direito do formulario */
 .auth-form-side {
   flex: 1;
   padding: 36px 32px;
@@ -10640,7 +10478,7 @@ html.theme-night::after {
   font-weight: 500;
 }
 
-/* Botão Google na Nova Estética */
+/* botao google no login */
 .auth-form-side .auth-main-login {
   display: flex;
   flex-direction: column;
@@ -10691,7 +10529,7 @@ html.theme-night::after {
   font-weight: 700;
 }
 
-/* Ajustes no Modal de PIN para harmonizar com #140622 */
+/* ajustes no modal de pin */
 #modalPinLogin .modal-content {
   background: #140622 !important;
   color: #ffffff !important;
@@ -10713,7 +10551,7 @@ html.theme-night::after {
   border-color: var(--magenta-bright) !important;
 }
 
-/* Ícone da Embalagem no Card de Tarefas / Encomendas */
+/* icone de pacote na tarefa */
 .task-package-icon {
   width: 17px;
   height: 17px;
@@ -10728,10 +10566,7 @@ html.theme-night::after {
   align-items: center;
 }
 
-
-/* ==========================================================================
-   RESPONSIVIDADE DA TELA DE LOGIN (MOBILE)
-   ========================================================================== */
+/* --- login responsivo no mobile --- */
 @media (max-width: 768px) {
   .auth-gateway-container {
     flex-direction: column !important;
@@ -10788,11 +10623,9 @@ html.theme-night::after {
   }
 }
 
-/* ==========================================================================
-   TUDUM IA - ASSISTENTE INTELIGENTE DE DESPACHO EEX (NEO-BRUTALISMO)
-   ========================================================================== */
+/* --- assistente tudum ia --- */
 
-/* Botão Tudum na Navbar Desktop (À esquerda da divisória pontilhada) */
+/* botao tudum na navbar desktop */
 .btn-nav-tudum {
   flex-shrink: 0 !important;
   margin: 0 2px;
@@ -10829,12 +10662,12 @@ html.theme-night::after {
 .btn-nav-tudum .tudum-logo-on-dark { display: block !important; }
 .btn-nav-tudum .tudum-logo-on-light { display: none !important; }
 
-/* Quando a Tudum abre, o botão da navbar some completamente para liberar espaço */
+/* esconde botao na navbar com tudum aberta */
 body.tudum-open .btn-nav-tudum {
   display: none !important;
 }
 
-/* Ajustes na navbar quando a Tudum está aberta */
+/* navbar com tudum aberta */
 body.tudum-open nav.desktop-nav {
   padding: 5px 8px;
   gap: 6px;
@@ -10850,7 +10683,7 @@ body.tudum-open .desktop-nav .nav-btn {
   font-size: 0.8rem;
 }
 
-/* Redimensionamento responsivo do container no Desktop (SEM sobrepor o app) */
+/* container desktop com tudum */
 @media (min-width: 1024px) {
   html {
     overflow-x: hidden;
@@ -10863,7 +10696,7 @@ body.tudum-open .desktop-nav .nav-btn {
   }
 }
 
-/* Backdrop suave para Mobile */
+/* backdrop mobile da tudum */
 .tudum-backdrop {
   display: none;
   position: fixed;
@@ -10882,7 +10715,7 @@ body.tudum-open .desktop-nav .nav-btn {
   }
 }
 
-/* Gaveta Lateral Tudum (Docked no Desktop, Drawer no Mobile) */
+/* drawer da tudum */
 .tudum-sidebar {
   position: fixed;
   top: 0 !important;
@@ -10913,7 +10746,7 @@ body.tudum-open .tudum-sidebar {
   }
 }
 
-/* Header da Tudum */
+/* header da tudum */
 .tudum-header {
   background: var(--purple-dark, #3a154d);
   color: var(--white, #ffffff);
@@ -11062,7 +10895,7 @@ body.tudum-open .tudum-sidebar {
   background: #f43f5e;
 }
 
-/* Área de Mensagens / Chat */
+/* chat da tudum */
 .tudum-chat-body {
   flex: 1;
   overflow-y: auto;
@@ -11210,7 +11043,7 @@ body.tudum-open .tudum-sidebar {
   display: block;
 }
 
-/* Card de Resultados Despachados (Tarefas e Eventos criados na UI) */
+/* cards gerados pela tudum */
 .tudum-action-result-card {
   margin-top: 10px;
   background: #f0fdf4;
@@ -11261,7 +11094,7 @@ body.tudum-open .tudum-sidebar {
   transform: translate(-1px, -1px);
 }
 
-/* Indicador de Digitação (Typing) */
+/* digitando... */
 .tudum-typing {
   display: inline-flex;
   align-items: center;
@@ -11297,7 +11130,7 @@ body.tudum-open .tudum-sidebar {
   margin-left: 4px;
 }
 
-/* Barra Inferior de Entrada (Input / Footer) */
+/* input da tudum */
 .tudum-chat-footer {
   padding: 12px 14px;
   background: var(--white, #ffffff);
@@ -11397,7 +11230,7 @@ body.tudum-open .tudum-sidebar {
   font-weight: 600;
 }
 
-/* Modos Escuros & Temas Alternativos para Tudum */
+/* tudum nos temas escuros */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .tudum-sidebar {
   background: #180527;
   border-left-color: #581c87;
@@ -11436,9 +11269,7 @@ body.tudum-open .tudum-sidebar {
   color: #bbf7d0;
 }
 
-/* ==========================================================================
-   TELA DE ATUALIZAÇÃO DA PROVIDENTE (FUNDO #e2077e + PROVIDENTE DANCE)
-   ========================================================================== */
+/* --- tela de atualizacao --- */
 .update-takeover-overlay {
   background: #e2077e !important;
   z-index: 999999 !important;
@@ -11624,9 +11455,7 @@ body.tudum-open .tudum-sidebar {
   opacity: 1;
 }
 
-/* ==========================================================================
-   BANNER / PILL DE ATUALIZAÇÃO WEB / PWA
-   ========================================================================== */
+/* --- banner update pwa --- */
 .web-update-pill {
   position: fixed;
   bottom: 84px;
@@ -11692,9 +11521,7 @@ body.tudum-open .tudum-sidebar {
   padding: 4px;
 }
 
-/* ==========================================================================
-   EXPRESS-FM — WIDGET FLUTUANTE, DISCO DE VINIL & BALÃO INTERATIVO (COMPACTO)
-   ========================================================================== */
+/* --- express-fm: radio e vinil --- */
 .vitrola-floating-widget {
   position: fixed;
   bottom: 84px;
@@ -11717,20 +11544,20 @@ body.tudum-open .tudum-sidebar {
   transform: scale(1.06);
 }
 
-/* O Wrapper com Sombra Fixa que NÃO gira */
+/* container com sombra fixa */
 .vitrola-mini-disc-wrapper {
   width: 58px;
   height: 58px;
   border-radius: 50%;
   position: relative;
-  /* A sombra fica parada aqui! */
+  /* sombra estatica do vinil */
   box-shadow: 4px 4px 0 var(--black), 0 6px 16px rgba(0,0,0,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* O Disco de Vinil que Gira */
+/* vinil animado */
 .vitrola-mini-disc {
   width: 100%;
   height: 100%;
@@ -11772,7 +11599,7 @@ body.tudum-open .tudum-sidebar {
   z-index: 2;
 }
 
-/* Mini Pill de Faixa */
+/* pilula com nome da faixa */
 .vitrola-mini-pill {
   background: var(--white);
   border: 3px solid var(--black);
@@ -11804,7 +11631,7 @@ body.tudum-open .tudum-sidebar {
   animation: vitrolaPulseDot 1s ease infinite alternate;
 }
 
-/* Balãozinho Compacto e mais Horizontal */
+/* balao compacto do player */
 .vitrola-balloon-panel {
   position: fixed;
   bottom: 148px;
@@ -11946,7 +11773,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: 2px 2px 0 var(--black);
 }
 
-/* Mesa Toca-Discos — O Vinil Grande Cortado Pela Metade de Cima! */
+/* mesa toca-discos */
 .vitrola-turntable-deck {
   background: #fdf2f8;
   border: 2.5px solid var(--black);
@@ -11958,10 +11785,10 @@ body.tudum-open .tudum-sidebar {
   position: relative;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
   height: 100px;
-  overflow: hidden; /* Corta a metade inferior do vinil! */
+  overflow: hidden; /* metade cortada do disco */
 }
 
-/* Platter do Vinil Grande Cortado */
+/* base do prato do vinil */
 .vitrola-platter {
   position: relative;
   width: 170px;
@@ -11972,7 +11799,7 @@ body.tudum-open .tudum-sidebar {
   margin-left: 20px;
 }
 
-/* O Disco Gigante (160px), com o topo visível e o fundo cortado */
+/* disco grande recortado */
 .vitrola-record {
   width: 160px;
   height: 160px;
@@ -11980,7 +11807,7 @@ body.tudum-open .tudum-sidebar {
   background: radial-gradient(circle, #2e2e2e 0%, #151515 50%, #000000 100%);
   border: 3.5px solid var(--black);
   position: absolute;
-  top: 10px; /* Deixa o hemisfério norte do vinil perfeitamente enquadrado */
+  top: 10px; /* enquadramento superior do vinil */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12000,7 +11827,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: inset 0 0 0 10px rgba(0,0,0,0.6), inset 0 0 0 20px rgba(255,255,255,0.08);
 }
 
-/* O Centro do Vinil com a Capa do Álbum / Thumbnail */
+/* miolo do vinil com capa */
 .vitrola-record-label {
   width: 58px;
   height: 58px;
@@ -12036,7 +11863,7 @@ body.tudum-open .tudum-sidebar {
   border-radius: 4px;
 }
 
-/* Thumbnail no Mini Vinil Flutuante */
+/* thumb no mini vinil */
 .vitrola-mini-thumb {
   width: 100%;
   height: 100%;
@@ -12044,7 +11871,7 @@ body.tudum-open .tudum-sidebar {
   border-radius: 50%;
 }
 
-/* Display Digital Retrô de Sintonia no Lugar da Agulha */
+/* display digital de sintonia */
 .vitrola-deck-display {
   flex: 1;
   max-width: 175px;
@@ -12093,7 +11920,7 @@ body.tudum-open .tudum-sidebar {
   font-family: monospace;
 }
 
-/* Marquee / Ticker do Título Passando Suavemente */
+/* letreiro animado da faixa */
 .vitrola-ticker-wrap {
   width: 100%;
   overflow: hidden;
@@ -12125,7 +11952,7 @@ body.tudum-open .tudum-sidebar {
   text-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
 }
 
-/* Canal ou Playlist no Rodapé do Display */
+/* playlist no rodape do display */
 .vitrola-channel-wrap {
   display: flex;
   align-items: center;
@@ -12161,7 +11988,7 @@ body.tudum-open .tudum-sidebar {
   }
 }
 
-/* Faixa e Status */
+/* faixa e status */
 .vitrola-track-display {
   text-align: center;
 }
@@ -12182,7 +12009,7 @@ body.tudum-open .tudum-sidebar {
   margin-top: 2px;
 }
 
-/* Timeline */
+/* barra de progresso */
 .vitrola-timeline-wrap {
   display: flex;
   align-items: center;
@@ -12210,7 +12037,7 @@ body.tudum-open .tudum-sidebar {
   transition: width 0.2s linear;
 }
 
-/* Controles de Reprodução */
+/* controles do player */
 .vitrola-controls-bar {
   display: flex;
   align-items: center;
@@ -12268,7 +12095,7 @@ body.tudum-open .tudum-sidebar {
   cursor: pointer;
 }
 
-/* Tabs de Modo */
+/* abas do player */
 .vitrola-modes-tabs {
   display: flex;
   gap: 6px;
@@ -12294,7 +12121,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: 2.5px 2.5px 0 var(--black);
 }
 
-/* Grid de Estações */
+/* estacoes de radio */
 .vitrola-stations-grid {
   display: flex;
   flex-direction: column;
@@ -12399,7 +12226,7 @@ body.tudum-open .tudum-sidebar {
   line-height: 1.3;
 }
 
-/* Keyframes */
+/* animacoes do vinil */
 @keyframes vitrolaSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -12410,7 +12237,7 @@ body.tudum-open .tudum-sidebar {
   100% { transform: scale(1.3); opacity: 1; }
 }
 
-/* Modo Escuro */
+/* player no modo escuro */
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .vitrola-balloon-panel {
   background: #1e102a;
   border-color: #f472b6;
@@ -12443,9 +12270,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9), 2px 2px 0 #f472b6;
 }
 
-/* ==========================================================================
-   IMPRESSORA TÉRMICA - MANIFESTO DE CARGA EEX
-   ========================================================================== */
+/* --- impressora termica de carga --- */
 .impressora-trigger-wrap {
   display: flex;
   flex-direction: column;
@@ -12622,7 +12447,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: 4px 4px 0 var(--black), -4px 4px 0 var(--black);
 }
 
-/* Desativar Express-FM no Mobile */
+/* esconde radio no mobile */
 @media (max-width: 768px) {
   #vitrolaFloatingWidget,
   #vitrolaBalloonPanel {
@@ -12630,10 +12455,7 @@ body.tudum-open .tudum-sidebar {
   }
 }
 
-
-/* ==========================================================================
-   FITAS HOLOGRÁFICAS DE CRACHÁ (20 COMBINAÇÕES - LOJA EEX)
-   ========================================================================== */
+/* --- fitas holograficas na loja --- */
 .holo-eexplus,
 .holo-eex-plus {
   background: linear-gradient(90deg, #ffd700, #ff007f, #9d4edd, #00f2fe, #ffd700);
@@ -12803,7 +12625,7 @@ body.tudum-open .tudum-sidebar {
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
 }
 
-/* Cards da Loja para Fitas Holográficas */
+/* cards de fitas */
 .strip-swatch-box {
   width: 100%;
   height: 38px;
@@ -12826,7 +12648,7 @@ body.tudum-open .tudum-sidebar {
   z-index: 2;
 }
 
-/* Bio do Agente no Crachá */
+/* bio do agente */
 .grand-agent-bio {
   background: rgba(255, 255, 255, 0.08);
   border-left: 3.5px solid var(--yellow-bright);
@@ -12875,7 +12697,7 @@ body.tudum-open .tudum-sidebar {
   align-items: flex-start;
 }
 
-/* Grid do Perfil (Dashboard) */
+/* grid do perfil */
 .profile-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -12915,9 +12737,7 @@ body.tudum-open .tudum-sidebar {
   border-radius: 4px;
 }
 
-/* ==========================================================================
-   SEGURANÇA & PROTEÇÃO ANTI-CÓPIA (MOBILE & BLINDAGEM DE IMAGENS)
-   ========================================================================== */
+/* --- protecao contra copia de imagens --- */
 @media (max-width: 900px) {
   body,
   body *:not(input):not(textarea):not([contenteditable="true"]) {
@@ -12929,7 +12749,7 @@ body.tudum-open .tudum-sidebar {
   }
 }
 
-/* Blindagem absoluta de imagens em todo o sistema contra abertura em outras guias */
+/* bloqueia arrastar ou abrir imagem */
 img {
   -webkit-user-drag: none !important;
   -khtml-user-drag: none !important;
@@ -12941,9 +12761,7 @@ img {
   -webkit-user-select: none !important;
 }
 
-/* ==========================================================================
-   HUMOR OPERACIONAL & BIO APRIMORADA DO AGENTE
-   ========================================================================== */
+/* --- status de humor e bio --- */
 .agent-mood-tag {
   display: inline-flex;
   align-items: center;
@@ -13033,9 +12851,7 @@ img {
   margin-top: 3px;
 }
 
-/* ==========================================================================
-   AÇÕES DO MODAL DE ZOOM DA FOTO (SALVAR FOTO)
-   ========================================================================== */
+/* --- salvar foto no zoom --- */
 .photo-zoom-actions {
   display: flex;
   gap: 10px;
@@ -13068,9 +12884,7 @@ img {
   box-shadow: 2px 2px 0 var(--black) !important;
 }
 
-/* ==========================================================================
-   BOTÕES DE ACESSO AO "SOBRE O EEX" (LANDING & AUTH)
-   ========================================================================== */
+/* --- botao sobre o eex --- */
 .landing-nav-actions {
   display: flex;
   align-items: center;
@@ -13133,9 +12947,7 @@ img {
   }
 }
 
-/* ==========================================================================
-   MODAL "SOBRE O ELGALY EXPRESS" (@un.dashed & FATEC ITAPETININGA)
-   ========================================================================== */
+/* --- modal sobre o elgaly express --- */
 .modal-about-overlay {
   z-index: 100500 !important;
   padding: 16px;
@@ -13201,7 +13013,7 @@ img {
   background: #be123c;
 }
 
-/* Hero do Modal Sobre */
+/* hero do modal sobre */
 .about-hero-section {
   text-align: center;
   padding: 4px 0 8px;
@@ -13239,7 +13051,7 @@ img {
   margin: 0;
 }
 
-/* Card do Criador (@un.dashed) */
+/* card do autor */
 .about-creator-card {
   background: #fdf2f8;
   border: 3.5px solid var(--black);
@@ -13337,7 +13149,7 @@ img {
   filter: brightness(1.1);
 }
 
-/* Card da História / Motivação */
+/* historia e motivacao */
 .about-story-card {
   background: #fefce8;
   border: 3px solid var(--black);
@@ -13368,7 +13180,7 @@ img {
   color: var(--purple-dark);
 }
 
-/* Grid de Destaques */
+/* destaques do projeto */
 .about-highlights-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -13404,7 +13216,7 @@ img {
   line-height: 1.15;
 }
 
-/* Rodapé do Modal */
+/* rodape do modal sobre */
 .about-modal-footer {
   margin-top: 4px;
 }
@@ -13449,10 +13261,7 @@ img {
   }
 }
 
-
-/* ==========================================================================
-   CARGA MISTERIOSA DA C.E.O. PROVIDENTE (NOVO RECURSO)
-   ========================================================================== */
+/* --- carga misteriosa --- */
 .carga-misteriosa-banner {
   display: flex;
   align-items: center;
@@ -13639,9 +13448,7 @@ img {
   transform: scale(1.08) rotate(-2deg);
 }
 
-/* ==========================================================================
-   ESTILOS DE UPLOAD CLICÁVEL & HÁBITOS EDITÁVEIS (v1.1.0)
-   ========================================================================== */
+/* --- uploads e edicao de habitos --- */
 .clickable-upload {
   cursor: pointer !important;
   position: relative !important;
@@ -13682,7 +13489,7 @@ img {
   opacity: 1;
 }
 
-/* Ações de Hábitos e Hábitos em Descanso */
+/* habitos em descanso e acoes */
 .habit-actions,
 .rest-habit-actions {
   display: flex;

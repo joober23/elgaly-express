@@ -1,6 +1,5 @@
 // firebase-messaging-sw.js
-// Service Worker do Firebase Cloud Messaging
-// Fica na raiz do projeto para capturar notificacoes em background (PWA/web)
+// service worker do FCM — fica na raiz pra capturar notifs em background (PWA/web)
 
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
@@ -16,7 +15,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Manipula mensagens recebidas em background
+// trata mensagens recebidas em background
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Mensagem em background recebida:', payload);
 
@@ -35,7 +34,7 @@ messaging.onBackgroundMessage(function(payload) {
     vibrate: [200, 100, 200, 100, 200],
     requireInteraction: false,
     actions: [
-      { action: 'open',    title: '\u26A1 Ver Rotina' },
+      { action: 'open',    title: '⚡ Ver Rotina' },
       { action: 'dismiss', title: 'Dispensar' }
     ]
   };
@@ -43,7 +42,7 @@ messaging.onBackgroundMessage(function(payload) {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Click na notificacao: abre o app
+// click na notificacao: abre o app (ou foca se ja estiver aberto)
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
 

@@ -4,15 +4,12 @@
  * Onboarding no primeiro acesso + Crachás salvos com PIN de 6 dígitos.
  */
 
-// ==========================================================================
-// VERSÃO ATUAL DO APP
-// ==========================================================================
+// versão atual do app
 const EEX_APP_VERSION = '1.1.1';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
-// ==========================================================================
-// GERENCIADOR DE ATUALIZAÇÕES (Verifica nova versão via GitHub Releases)
-// ==========================================================================
+// --- atualizações ---
+
 const UpdateManager = {
   _checked: false,
 
@@ -48,8 +45,8 @@ const UpdateManager = {
     if (r.major !== l.major) return r.major > l.major;
     if (r.minor !== l.minor) return r.minor > l.minor;
     if (r.patch !== l.patch) return r.patch > l.patch;
-    // Se a versão semântica (major.minor.patch) for exatamente igual, NÃO considera atualização
-    // a menos que ambas explicitem build e a remota seja maior
+    // se major.minor.patch igual, só atualiza se o build remoto for maior
+    
     if (l.build > 0 && r.build > 0) {
       return r.build > l.build;
     }
@@ -77,15 +74,15 @@ const UpdateManager = {
 
       if (this._isNewer(EEX_APP_VERSION, latestTag)) {
         if (this.isNativeApp()) {
-          // No APK nativo: Providente Dance takeover com fundo #e2077e e música em loop!
+          // no apk: tela do providente dance com música em loop
           this._showUpdateModal(latestTag, downloadUrl, data.body || '');
         } else {
-          // Na Web / PWA: Alerta de nova rota
+          // na web/pwa: banner de nova versão
           this._showWebUpdateBanner(latestTag);
         }
       }
     } catch (e) {
-      // Sem internet ou erro na API — ignora silenciosamente
+      // sem internet ou erro — ignora
     }
   },
 
@@ -110,7 +107,7 @@ const UpdateManager = {
       notesEl.textContent = cleanNotes.slice(0, 200) + (cleanNotes.length > 200 ? '...' : '');
     }
 
-    // Toca música em loop perfeito: Waiting for It (Burning Ver.)
+    // toca a trilha em loop
     if (audio) {
       try {
         audio.currentTime = 0;
@@ -193,9 +190,8 @@ const UpdateManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE AUTENTICAÇÃO EEX (Somente Google + Rede EEX)
-// ==========================================================================
+// --- autenticação ---
+
 const AuthManager = {
   currentUser: null,
   isEexPassVerified: false,
@@ -206,7 +202,7 @@ const AuthManager = {
       try {
         const parsed = JSON.parse(savedCurrent);
         if (parsed && parsed.id && parsed.id !== 'guest') {
-          // Sanitização preventiva de avatar gigante (evita erro de 1MB no Firestore)
+          // avatar muito grande: troca pela url do google ou fallback
           if (parsed.avatar && typeof parsed.avatar === 'string' && parsed.avatar.length > 70000) {
             if (parsed.googlePhotoURL && typeof parsed.googlePhotoURL === 'string' && parsed.googlePhotoURL.startsWith('http')) {
               parsed.avatar = parsed.googlePhotoURL;
@@ -214,12 +210,12 @@ const AuthManager = {
               parsed.avatar = 'images/elgalylogo.png';
             }
           }
-          // Sanitização preventiva de cidade: cidades inventadas do sistema antigo viram 'São Paulo - SP'
+          // sanitiza cidade fictícia antiga pra são paulo
           if (!parsed.location || (typeof isValidSpCity === 'function' && !isValidSpCity(parsed.location)) || /nova amerit|nova arcanis|elgaly edge/i.test(parsed.location || '')) {
             parsed.location = 'São Paulo - SP';
             localStorage.setItem('elgaly_express_current_user', JSON.stringify(parsed));
           }
-          // Desativação global do EEX+ e limpeza da conquista express-total
+          // garante que eex+ esteja desativado e sem a conquista express-total
           if (parsed.isEexPlus) parsed.isEexPlus = false;
           if (parsed.eexPlusActive) parsed.eexPlusActive = false;
           if (Array.isArray(parsed.unlockedAchievements) && parsed.unlockedAchievements.includes('express-total')) {
@@ -257,7 +253,7 @@ const AuthManager = {
     this.currentUser = { ...this.currentUser, ...updatedFields };
     this.saveCurrent();
 
-    // Atualiza o crachá salvo com novos dados (nome/avatar/eex)
+    // sincroniza dados no crachá salvo
     this.updateSavedBadge(this.currentUser);
 
     if (typeof FirebaseService !== 'undefined') {
@@ -307,7 +303,7 @@ const AuthManager = {
       AppUI.showToast(`✨ +${amount} XP: ${reason}`);
     }
 
-    // Atualiza visão de perfil em tempo real se estiver aberta
+    // atualiza perfil se a view estiver aberta
     const activeView = document.querySelector('.app-view.active-view');
     if (activeView && activeView.id === 'view-perfil' && typeof AppUI !== 'undefined' && AppUI.renderProfileView) {
       AppUI.renderProfileView();
@@ -352,9 +348,8 @@ const AuthManager = {
     localStorage.setItem('elgaly_express_current_user', JSON.stringify(this.currentUser));
   },
 
-  // ============================================================
   // SISTEMA DE CRACHÁS SALVOS — re-login rápido com PIN de 6 dígitos
-  // ============================================================
+
   getSavedBadges() {
     try {
       return JSON.parse(localStorage.getItem('elgaly_express_badges') || '[]');
@@ -395,7 +390,7 @@ const AuthManager = {
     localStorage.setItem('elgaly_express_badges', JSON.stringify(badges));
   },
 
-  // Hash simples e determinístico — conforto de UX, não segurança criptográfica
+  // hash simples — pra ux, nao segurança criptográfica
   hashPin(pin) {
     let h = 0;
     const str = 'eex_salt_2026_' + pin;
@@ -412,13 +407,13 @@ const AuthManager = {
   verifyEexPass(pin, user) {
     if (!user) return false;
     const hash = this.hashPin(pin);
-    // 1. Verifica contra o pinHash salvo no perfil do usuário
+    // tenta o pinHash do perfil
     if (user.pinHash && user.pinHash === hash) return true;
-    // 2. Fallback: verifica contra badges legados
+    // fallback: badges legados
     const badges = this.getSavedBadges();
     const badge = badges.find(b => b.uid === user.id);
     if (badge && badge.pinHash === hash) {
-      // Migra para o perfil
+      // migra o pin pro perfil
       user.pinHash = hash;
       this.saveCurrent();
       if (typeof FirebaseService !== 'undefined') {
@@ -426,7 +421,7 @@ const AuthManager = {
       }
       return true;
     }
-    // 3. Fallback para usuários antigos que não tinham PIN cadastrado ainda
+    // usuarios antigos sem pin ainda: aceita e salva
     if (!user.pinHash && badges.length === 0) {
       user.pinHash = hash;
       this.saveCurrent();
@@ -438,19 +433,19 @@ const AuthManager = {
     return false;
   },
 
-  // Retorna URL segura para uso no Firestore (nunca base64, que ultrapassa 1MB)
-  // Usa a foto do Google (googlePhotoURL) ou o caminho padrão
+  // retorna url segura pro firestore (nunca base64)
+  
   safeAvatarUrl(user) {
     if (!user) return 'images/elgalylogo.png';
-    // Preferência 1: URL do Google (pequena, começa com https://)
+    // preferencia 1: url do google
     if (user.googlePhotoURL && user.googlePhotoURL.startsWith('http')) {
       return user.googlePhotoURL;
     }
-    // Preferência 2: avatar salvo, MAS apenas se for URL (não base64)
+    // preferencia 2: avatar salvo se for url
     if (user.avatar && user.avatar.startsWith('http')) {
       return user.avatar;
     }
-    // Fallback: ícone padrão (nunca manda base64 pro Firestore)
+    // fallback: icone padrao
     return 'images/elgalylogo.png';
   },
 
@@ -463,9 +458,8 @@ const AuthManager = {
   }
 };
 
-// ==========================================================================
-// UTILITÁRIO DE COMPRESSÃO DE IMAGENS (Evita exceder limite de 1MB do Firestore)
-// ==========================================================================
+// compressão de imagens (evita exceder 1MB do firestore)
+
 function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75) {
   return new Promise((resolve) => {
     if (!file || !file.type || !file.type.startsWith('image/')) {
@@ -506,15 +500,14 @@ function compressImageFile(file, maxWidth = 300, maxHeight = 300, quality = 0.75
   });
 }
 
-// ==========================================================================
-// GERENCIADOR DE CONFORTO OCULAR / MODO NOTURNO (Livre para todos)
-// ==========================================================================
+// --- modo noturno ---
+
 const EyeComfortManager = {
   _autoTimer: null,
 
   isNightTime() {
     const h = new Date().getHours();
-    return h >= 19 || h < 7; // Noite: 19h às 07h
+    return h >= 19 || h < 7; // noite: 19h às 7h
   },
 
   isAutoEnabled() {
@@ -603,11 +596,10 @@ const EyeComfortManager = {
   }
 };
 
-// ==========================================================================
-// EEX+ — GERENCIADOR DE ASSINATURA PREMIUM (Legado / Oculto)
+// --- eex+ (legado, desativado) ---
 // Dois planos: Mensal (R$4,99) e Vitalício (R$19,99 = ~4 meses)
 // Ativação via código gerado na coleção Firestore `eex_codes`
-// ==========================================================================
+
 const EEXPlusManager = {
   _premium: null,       // cache do status premium
   _nightMode: false,    // modo noturno ativo
@@ -624,7 +616,7 @@ const EEXPlusManager = {
            email.includes('kotundashed') || email.includes('lana');
   },
 
-  // ── STATUS (EEX+ TEMPORARIAMENTE DESATIVADO PARA TODOS) ─────────────────────
+  // status: eex+ desativado temporariamente
 
   isPremium() {
     return false;
@@ -638,12 +630,12 @@ const EEXPlusManager = {
 
   getExpiresAt() { return null; },
 
-  // Retorna label bonitinho para UI
+  // label pra ui
   getPlanLabel() {
     return null;
   },
 
-  // ── CARREGAR / SALVAR STATUS ──────────────────────────────────────────────
+  // --- carregar / salvar status ---
 
   async loadStatus() {
     this._premium = null;
@@ -654,7 +646,7 @@ const EEXPlusManager = {
       localStorage.removeItem(`elgaly_eexplus_status_${uid}`);
     }
 
-    // Desativa flags EEX+ no usuário local se existirem e limpa conquista express-total
+    // limpa flags de eex+ e conquista express-total se existirem
     if (user) {
       let changed = false;
       if (user.isEexPlus) { user.isEexPlus = false; changed = true; }
@@ -682,7 +674,7 @@ const EEXPlusManager = {
         .collection('users').doc(uid)
         .collection('system').doc('eexplus').delete().catch(() => {});
     } catch (e) {
-      // ignorar
+      // ignora
     }
   },
 
@@ -702,13 +694,13 @@ const EEXPlusManager = {
     return false;
   },
 
-  // ── ATIVAÇÃO POR CÓDIGO (DESATIVADO) ───────────────────────────────────────
+  // --- ativação por código (desativado) ---
 
   async activate(rawCode) {
     return { ok: false, msg: 'O serviço EEX+ está temporariamente desativado.' };
   },
 
-  // ── LIMITE DE HÁBITOS ─────────────────────────────────────────────────────
+  // --- limite de hábitos ---
 
   HABIT_LIMIT_FREE: 12,
 
@@ -718,19 +710,19 @@ const EEXPlusManager = {
     return count < this.HABIT_LIMIT_FREE;
   },
 
-  // ── BÔNUS DE CONCHAS EEX+ (+5 por recompensa) ────────────────────────────
+  // --- bonus de conchas ---
 
   async applyShellBonus(baseAmount, sourceId, type) {
     if (!this.isPremium()) return;
-    // Bonus flat de +5 conchas, sem passar pelo anti-farm (é um bônus separado)
+    // bonus fixo de +5 conchas (separado do anti-farm)
     await ShellsManager.addShells(5, '✨ Bônus EEX+ (+5 conchas)');
   },
 
-  // ── CICLO DIA/NOITE ───────────────────────────────────────────────────────
+  // --- ciclo dia/noite ---
 
   isNightTime() {
     const h = new Date().getHours();
-    return h >= 19 || h < 7; // Noite: 19h–7h
+    return h >= 19 || h < 7; // noite: 19h às 7h
   },
 
   applyNightMode(force) {
@@ -748,23 +740,22 @@ const EEXPlusManager = {
   },
 
   startDayNightCycle() {
-    // Delegado ao EyeComfortManager
+    // delega pro EyeComfortManager
   },
 
   stopDayNightCycle() {
-    // Delegado ao EyeComfortManager
+    // delega pro EyeComfortManager
   },
 
-  // ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
+  // --- inicialização ---
 
   async init() {
     await this.loadStatus();
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE CONCHAS EEX (ShellsManager — Moeda de Recompensa EEX com Anti-Farm)
-// ==========================================================================
+// --- shells (conchas eex) ---
+
 const ShellsManager = {
 
   WEEKLY_CAP: 350,
@@ -855,26 +846,20 @@ const ShellsManager = {
     return updated;
   },
 
-  /**
-   * Sistema Anti-Farm: Proteção contra spam e exploits de conchas
-   * - Limite SEMANAL de 350 conchas (WEEKLY_CAP)
-   * - Tarefas/Eventos: 1x por item (permanente)
-   * - Hábitos: 1x por dia por hábito
-   * - Anti-spam rate-limit de 400ms
-   */
+  // anti-farm: limite semanal de 350 conchas, 1x por item, 1x por habito por dia, rate-limit de 400ms
   async rewardWithProtection(sourceId, type, amount, reason = '') {
     if (!sourceId) return 0;
     const audit = this.getAuditData();
     const today = this.getTodayKey();
     const currentWeek = this.getWeekKey();
 
-    // Reset semanal se mudou a semana (segunda-feira ou novo ciclo)
+    // reset semanal se mudou a semana
     if (audit.lastWeek !== currentWeek) {
       audit.lastWeek = currentWeek;
       audit.weekTotal = 0;
     }
 
-    // Reset diário de hábitos para evitar repetir mesmo hábito no mesmo dia
+    // reset diario de habitos completados
     if (audit.lastDate !== today) {
       audit.lastDate = today;
       audit.rewardedHabitsToday = [];
@@ -882,40 +867,40 @@ const ShellsManager = {
     if (!Array.isArray(audit.rewardedItems)) audit.rewardedItems = [];
     if (!Array.isArray(audit.rewardedHabitsToday)) audit.rewardedHabitsToday = [];
 
-    // 1. Verificação de hábito já recompensado hoje
+    // habito ja recompensado hoje?
     if (type === 'habit') {
       if (audit.rewardedHabitsToday.includes(sourceId)) {
         AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Hábito já recompensado hoje! Volte amanhã para mais conchas! ✨');
         return 0;
       }
     } else {
-      // 2. Verificação de tarefa ou evento já recompensado
+      // tarefa/evento ja recompensado?
       if (audit.rewardedItems.includes(sourceId)) {
         AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Essa entrega já foi recompensada! Sem trapaça com a C.E.O.! 😼📦');
         return 0;
       }
     }
 
-    // 3. Verificação de limite SEMANAL de conchas (350/semana)
+    // atingiu o teto semanal?
     if (audit.weekTotal >= this.WEEKLY_CAP) {
       AppUI.showToast('<img src="images/shellcoin.png" class="shell-coin-inline" alt="Conchas"> Limite semanal de conchas atingido (350/semana)! Descanse suas patinhas, agente! 🐾');
       return 0;
     }
 
-    // 4. Rate-limit rápido (anti-autoclicker: 400ms)
+    // rate-limit: 400ms entre recompensas
     const now = Date.now();
     if (audit.lastRewardTimestamp && (now - audit.lastRewardTimestamp < 400)) {
       return 0;
     }
 
-    // Ajusta valor caso atinja o teto semanal
+    // ajusta o valor se estourar o teto
     let finalAmount = amount;
     if (audit.weekTotal + finalAmount > this.WEEKLY_CAP) {
       finalAmount = this.WEEKLY_CAP - audit.weekTotal;
     }
     if (finalAmount <= 0) return 0;
 
-    // Registra a recompensa na auditoria
+    // registra na auditoria
     audit.weekTotal += finalAmount;
     audit.lastRewardTimestamp = now;
 
@@ -980,7 +965,7 @@ const ShellsManager = {
     if (lojaCountEl) {
       lojaCountEl.textContent = balanceStr;
     }
-    // Mobile header shells pill
+    // conchas no header mobile
     const mobileCountEl = document.getElementById('mobileShellsCount');
     if (mobileCountEl) {
       mobileCountEl.textContent = balanceStr;
@@ -998,9 +983,8 @@ const ShellsManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE TAREFAS / ENCOMENDAS (TaskManager)
-// ==========================================================================
+// --- tarefas ---
+
 const TaskManager = {
   tasks: [],
 
@@ -1137,9 +1121,8 @@ const TaskManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE ROTINA DIÁRIA (HabitManager)
-// ==========================================================================
+// --- rotina diária ---
+
 const HabitManager = {
   habits: [],
   history: {},
@@ -1251,7 +1234,7 @@ const HabitManager = {
       }
     }
 
-    // SINCRONIZAÇÃO EM TEMPO REAL COM AMIGOS:
+    // sincroniza perfil publico com amigos
     if (typeof FriendsManager !== 'undefined' && FriendsManager.syncMyPublicProfile) {
       try {
         FriendsManager.syncMyPublicProfile();
@@ -1332,11 +1315,11 @@ const HabitManager = {
 
   async resetHabitStreak(id) {
     const todayKey = this.getTodayKey();
-    // Remove de hoje
+    // remove de hoje
     if (this.history[todayKey]) {
       this.history[todayKey] = this.history[todayKey].filter(hId => hId !== id);
     }
-    // Zera o streak removendo o histórico deste hábito completamente
+    // zera o streak removendo o historico do habito
     Object.keys(this.history).forEach(k => {
       this.history[k] = this.history[k].filter(hId => hId !== id);
     });
@@ -1363,7 +1346,7 @@ const HabitManager = {
       pastDate.setDate(today.getDate() - i);
       const dow = pastDate.getDay();
 
-      // Se não era dia previsto para esse hábito (ex: fim de semana sem faculdade), não quebra o streak
+      // dia nao previsto (ex: fim de semana) — nao quebra o streak
       if (!scheduledDays.includes(dow)) {
         continue;
       }
@@ -1373,7 +1356,7 @@ const HabitManager = {
       if (list.includes(habitId)) {
         streak++;
       } else {
-        break; // Dia previsto que não foi cumprido: encerra o streak
+        break; // dia previsto mas nao cumprido — encerra o streak
       }
     }
     return streak;
@@ -1397,12 +1380,10 @@ const HabitManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE WIDGET (EEX Widget: Agente Midnight & Agente Brave)
-// ==========================================================================
-// ==========================================================================
-// GERENCIADOR DE CARGA MISTERIOSA DA C.E.O. PROVIDENTE
-// ==========================================================================
+// --- widget ---
+
+// --- carga misteriosa ---
+
 const CargaMisteriosaManager = {
   frasesProvidente: [
     { autor: 'C.E.O. Providente', texto: 'Aprovado com louvor! O frete dimensional hoje voará sob vento favorável! ✨' },
@@ -1722,9 +1703,8 @@ const WidgetManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE REGISTROS DIÁRIOS (Memórias com Fotos e Adesivos EEX)
-// ==========================================================================
+// --- módulo ---
+
 const MemoriesManager = {
   memories: [],
 
@@ -1816,9 +1796,8 @@ const MemoriesManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DO EEX-FRIENDS (Rede de Amigos & Entregas Coletivas)
-// ==========================================================================
+// --- módulo ---
+
 const FriendsManager = {
   friends: [],
   pendingRequests: [],
@@ -2109,7 +2088,6 @@ const FriendsManager = {
       });
     });
 
-
     grid.querySelectorAll('.btn-del-friend').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -2178,9 +2156,8 @@ const FriendsManager = {
     });
   },
 
-  // ==========================================================
   // PASSAPORTE DO PARCEIRO (VER ROTINA E FOTOS DO AMIGO)
-  // ==========================================================
+
   async openFriendProfile(uid, fallbackData = null) {
     try {
       let friend = this.friends.find(f => f.uid === uid);
@@ -2431,9 +2408,8 @@ const FriendsManager = {
     }
   },
 
-  // ==========================================================
   // ENVIAR ENCOMENDA EXPRESS
-  // ==========================================================
+
   openSendPackageModal(friend) {
     this.activeFriendForPackage = friend;
     const modal = document.getElementById('modalSendPackage');
@@ -2450,9 +2426,8 @@ const FriendsManager = {
     modal.classList.add('active');
   },
 
-  // ==========================================================
   // RECEBIMENTO DE ENCOMENDA EXPRESS (UNBOXING)
-  // ==========================================================
+
   onPackageReceived(pkg) {
     const modal = document.getElementById('modalOpenPackage');
     if (!modal) return;
@@ -2522,10 +2497,8 @@ const FriendsManager = {
     }
   },
 
-
-  // ==========================================================
   // SOS & RÁDIO COMUNICADOR
-  // ==========================================================
+
   toggleSos() {
     this.sosActive = !this.sosActive;
     if (this.sosActive) {
@@ -2550,10 +2523,9 @@ const FriendsManager = {
   }
 };
 
-// ==========================================================================
 // GAZETA DA PROVIDÊNCIA & ATUALIZAÇÕES DA C.E.O. (ProvidenteNewsManager)
 // Boletim oficial em formato de jornal e carta selada por Providente
-// ==========================================================================
+
 const ProvidenteNewsManager = {
   currentEditionIndex: 0,
   latestVersion: 'v3.2',
@@ -2979,15 +2951,14 @@ const ProvidenteNewsManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE TEMAS DA FROTA (ThemeManager)
+// --- temas ---
 // 1. Rosa Express (Clássico Chiclete - Grátis)
 // 2. Roxo NuMetálico (65 Conchas)
 // 3. Verde Magáfico (255 Conchas - Grátis para pedrinho.express.com)
 // 4. Vermelho Culposo (95 Conchas - Vermelho Pastel & Bege Clarinho)
 // 5. Azul Arcânico (EEX+)
 // 6. Ouro Providêntico (EEX+)
-// ==========================================================================
+
 const ThemeManager = {
   current: 'rosa-express',
 
@@ -3365,9 +3336,8 @@ const ThemeManager = {
   }
 };
 
-// ==========================================================================
 // CATÁLOGO DE FITAS HOLOGRÁFICAS DE CRACHÁ (20 Combinações - Loja EEX)
-// ==========================================================================
+
 const HologramStripsCatalog = [
   { id: 'strip-padrao', name: 'Rosa com Roxo', tagline: 'Padrão Oficial EEX', desc: 'A clássica faixa chiclete e roxo retrô oficial do Elgaly Express. Padrão de fábrica para todos os agentes.', price: 0, className: 'holo-strip-padrao', text: '• ELGALY EXPRESS •', colors: ['#ec4899', '#8b5cf6'] },
   { id: 'strip-neon-cyber', name: 'Neon Cyber', tagline: 'Ciano & Magenta Laser', desc: 'Reflexo futurista das avenidas iluminadas à noite no centro de Nova Amerit.', price: 75, className: 'holo-strip-neon-cyber', text: '• NEON CYBER •', colors: ['#06b6d4', '#ec4899'] },
@@ -3391,9 +3361,8 @@ const HologramStripsCatalog = [
   { id: 'strip-olho-supremo', name: 'O Olho Supremo', tagline: 'Púrpura Celestial & Ouro Divino', desc: 'A consagração máxima da Providente. Apenas a nata da Frota EEX tem acesso.', price: 350, className: 'holo-strip-olho-supremo', text: '• PROVIDENTE SUPREMO •', colors: ['#ffd700', '#581c87'] }
 ];
 
-// ==========================================================================
 // HUMORES OPERACIONAIS DO AGENTE (Status do Crachá EEX)
-// ==========================================================================
+
 const EEX_MOODS = {
   foco: { emoji: '⚡', label: 'Modo Hiperfoco', color: '#eab308' },
   cafe: { emoji: '☕', label: 'Movido a Cafeína', color: '#f97316' },
@@ -3404,10 +3373,9 @@ const EEX_MOODS = {
   game: { emoji: '🎮', label: 'Pausa pro Game', color: '#3b82f6' }
 };
 
-// ==========================================================================
-// GERENCIADOR DA LOJA EEX (LojaEEXManager — Bazar do Correio)
+// --- módulo ---
 // Menu popup, categorias verticais à esquerda, compra de itens com conchas
-// ==========================================================================
+
 const LojaEEXManager = {
   currentCategory: 'temas',
 
@@ -3780,10 +3748,9 @@ const LojaEEXManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE EVENTOS & LEMBRETES (EventManager)
+// --- eventos ---
 // Provas da faculdade, aniversários, reuniões e compromissos com data fixa
-// ==========================================================================
+
 const EventManager = {
   events: [],
 
@@ -3874,9 +3841,8 @@ const EventManager = {
   }
 };
 
-// ==========================================================================
 // UTILITÁRIO DE AUTOCOMPLETE DE CIDADES DE SÃO PAULO (645 Municípios)
-// ==========================================================================
+
 function setupCityAutocomplete(inputEl, suggestionsEl) {
   if (!inputEl || !suggestionsEl) return;
   const cities = window.SP_CITIES || ['São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP'];
@@ -3927,9 +3893,8 @@ function isValidSpCity(cityName) {
   return cities.some(c => normalize(c) === target || normalize(c.replace(/ - SP/i, '')) === target);
 }
 
-// ==========================================================================
-// GERENCIADOR DE CLIMA EM TEMPO REAL (Open-Meteo)
-// ==========================================================================
+// --- módulo ---
+
 const WeatherManager = {
   _cache: null,
   _lastFetchTime: 0,
@@ -4049,9 +4014,8 @@ const WeatherManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DO BLOQUINHO DE NOTAS EEX (Notas, Ideias & Lembretes)
-// ==========================================================================
+// --- módulo ---
+
 const NotesManager = {
   notes: [],
 
@@ -4330,10 +4294,9 @@ const NotesManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE NOTIFICAÇÕES LOCAIS (Capacitor Native + Web)
+// --- módulo ---
 // Notificações de 3 em 3 horas para hábitos pendentes, prazos e eventos
-// ==========================================================================
+
 const NotificationManager = {
   _plugin: null,
   _ready: false,
@@ -4408,10 +4371,9 @@ const NotificationManager = {
       const now = new Date();
       let notifId = 1000;
 
-      // -------------------------------------------------------------
       // 1. ROTINA DIÁRIA (HÁBITOS PENDENTES) - De 3 em 3 horas
       // Horários: 08:00, 11:00, 14:00, 17:00, 20:00
-      // -------------------------------------------------------------
+
       const habits = (typeof HabitManager !== 'undefined' && HabitManager.habits) ? HabitManager.habits : [];
       const routineHours = [8, 11, 14, 17, 20];
       const dayMap = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sab' };
@@ -4428,7 +4390,6 @@ const NotificationManager = {
         const targetDate = new Date(now);
         targetDate.setDate(targetDate.getDate() + dayOffset);
         const dayOfWeek = targetDate.getDay();
-
 
         const scheduledHabits = habits.filter(h => {
           if (!h.days || h.days.length === 0) return true;
@@ -4461,12 +4422,11 @@ const NotificationManager = {
         }
       }
 
-      // -------------------------------------------------------------
       // 2. ENCOMENDAS & TAREFAS COM PRAZO
       // - 3 dias antes (09:00)
       // - 1 dia antes (09:00)
       // - No dia da entrega (09:00)
-      // -------------------------------------------------------------
+
       const tasks = (typeof TaskManager !== 'undefined' && TaskManager.tasks) ? TaskManager.tasks : [];
       for (const task of tasks) {
         if (task.completed || !task.dueDate) continue;
@@ -4518,12 +4478,11 @@ const NotificationManager = {
         }
       }
 
-      // -------------------------------------------------------------
       // 3. EVENTOS & LEMBRETES
       // - 1 dia antes (09:00)
       // - 1 hora antes do horário
       // - No momento do evento
-      // -------------------------------------------------------------
+
       const events = (typeof EventManager !== 'undefined' && EventManager.events) ? EventManager.events : [];
       for (const ev of events) {
         if (ev.done || !ev.date) continue;
@@ -4617,9 +4576,8 @@ const NotificationManager = {
   }
 };
 
-// ==========================================================================
 // IMPRESSORA TÉRMICA — MANIFESTO DE CARGA DIÁRIO EEX
-// ==========================================================================
+
 const ImpressoraManager = {
   _audioCtx: null,
   _printing: false,
@@ -4921,10 +4879,9 @@ const ImpressoraManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE PWA & NOTIFICAÇÕES (PWAManager)
+// --- pwa e notificações ---
 // Instalação na tela inicial do celular/PC e alertas operacionais
-// ==========================================================================
+
 const PWAManager = {
   deferredPrompt: null,
 
@@ -5052,11 +5009,9 @@ const PWAManager = {
   }
 };
 
-
-// ==========================================================================
 // RELÓGIO POMODORO EEX+ (PomodoroManager)
 // Fases: Foco 25min → Pausa Curta 5min → (a cada 4 ciclos: Pausa Longa 15min)
-// ==========================================================================
+
 const PomodoroManager = {
   PHASES: [
     { id: 'focus',       label: 'Foco',        duration: 25 * 60, icon: '🍅' },
@@ -5121,7 +5076,7 @@ const PomodoroManager = {
     // Notificação (Capacitor nativo ou browser)
     this._notify(phase);
 
-    // Bônus de conchas ao completar foco (liberado para todos os usuários!)
+    // bonus de conchas ao terminar o foco
     if (phase.id === 'focus') {
       this._cycleCount++;
       if (typeof ShellsManager !== 'undefined') {
@@ -5230,10 +5185,9 @@ const PomodoroManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE SONS CALMOS DE DIGITAÇÃO (TypingSoundManager - Web Audio API)
+// --- sons de digitação ---
 // Produz cliques suaves, mecânicos e relaxantes ao digitar em qualquer input
-// ==========================================================================
+
 const TypingSoundManager = {
   _ctx: null,
   _enabled: true,
@@ -5316,10 +5270,9 @@ const TypingSoundManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DA VITROLA EXPRESS - TOCA-DISCOS RETRÔ & YOUTUBE MUSIC FROTA EEX
+// --- vitrola express ---
 // Suporta Músicas, Playlists, Vídeos, Shorts (YouTube / YT Music) + Modo DVD
-// ==========================================================================
+
 const VitrolaManager = {
   isDvdMode: false,
   dvdAnimId: null,
@@ -5857,10 +5810,9 @@ const VitrolaManager = {
   }
 };
 
-// ==========================================================================
-// GERENCIADOR TUDUM IA - ASSISTENTE INTELIGENTE DE DESPACHO EEX
+// --- tudum ia ---
 // Alimentado pela API Gemini (Google Generative AI)
-// ==========================================================================
+
 const TudumManager = {
   // Chave padrão da Tudum montada via runtime (protegida contra scanners estáticos do GitHub)
   defaultApiKey: ['AQ.', 'Ab8RN6I5fDB5AJqoNiTPy00', '--AZ2QgFBYmZNNT9DA21ZCVQ9BA'].join(''),
@@ -6079,7 +6031,7 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   },
 
   init() {
-    // Personalidade padrão oficial da Tudum para todos os agentes
+    // personalidade padrão da tudum
     localStorage.removeItem('elgaly_tudum_personality');
     this.loadHistory();
     this.renderHistory();
@@ -6634,10 +6586,9 @@ data de hoje: ${new Date().toISOString().split('T')[0]}.`,
   }
 };
 
-// ==========================================================================
-// GERENCIADOR DE TELEMETRIA DINÂMICA DO TERMINAL (TerminalTelemetryManager)
+// --- telemetria do terminal ---
 // Alterna cíclicamente: Informação > Horário Atual > Informação > Horário Atual...
-// ==========================================================================
+
 const TerminalTelemetryManager = {
   _step: 0,
   _intervalId: null,
@@ -6789,10 +6740,9 @@ const TerminalTelemetryManager = {
   }
 };
 
-// ==========================================================================
 // CONTROLADOR DE UI & INTERAÇÃO (AppUI)
 // Com Portão de Autenticação Obrigatório, Edição de Perfil e Upload de Fotos
-// ==========================================================================
+
 const AppUI = {
 
   currentTab: 'inicio',
@@ -7010,7 +6960,7 @@ const AppUI = {
       splash.classList.add('hidden');
       this._splashDone = true;
 
-      // Agora sim o sistema e a saudação da Providente / VIP aparecem
+      // mostra saudação e sistema
       const user = AuthManager.getCurrentUser();
       if (user) {
         this.triggerMagafusLoginGreeting(user);
@@ -7351,7 +7301,7 @@ const AppUI = {
         });
       }
 
-      // Autocomplete de cidades de SP (Todos os 645 municípios)
+      // autocomplete de cidades de SP (645 municípios)
       const onbLocation = document.getElementById('onbLocation');
       const citySugg = document.getElementById('citySuggestions');
       setupCityAutocomplete(onbLocation, citySugg);
@@ -7636,7 +7586,6 @@ const AppUI = {
       }
     });
 
-
     if (modalTaskClose && modalTask) {
       modalTaskClose.addEventListener('click', () => {
         modalTask.classList.remove('active');
@@ -7865,7 +7814,7 @@ const AppUI = {
       });
     });
 
-    // ---- RELÓGIO POMODORO (LIBERADO PARA TODOS) ----
+    // --- pomodoro ---
     const modalPomodoro = document.getElementById('modalPomodoro');
     const openPomodoro = () => {
       if (modalPomodoro) {
@@ -8113,7 +8062,7 @@ const AppUI = {
       });
     }
 
-    // ---- CONFORTO OCULAR / MODO NOTURNO (LIVRE PARA TODOS) ----
+    // --- conforto ocular ---
     const btnToggleNightMode = document.getElementById('btnToggleNightMode');
     const chkAutoNightMode = document.getElementById('chkAutoNightMode');
 
@@ -8167,7 +8116,6 @@ const AppUI = {
         this.showToast(`📊 Relatório gerado para os últimos ${days} dias!`);
       });
     }
-
 
     // 14. Configurações: Atualizar PIN
     const formChangePin = document.getElementById('formChangePin');
@@ -8364,7 +8312,7 @@ const AppUI = {
         const caption = (document.getElementById('momentCaptionInput').value || '').trim();
         const habitTitle = this._currentMomentHabit ? this._currentMomentHabit.title : 'Rotina Concluída';
 
-        // Renderiza no Canvas para embutir todos os adesivos na imagem
+        // renderiza no canvas com os adesivos embutidos
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const baseImg = new Image();
@@ -8842,7 +8790,6 @@ const AppUI = {
       });
     }
 
-
     // 27. EEX-Friends: Envio de Encomenda Express
     const formSendPackage = document.getElementById('formSendPackage');
     const modalSendPackage = document.getElementById('modalSendPackage');
@@ -8966,7 +8913,6 @@ const AppUI = {
       });
     }
 
-
     const btnUpdateDismiss = document.getElementById('btnUpdateDismiss');
     if (btnUpdateDismiss) {
       btnUpdateDismiss.addEventListener('click', () => {
@@ -9051,9 +8997,8 @@ const AppUI = {
       });
     }
 
-    // ========================================================================
     // TUDUM IA - EVENT BINDINGS
-    // ========================================================================
+
     const btnNavTudum = document.getElementById('btnNavTudum');
     if (btnNavTudum) {
       btnNavTudum.addEventListener('click', (e) => {
@@ -9155,9 +9100,8 @@ const AppUI = {
       });
     }
 
-    // ========================================================================
     // LANDING PAGE & LOGIN MODAL CONTROLS
-    // ========================================================================
+
     document.querySelectorAll('.action-open-login').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -9184,9 +9128,8 @@ const AppUI = {
       });
     }
 
-    // ========================================================================
     // MODAL "SOBRE O EEX" (@un.dashed & FATEC Itapetininga)
-    // ========================================================================
+
     const modalAbout = document.getElementById('modalAboutEex');
     document.querySelectorAll('.action-open-about').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -9219,9 +9162,8 @@ const AppUI = {
 
     this.initLandingAnimations();
 
-    // ==========================================================================
-    // SISTEMA DE SEGURANÇA E BLINDAGEM DE CONTEÚDO (MOBILE & IMAGENS)
-    // ==========================================================================
+    // --- segurança e blindagem ---
+
     // 1. Blindagem de Menu de Contexto (Impede clique direito / long-press em imagens para abrir em outra guia)
     document.addEventListener('contextmenu', (e) => {
       const isImg = e.target && (e.target.tagName === 'IMG' || e.target.closest('img'));
@@ -9374,7 +9316,6 @@ const AppUI = {
     NotificationManager.scheduleAll();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
 
-
     const user = AuthManager.getCurrentUser();
     if (user) {
       this.updateWorkModeUI(!!user.workMode);
@@ -9395,7 +9336,6 @@ const AppUI = {
 
     this.hideSplash();
   },
-
 
   /**
    * Exibe o modal de solicitação do EEX-PASS após o login com Google
@@ -9980,7 +9920,7 @@ const AppUI = {
     const isPrem = typeof EEXPlusManager !== 'undefined' && EEXPlusManager.isPremium();
     const planLabel = isPrem ? EEXPlusManager.getPlanLabel() : null;
 
-    // Botão Pomodoro na Navbar, no Drawer e na Barra Inferior Mobile (Livre para todos)
+    // pomodoro na navbar, drawer e barra mobile
     const btnNavPomodoro = document.getElementById('btnNavPomodoro');
     const btnDrawerPomodoro = document.getElementById('btnDrawerPomodoro');
     const btnBottomPomodoro = document.getElementById('btnBottomPomodoro');
@@ -10071,12 +10011,11 @@ const AppUI = {
       containerModalEexPlusTestMode.style.setProperty('display', isKotun ? 'block' : 'none', 'important');
     }
 
-    // Conforto Ocular (Livre para todos)
+    // conforto ocular
     if (typeof EyeComfortManager !== 'undefined') {
       EyeComfortManager.updateUI();
     }
   },
-
 
   renderTasks() {
     const container = document.getElementById('tasksGrid');
@@ -10309,7 +10248,7 @@ const AppUI = {
     // Cálculo consolidado de XP
     const totalXp = bonusXp + (completedTasks * 25) + (streak * 20) + (friendsCount * 30) + (memories.length * 10);
 
-    // Sistema de 100 Níveis (1 a 100)
+    // sistema de 100 niveis (1 a 100)
     const level = Math.min(100, Math.max(1, Math.floor(totalXp / 100) + 1));
 
     // 10 Tiers a cada 10 patentes até o Nível 100 (O Olho de Providente)

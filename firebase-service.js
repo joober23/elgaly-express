@@ -1,9 +1,6 @@
-/**
- * ELGALY EXPRESS - SERVIÇO DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
- * Gerencia Login com Google, Perfis Customizados e Banco de Dados Cloud Firestore em tempo real.
- */
+// firebase-service.js — login com google, perfil e sincronização em tempo real com firestore
 
-// Configuração oficial do projeto Firebase
+// config oficial do projeto firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCqiHc-EI3HKK557PXiVHoiqbZ6hPFGMws",
   authDomain: "elgaly-express-230108.firebaseapp.com",
@@ -24,9 +21,7 @@ const FirebaseService = {
   unsubscribeEvents: null,
   unsubscribeTudumUsage: null,
 
-  // VAPID Key publica do Firebase Console:
-  // Firebase Console → Projeto → Cloud Messaging → Web Push certificates → Gerar par de chaves
-  // Cole a chave publica aqui:
+  // VAPID key publica — firebase console > cloud messaging > web push certificates
   VAPID_KEY: 'BKzC1OgoCC1Vths73Ne40SVrWRTjGlOZVi0E-fSWYL1mndbITK-QdSM0mXkxkAmJRmBh8lC_BHuAfIYPLP9mahY',
 
 
@@ -43,7 +38,7 @@ const FirebaseService = {
       this.auth = firebase.auth();
       this.db = firebase.firestore();
 
-      // Habilitar persistência offline do Firestore
+      // persistência offline — sincroniza entre abas
       this.db.enablePersistence({ synchronizeTabs: true }).catch(err => {
         if (err.code === 'failed-precondition') {
           console.warn('Persistência offline desativada: múltiplas abas abertas.');
@@ -54,7 +49,7 @@ const FirebaseService = {
 
       this.isInitialized = true;
       
-      // Processa retorno de autenticação via redirecionamento
+      // pega o resultado do redirect de auth se tiver
       this.auth.getRedirectResult().then(result => {
         if (result && result.user) {
           console.log('✅ Autenticação por redirecionamento concluída:', result.user.email);
@@ -67,7 +62,7 @@ const FirebaseService = {
 
       this.setupAuthStateListener();
 
-      // Inicializa GoogleAuth nativo caso esteja rodando como app Capacitor
+      // inicializa GoogleAuth nativo se estiver rodando como apk capacitor
       if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
         try {
           window.Capacitor.Plugins.GoogleAuth.initialize({
@@ -87,10 +82,7 @@ const FirebaseService = {
     }
   },
 
-  /**
-   * Inicializa o Firebase Cloud Messaging (FCM) para notificacoes push
-   * Solicita permissao, obtem o token e salva no Firestore
-   */
+  // inicializa FCM — pede permissão, pega o token e salva no firestore
   async initFCM() {
     if (typeof firebase === 'undefined' || !firebase.messaging) {
       console.log('FCM: SDK de messaging nao disponivel.');
@@ -122,7 +114,7 @@ const FirebaseService = {
           const newToken = await this.messaging.getToken({ vapidKey: this.VAPID_KEY, serviceWorkerRegistration: swReg });
           if (newToken) await this.saveFcmToken(newToken);
         });
-        // Mensagens em foreground — exibe como toast
+        // mensagens em foreground — mostra como toast
         this.messaging.onMessage((payload) => {
           const title = (payload.notification && payload.notification.title) ? payload.notification.title : 'Elgaly Express';
           const body  = (payload.notification && payload.notification.body)  ? payload.notification.body  : '';
@@ -140,9 +132,7 @@ const FirebaseService = {
     }
   },
 
-  /**
-   * Salva o token FCM no documento do usuario no Firestore
-   */
+  // salva o token FCM no doc do usuario no firestore
   async saveFcmToken(token) {
     if (!this.auth || !this.auth.currentUser || !this.db) return;
     try {
@@ -155,9 +145,7 @@ const FirebaseService = {
     }
   },
 
-  /**
-   * Monitora estado de login do Firebase
-   */
+  // escuta mudanças no estado de login do firebase
   setupAuthStateListener() {
 
     this.auth.onAuthStateChanged(async (firebaseUser) => {
@@ -185,7 +173,7 @@ const FirebaseService = {
           joinedAt: realCreation
         };
 
-        // Verifica se o usuário já possui perfil customizado salvo no Firestore
+        // verifica se o usuario já tem perfil salvo na nuvem
         try {
           const profileDoc = await this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').get();
           if (profileDoc.exists) {
@@ -222,7 +210,7 @@ const FirebaseService = {
               }, { merge: true }).catch(() => {});
             }
 
-// Temas sincronizados logo abaixo após AuthManager.saveCurrent()
+// temas sincronizados logo abaixo após AuthManager.saveCurrent()
           } else {
             this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
           }
@@ -230,7 +218,7 @@ const FirebaseService = {
           console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');
         }
 
-        // Sanitiza localização antiga/fictícia para São Paulo - SP
+        // sanitiza localizacao antiga/ficticia pra sao paulo
         if (!userData.location || (typeof isValidSpCity === 'function' && !isValidSpCity(userData.location)) || /nova amerit|nova arcanis|elgaly edge/i.test(userData.location || '')) {
           userData.location = 'São Paulo - SP';
         }
@@ -238,7 +226,7 @@ const FirebaseService = {
         AuthManager.currentUser = userData;
         AuthManager.saveCurrent();
 
-        // Sincroniza temas adquiridos e preferência após ter AuthManager.currentUser preenchido
+        // sincroniza temas comprados e preferência depois de ter o AuthManager.currentUser preenchido
         try {
           if (cloudProfileData && cloudProfileData.purchasedThemes && typeof ThemeManager !== 'undefined') {
             ThemeManager.syncPurchasedThemes(cloudProfileData.purchasedThemes);
@@ -253,21 +241,21 @@ const FirebaseService = {
           console.warn('Erro ao sincronizar temas da nuvem:', e);
         }
 
-        // Primeiro acesso: onboarding obrigatório
+        // primeiro acesso — abre o onboarding
         if (!userData.onboardingDone) {
-          // Preenche o preview do avatar com a foto do Google
+          // preenche o preview do avatar com a foto do google
           const onbPreview = document.getElementById('onbAvatarPreview');
           if (onbPreview && userData.avatar) onbPreview.src = userData.avatar;
-          // Oculta o auth gateway e exibe o modal de onboarding
+          // esconde o gateway e mostra o onboarding
           const gw = document.getElementById('authGateway');
           if (gw) gw.style.display = 'none';
           document.getElementById('appViewsContainer').style.display = 'none';
           document.getElementById('modalOnboarding').classList.add('active');
-          return; // Não inicializa o app ainda
+          return; // nao inicializa o app ainda
         }
 
-        // Onboarding já feito — verifica se o EEX-PASS já foi validado nesta sessão
-        // Garante que o crachá público esteja sincronizado no Firestore
+        // onboarding feito — verifica se o eex-pass ja foi validado nessa sessão
+        // sincroniza o crachá público no firestore
         this.updatePublicProfile(userData).catch(() => {});
 
         const sessionVerified = sessionStorage.getItem('elgaly_eex_pass_verified_' + userData.uid) === 'true';
@@ -278,11 +266,11 @@ const FirebaseService = {
           AppUI.renderAll();
           AppUI.showToast(`☁️ Bem-vindo de volta, ${userData.name}!`);
 
-          // Inicializa FCM para notificacoes push
+          // inicializa FCM com um delay pra nao travar o startup
           setTimeout(() => this.initFCM(), 2000);
 
         } else {
-          // Exige validação do EEX-PASS antes de liberar o despacho
+          // pede o eex-pass antes de liberar o app
           AuthManager.isEexPassVerified = false;
           const gw = document.getElementById('authGateway');
           if (gw) gw.style.display = 'none';
@@ -293,7 +281,7 @@ const FirebaseService = {
           }
         }
       } else {
-        // Usuário deslogado do Firebase
+        // usuario deslogou do firebase
         this.stopRealtimeSync();
         if (AuthManager.currentUser) {
           sessionStorage.removeItem('elgaly_eex_pass_verified_' + AuthManager.currentUser.id);
@@ -306,9 +294,7 @@ const FirebaseService = {
     });
   },
 
-  /**
-   * Realiza login com a Conta Google (Nativo no Android/APK e Pop-up no Navegador/PWA)
-   */
+  // login com google — nativo no android/apk, popup no navegador/pwa
   async loginWithGoogle() {
     if (!this.isInitialized) {
       alert('Firebase ainda não inicializado. Verifique sua conexão com a internet.');
@@ -320,7 +306,7 @@ const FirebaseService = {
       window.Capacitor.isNativePlatform &&
       window.Capacitor.isNativePlatform();
 
-    // 1. SE ESTIVER NO APLICATIVO NATIVO (APK ANDROID): Login nativo direto com Google Play Services
+    // no apk android: usa google play services direto
     if (isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
       try {
         console.log('📱 Iniciando login nativo com Google Play Services...');
@@ -338,7 +324,7 @@ const FirebaseService = {
       } catch (nativeErr) {
         console.error('Erro no login nativo do Google:', nativeErr);
         if (nativeErr && (nativeErr.error === '12501' || (typeof nativeErr === 'string' && nativeErr.includes('12501')) || nativeErr.message?.includes('12501') || nativeErr.message?.includes('canceled') || nativeErr.message?.includes('cancelled'))) {
-          // Usuário fechou ou cancelou o diálogo de seleção de conta
+          // usuario cancelou o dialogo de conta
           return;
         }
         alert('Erro no login nativo do Google: ' + (nativeErr.message || JSON.stringify(nativeErr)));
@@ -346,7 +332,7 @@ const FirebaseService = {
       }
     }
 
-    // 2. SE ESTIVER NO NAVEGADOR / PWA: Login via Pop-up Web
+    // no navegador/pwa: popup web
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
@@ -385,9 +371,7 @@ const FirebaseService = {
 
 
 
-  /**
-   * Realiza logout
-   */
+  // logout
   async logout() {
     this.stopRealtimeSync();
     if (this.auth && this.auth.currentUser) {
@@ -400,16 +384,15 @@ const FirebaseService = {
     }
   },
 
-  /**
-   * Sincronização em tempo real com o Cloud Firestore
-   */
+  // --- sincronização em tempo real com o firestore ---
+
   startRealtimeSync(uid) {
     if (!this.db) return;
     this.stopRealtimeSync();
 
     const userDoc = this.db.collection('users').doc(uid);
 
-    // 1. Escuta tarefas em tempo real (qualquer mudança no PC reflete no celular!)
+    // 1. tarefas — qualquer mudança no pc reflete no celular
     this.unsubscribeTasks = userDoc.collection('tasks').onSnapshot(snapshot => {
       const cloudTasks = [];
       snapshot.forEach(doc => {
@@ -426,7 +409,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar tarefas do Firestore:', err);
     });
 
-    // 2. Escuta hábitos em tempo real
+    // 2. habitos
     this.unsubscribeHabits = userDoc.collection('habits').onSnapshot(snapshot => {
       const cloudHabits = [];
       snapshot.forEach(doc => {
@@ -441,7 +424,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar hábitos do Firestore:', err);
     });
 
-    // 3. Escuta histórico de hábitos
+    // 3. historico de habitos
     this.unsubscribeHistory = userDoc.collection('system').doc('habit_history').onSnapshot(doc => {
       if (doc.exists) {
         HabitManager.history = doc.data() || {};
@@ -454,7 +437,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar histórico do Firestore:', err);
     });
 
-    // 4. Escuta eventos e lembretes em tempo real
+    // 4. eventos e lembretes
     this.unsubscribeEvents = userDoc.collection('events').onSnapshot(snapshot => {
       const cloudEvents = [];
       snapshot.forEach(doc => {
@@ -471,7 +454,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar eventos do Firestore:', err);
     });
 
-    // 5. Escuta memórias e fotos com adesivos em tempo real
+    // 5. memorias e fotos com adesivos
     this.unsubscribeMemories = userDoc.collection('memories').onSnapshot(snapshot => {
       const cloudMemories = [];
       snapshot.forEach(doc => {
@@ -487,7 +470,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar memórias do Firestore:', err);
     });
 
-    // 6. Escuta lista de amigos em tempo real
+    // 6. lista de amigos
     this.unsubscribeFriends = userDoc.collection('friends').onSnapshot(async snapshot => {
       const friendIds = [];
       snapshot.forEach(doc => friendIds.push(doc.id));
@@ -498,7 +481,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar amigos do Firestore:', err);
     });
 
-    // 7. Escuta pedidos de amizade pendentes recebidos
+    // 7. pedidos de amizade pendentes recebidos
     this.unsubscribeRequests = this.db.collection('friend_requests')
       .where('toUid', '==', uid)
       .where('status', '==', 'pending')
@@ -512,7 +495,7 @@ const FirebaseService = {
         console.warn('Erro ao escutar pedidos de amizade:', err);
       });
 
-    // 8. Escuta cutucadas / pokes recebidos
+    // 8. pokes recebidos
     this.unsubscribePokes = userDoc.collection('pokes')
       .orderBy('timestamp', 'desc')
       .limit(5)
@@ -521,7 +504,7 @@ const FirebaseService = {
           if (change.type === 'added') {
             const poke = change.doc.data();
             const ageMs = Date.now() - (poke.timestamp || 0);
-            if (ageMs < 120000 && typeof AppUI !== 'undefined') { // Recebido nos últimos 2 minutos
+            if (ageMs < 120000 && typeof AppUI !== 'undefined') { // recebido nos ultimos 2 minutos
               AppUI.showToast(`⚡ Agente ${poke.fromName} (@${poke.fromNick}) buzinou e te deu um Boost de +15 XP! 📢`);
               if (typeof AuthManager !== 'undefined' && AuthManager.addXp) {
                 AuthManager.addXp(15, `Boost de parceiro recebido de ${poke.fromName}! ⚡`);
@@ -533,7 +516,7 @@ const FirebaseService = {
         console.warn('Erro ao escutar pokes:', err);
       });
 
-    // 9. Escuta encomendas / cartinhas express recebidas
+    // 9. encomendas recebidas (nao abertas)
     this.unsubscribePackages = userDoc.collection('packages')
       .where('opened', '==', false)
       .onSnapshot(snapshot => {
@@ -549,7 +532,7 @@ const FirebaseService = {
         console.warn('Erro ao escutar encomendas recebidas:', err);
       });
 
-    // 10. Escuta preferências de perfil em tempo real (ex: tema sincronizado entre PC e Celular)
+    // 10. perfil — sincroniza tema entre pc e celular
     this.unsubscribeProfile = userDoc.collection('system').doc('profile').onSnapshot(doc => {
       if (doc.exists) {
         const data = doc.data();
@@ -557,8 +540,7 @@ const FirebaseService = {
           ThemeManager.syncPurchasedThemes(data.purchasedThemes);
         }
         if (data && data.preferredTheme && typeof ThemeManager !== 'undefined') {
-          // Se o usuário alterou o tema localmente nos últimos 3 segundos,
-          // não permite que snapshot defasado do Firestore reverta ou cause conflito/loop
+          // se o usuario mudou o tema localmente nos ultimos 3s, ignora o snapshot pra evitar loop
           const isRecentLocalChange = ThemeManager.lastLocalChange && (Date.now() - ThemeManager.lastLocalChange < 3000);
           if (!isRecentLocalChange) {
             const targetTheme = ThemeManager.isThemeUnlocked(data.preferredTheme)
@@ -574,7 +556,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar perfil do Firestore:', err);
     });
 
-    // 11. Escuta anotações do Bloquinho EEX em tempo real
+    // 11. notas do bloquinho eex
     this.unsubscribeNotes = userDoc.collection('notes').onSnapshot(snapshot => {
       const cloudNotes = [];
       snapshot.forEach(doc => {
@@ -588,7 +570,7 @@ const FirebaseService = {
       console.warn('Erro ao escutar notas do Firestore:', err);
     });
 
-    // 12. Escuta uso diário da Tudum em tempo real (sincroniza PC e Celular)
+    // 12. uso diario da tudum — sincroniza pc e celular
     this.unsubscribeTudumUsage = userDoc.collection('system').doc('tudum_usage').onSnapshot(doc => {
       if (doc.exists && typeof TudumManager !== 'undefined') {
         TudumManager.onCloudUsageUpdated(doc.data());
@@ -613,9 +595,7 @@ const FirebaseService = {
     if (this.unsubscribeTudumUsage) { this.unsubscribeTudumUsage(); this.unsubscribeTudumUsage = null; }
   },
 
-  // ========================================================
-  // OPERAÇÕES DE ESCRITA NO FIRESTORE
-  // ========================================================
+  // --- escritas no firestore ---
 
   async syncTudumUsage(date, count, freeChipUsed) {
     if (!this.db || !this.auth || !this.auth.currentUser) return;
@@ -647,7 +627,7 @@ const FirebaseService = {
     const uid = this.auth.currentUser.uid;
     await this.db.collection('users').doc(uid).collection('system').doc('profile').set(profile, { merge: true });
 
-    // Sincroniza dados públicos do crachá na coleção global public_profiles
+    // sincroniza dados publicos do cracha na colecao global
     if (profile.nickname || profile.eexEmail || profile.name) {
       const publicData = {
         uid: uid,
@@ -774,9 +754,7 @@ const FirebaseService = {
     }
   },
 
-  // ========================================================
-  // EEX-FRIENDS (REDE DE AMIGOS & ENTREGAS COLETIVAS)
-  // ========================================================
+  // --- amigos e entregas coletivas ---
 
   getSafeAvatar(avatar, user) {
     if (typeof avatar === 'string' && avatar.length > 70000) {
@@ -852,7 +830,7 @@ const FirebaseService = {
       const myUid = this.auth?.currentUser?.uid;
       const resultsMap = new Map();
 
-      // 1. Busca por prefixo de nickname (ex: "pedr" -> acha "pedrinho")
+      // busca por prefixo de nickname (ex: "pedr" -> acha "pedrinho")
       try {
         const snapshot = await this.db.collection('public_profiles')
           .where('nickname', '>=', cleanNick)
@@ -870,7 +848,7 @@ const FirebaseService = {
         console.warn('Erro na busca por nickname:', errNick);
       }
 
-      // 2. Busca exata por eexEmail (caso o nickname seja diferente)
+      // busca exata por eexEmail (caso o nick seja diferente)
       const expectedEex = `${cleanNick}.express.com`;
       try {
         const emailSnap = await this.db.collection('public_profiles')
@@ -886,7 +864,7 @@ const FirebaseService = {
         });
       } catch (errEmail) {}
 
-      // 3. Busca por prefixo de eexEmail
+      // busca por prefixo de eexEmail
       try {
         const eexPrefixSnap = await this.db.collection('public_profiles')
           .where('eexEmail', '>=', cleanNick)
@@ -902,7 +880,7 @@ const FirebaseService = {
         });
       } catch (errEexPrefix) {}
 
-      // 4. Busca por prefixo do nome de exibição em minúsculas
+      // busca por prefixo do nome em minusculo
       try {
         const nameSnap = await this.db.collection('public_profiles')
           .where('nameLower', '>=', cleanNick)
@@ -961,7 +939,7 @@ const FirebaseService = {
     try {
       const batch = this.db.batch();
 
-      // 1. Adiciona o amigo no meu perfil
+      // 1. adiciona o amigo no meu perfil
       const myFriendRef = this.db.collection('users').doc(myUid).collection('friends').doc(request.fromUid);
       batch.set(myFriendRef, {
         uid: request.fromUid,
@@ -972,7 +950,7 @@ const FirebaseService = {
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // 2. Adiciona meu perfil na lista de amigos dele
+      // 2. adiciona meu perfil na lista de amigos dele
       const otherFriendRef = this.db.collection('users').doc(request.fromUid).collection('friends').doc(myUid);
       batch.set(otherFriendRef, {
         uid: myUid,
@@ -983,7 +961,7 @@ const FirebaseService = {
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // 3. Atualiza o status do request para 'accepted'
+      // 3. deleta o pedido (aceito)
       const reqRef = this.db.collection('friend_requests').doc(request.id);
       batch.delete(reqRef);
 
