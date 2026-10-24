@@ -30,8 +30,14 @@ messaging.onBackgroundMessage(function(payload) {
       : 'Voce tem uma nova notificacao EEX!',
     icon: '/images/icon-192.png',
     badge: '/images/icon-192.png',
-    tag: payload.data ? payload.data.type : 'eex-notif',
-    data: payload.data || {}
+    tag: (payload.data && payload.data.type) ? payload.data.type : 'eex-notif',
+    data: payload.data || {},
+    vibrate: [200, 100, 200, 100, 200],
+    requireInteraction: false,
+    actions: [
+      { action: 'open',    title: '\u26A1 Ver Rotina' },
+      { action: 'dismiss', title: 'Dispensar' }
+    ]
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -40,6 +46,10 @@ messaging.onBackgroundMessage(function(payload) {
 // Click na notificacao: abre o app
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+
+  const action = event.action;
+  if (action === 'dismiss') return;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       for (var i = 0; i < clientList.length; i++) {

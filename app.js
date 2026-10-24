@@ -1,4 +1,4 @@
-/**
+﻿﻿﻿﻿﻿﻿/**
  * ELGALY EXPRESS - APLICAÇÃO DE ROTINAS & DESPACHO
  * Autenticação exclusivamente via Google (Rede EEX).
  * Onboarding no primeiro acesso + Crachás salvos com PIN de 6 dígitos.
@@ -7,7 +7,7 @@
 // ==========================================================================
 // VERSÃO ATUAL DO APP
 // ==========================================================================
-const EEX_APP_VERSION = '1.1.0';
+const EEX_APP_VERSION = '1.1.1';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // ==========================================================================
@@ -4415,16 +4415,24 @@ const NotificationManager = {
       const habits = (typeof HabitManager !== 'undefined' && HabitManager.habits) ? HabitManager.habits : [];
       const routineHours = [8, 11, 14, 17, 20];
       const dayMap = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sab' };
+      // Textos neo-brutalistas para notificacoes de habitos
+      const habitNotifVariants = (n, firstHabit) => [
+        { title: '🚨 ROTA PENDENTE, AGENTE!',  body: `Midnight em panico: ${n} habito(s) na fila! Proximo: "${firstHabit}" 💥` },
+        { title: '⚡ MISSAO INCOMPLETA!',        body: `${n} habito(s) aguardando sua acao, Agente! "${firstHabit}" ta te esperando 🎯` },
+        { title: '🔥 ALERTA DA FROTA EEX!',     body: `A base registrou ${n} pendencia(s) hoje! Nao abandone a rota! 🚀` },
+        { title: '💀 AGENTE, ACORDA!',          body: `${n} missao(oes) sem concluir! A Midnight ja ta desesperada contigo 😤` },
+        { title: '📋 CHECK-IN DIMENSIONAL',      body: `${n} habito(s) na sua rota de hoje. "${firstHabit}" espera seu check-in ✅` }
+      ];
 
       for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
         const targetDate = new Date(now);
         targetDate.setDate(targetDate.getDate() + dayOffset);
         const dayOfWeek = targetDate.getDay();
-        const dayKey = dayMap[dayOfWeek];
+
 
         const scheduledHabits = habits.filter(h => {
           if (!h.days || h.days.length === 0) return true;
-          return h.days.includes(dayKey);
+          return h.days.includes(dayOfWeek);
         });
 
         const pendingHabits = (dayOffset === 0)
@@ -4438,10 +4446,14 @@ const NotificationManager = {
           schedTime.setHours(hour, 0, 0, 0);
 
           if (schedTime > now) {
+            const n = pendingHabits.length;
+            const firstHabit = (pendingHabits[0] && pendingHabits[0].title) ? pendingHabits[0].title : 'Habito';
+            const variants = habitNotifVariants(n, firstHabit);
+            const pick = variants[Math.floor(Math.random() * variants.length)];
             notifications.push({
               id: notifId++,
-              title: '🔄 Rotina EEX Pendente',
-              body: `Você tem ${pendingHabits.length} hábito(s) da rotina diária pendentes hoje! Não deixe acumular 💪`,
+              title: pick.title,
+              body: pick.body,
               schedule: { at: schedTime },
               sound: 'eex_notification.mp3'
             });

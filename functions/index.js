@@ -4,6 +4,7 @@
  *   - Nova encomenda recebida
  *   - Convite de amizade (Friend Request)
  *   - Buzina (Poke) recebida
+ *   - Lembretes de habitos pendentes (a cada 3h: 08, 11, 14, 17, 20 BRT)
  */
 
 const functions = require('firebase-functions');
@@ -140,5 +141,158 @@ exports.onPokeReceived = functions
       type:    'poke',
       fromUid: poke.fromUid || ''
     });
+    return null;
+  });
+
+// ============================================================
+// SCHEDULED FUNCTION: Lembretes de habitos pendentes
+// Roda a cada hora nos horarios 08, 11, 14, 17, 20 (BRT)
+// Notifica usuarios com habitos pendentes no dia via FCM
+// ============================================================
+exports.sendHabitReminders = functions
+  .region('southamerica-east1')
+  .pubsub
+  .schedule('0 8,11,14,17,20 * * *')
+  .timeZone('America/Sao_Paulo')
+  .onRun(async (context) => {
+    // Data de hoje no fuso America/Sao_Paulo (UTC-3)
+    const nowBRT = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const todayStr = nowBRT.toISOString().substring(0, 10); // YYYY-MM-DD
+    const dayOfWeek = nowBRT.getUTCDay(); // 0=Dom ... 6=Sab
+
+    console.log(`[sendHabitReminders] rodando para ${todayStr}, dia ${dayOfWeek}`);
+
+    // Textos neo-brutalistas para o push
+    const NOTIF_VARIANTS = [
+      {
+        title: '\uD83D\uDEA8 ROTA PENDENTE, AGENTE!',
+        body:  (count, nextHabit) => `Midnight em panico: ${count} habito(s) pendente(s)! Proximo: "${nextHabit}" \uD83D\uDCA5`
+      },
+      {
+        title: '\u26A1 MISSAO INCOMPLETA!',
+        body:  (count, nextHabit) => `${count} habito(s) aguardando sua acao, Agente! "${nextHabit}" ta te esperando \uD83C\uDFAF`
+      },
+      {
+        title: '\uD83D\uDD25 ALERTA DA FROTA EEX!',
+        body:  (count, nextHabit) => `A base registrou ${count} pendencia(s) hoje! Nao abandone a rota! \uD83D\uDE80`
+      },
+      {
+        title: '\uD83D\uDC80 AGENTE, ACORDA!',
+        body:  (count) => `${count} missao(oes) sem concluir! A Midnight ja ta desesperada contigo \uD83D\uDE24`
+      },
+      {
+        title: '\uD83D\uDCCB CHECK-IN DIMENSIONAL',
+        body:  (count, nextHabit) => `${count} habito(s) na sua rota de hoje. "${nextHabit}" espera seu check-in \u2705`
+      }
+    ];
+
+    // Busca usuarios com fcmToken (limite 500)
+    const usersSnap = await db.collection('users')
+      .where('fcmToken', '!=', null)
+      .limit(500)
+      .get();
+
+    if (usersSnap.empty) {
+      console.log('Nenhum usuario com fcmToken encontrado.');
+      return null;
+    }
+
+    const tokens   = [];
+    const tokenMap = {}; // token -> uid para tratamento de erros
+
+    await Promise.all(usersSnap.docs.map(async (userDoc) => {
+      const uid      = userDoc.id;
+      const fcmToken = userDoc.data().fcmToken;
+      if (!fcmToken) return;
+
+      // Busca habitos do dia (days array contendo o numero dayOfWeek)
+      const habitsSnap = await db.collection('users').doc(uid).collection('habits').get();
+      if (habitsSnap.empty) return;
+
+      const pendingHabits = habitsSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(h => {
+          // Filtra pelo dia da semana
+          if (!h.days || h.days.length === 0) return true;
+          if (!h.days.includes(dayOfWeek)) return false;
+          // Verifica se ja foi concluido hoje via completedDates
+          if (Array.isArray(h.completedDates) && h.completedDates.includes(todayStr)) return false;
+          return true;
+        });
+
+      if (pendingHabits.length === 0) return;
+
+      const count     = pendingHabits.length;
+      const nextHabit = (pendingHabits[0] && pendingHabits[0].title) ? pendingHabits[0].title : 'Habito';
+      const variant   = NOTIF_VARIANTS[Math.floor(Math.random() * NOTIF_VARIANTS.length)];
+      const bodyText  = variant.body(count, nextHabit);
+
+      tokens.push({
+        token:     fcmToken,
+        uid:       uid,
+        title:     variant.title,
+        body:      bodyText,
+        count:     count
+      });
+      tokenMap[fcmToken] = uid;
+    }));
+
+    if (tokens.length === 0) {
+      console.log('Nenhum usuario com habitos pendentes hoje.');
+      return null;
+    }
+
+    console.log(`Enviando lembretes para ${tokens.length} usuarios.`);
+
+    // Envia em lote via sendEachForMulticast (max 500 tokens)
+    const messages = tokens.map(t => ({
+      token: t.token,
+      notification: { title: t.title, body: t.body },
+      data: { type: 'habit_reminder', count: String(t.count) },
+      android: {
+        notification: {
+          icon:      'ic_launcher_foreground',
+          color:     '#FFDD00',
+          sound:     'default',
+          channelId: 'eex_habits'
+        },
+        priority: 'high'
+      },
+      webpush: {
+        notification: {
+          icon:   '/images/icon-192.png',
+          badge:  '/images/icon-192.png',
+          vibrate: [200, 100, 200]
+        },
+        headers: { Urgency: 'high' }
+      }
+    }));
+
+    // sendEachForMulticast aceita array de mensagens individuais (cada uma com token)
+    const response = await admin.messaging().sendEach(messages);
+    console.log(`sendEach: ${response.successCount} ok, ${response.failureCount} erros.`);
+
+    // Trata tokens invalidos
+    const deleteOps = [];
+    response.responses.forEach((res, idx) => {
+      if (!res.success) {
+        const errCode = res.error && res.error.code;
+        if (
+          errCode === 'messaging/registration-token-not-registered' ||
+          errCode === 'messaging/invalid-registration-token'
+        ) {
+          const uid = tokens[idx].uid;
+          console.warn(`Token invalido para uid ${uid}, removendo.`);
+          deleteOps.push(
+            db.collection('users').doc(uid).update({ fcmToken: admin.firestore.FieldValue.delete() })
+          );
+        } else {
+          console.error(`Erro ao enviar para uid ${tokens[idx].uid}:`, res.error);
+        }
+      }
+    });
+
+    if (deleteOps.length > 0) await Promise.all(deleteOps);
+
     return null;
   });
