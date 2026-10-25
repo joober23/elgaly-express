@@ -215,7 +215,17 @@ const FirebaseService = {
             this.db.collection('users').doc(firebaseUser.uid).collection('system').doc('profile').set({ joinedAt: realCreation }, { merge: true });
           }
         } catch (e) {
-          console.warn('Perfil na nuvem não encontrado, usando padrão do Google.');
+          console.warn('Erro ao buscar perfil na nuvem:', e);
+          // fallback: usa localStorage pra nao jogar usuario pro onboarding se firestore falhar
+          try {
+            const localFallback = localStorage.getItem('elgaly_express_current_user');
+            if (localFallback) {
+              const parsed = JSON.parse(localFallback);
+              if (parsed && parsed.uid === firebaseUser.uid && parsed.onboardingDone) {
+                userData = { ...userData, ...parsed };
+              }
+            }
+          } catch (_) {}
         }
 
         // sanitiza localizacao antiga/ficticia pra sao paulo
@@ -241,7 +251,19 @@ const FirebaseService = {
           console.warn('Erro ao sincronizar temas da nuvem:', e);
         }
 
-        // primeiro acesso — abre o onboarding
+        // primeiro acesso � abre o onboarding
+        // mas antes checa localStorage como duplo fallback (caso firestore tenha falhado)
+        if (!userData.onboardingDone) {
+          try {
+            const localSaved = localStorage.getItem('elgaly_express_current_user');
+            if (localSaved) {
+              const localParsed = JSON.parse(localSaved);
+              if (localParsed && localParsed.uid === firebaseUser.uid && localParsed.onboardingDone) {
+                userData = { ...userData, ...localParsed };
+              }
+            }
+          } catch (_) {}
+        }
         if (!userData.onboardingDone) {
           // preenche o preview do avatar com a foto do google
           const onbPreview = document.getElementById('onbAvatarPreview');
