@@ -742,84 +742,175 @@ header img.logo:hover {
 
 .daily-habits-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 16px;
 }
 
 .habit-card {
   background: var(--white);
   border: 3px solid var(--black);
   border-radius: 16px;
-  padding: 14px;
+  padding: 14px 16px;
   box-shadow: 4px 4px 0px var(--black);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s, background 0.15s;
   cursor: pointer;
   user-select: none;
+  min-height: 114px;
+  position: relative;
 }
 
 .habit-card:hover {
-  transform: translateY(-2px);
+  transform: translate(-2px, -2px);
   box-shadow: 6px 6px 0px var(--black);
 }
 
-.habit-card.completed {
-  background: #ecfdf5;
-  border-color: #065f46;
+.habit-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0px var(--black);
 }
 
-.habit-card.completed .habit-title {
-  text-decoration: line-through;
-  color: #6b7280;
+.habit-card.completed {
+  background: #f0fdf4;
+  border-color: #059669;
+  box-shadow: 4px 4px 0px #065f46;
+}
+
+.habit-card.completed:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #065f46;
+}
+
+.habit-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
 .habit-check-box {
-  width: 34px;
-  height: 34px;
-  border: 3px solid var(--black);
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--black);
   border-radius: 8px;
   background: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 900;
   color: var(--black);
   flex-shrink: 0;
+  box-shadow: 2px 2px 0px var(--black);
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  margin-top: 1px;
 }
 
 .habit-card.completed .habit-check-box {
-  background: var(--green-mint);
+  background: #10b981;
+  color: #ffffff;
   border-color: #065f46;
+  box-shadow: 2px 2px 0px #065f46;
 }
 
-.habit-info {
+.habit-title-wrap {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .habit-title {
   font-weight: 800;
   font-size: 1.05rem;
   color: var(--black);
-  line-height: 1.25;
+  line-height: 1.35;
+  word-break: break-word;
+  transition: color 0.15s;
+}
+
+.habit-card.completed .habit-title {
+  text-decoration: line-through;
+  color: #4b5563;
+  opacity: 0.82;
+}
+
+.habit-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.habit-btn-edit,
+.habit-btn-delete {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1.5px solid var(--black);
+  background: #ffffff;
+  box-shadow: 1.5px 1.5px 0px var(--black);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.habit-btn-edit {
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.habit-btn-edit:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--black);
+  background: #fef08a;
+  color: #854d0e;
+}
+
+.habit-btn-delete {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #9ca3af;
+}
+
+.habit-btn-delete:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--black);
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .habit-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 2px dashed rgba(0, 0, 0, 0.1);
+}
+
+.habit-card.completed .habit-meta {
+  border-top-color: rgba(6, 95, 70, 0.18);
 }
 
 .habit-tag {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   border: 1.5px solid var(--black);
+  box-shadow: 1.5px 1.5px 0px var(--black);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .habit-tag.faculdade {
@@ -832,24 +923,39 @@ header img.logo:hover {
   color: #78350f;
 }
 
-.habit-streak {
-  font-size: 0.8rem;
+.habit-tag.trabalho {
+  background: #a7f3d0;
+  color: #065f46;
+}
+
+.habit-days-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
   font-weight: 800;
-  color: var(--magenta-bright);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f3e8ff;
+  color: var(--purple-dark);
+  border: 1.5px solid var(--purple-main);
+  box-shadow: 1.5px 1.5px 0px var(--purple-main);
+  white-space: nowrap;
 }
 
-.habit-btn-delete {
-  background: transparent;
-  border: none;
-  color: #9ca3af;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 6px;
-  transition: color 0.2s;
-}
-
-.habit-btn-delete:hover {
-  color: var(--red-alert);
+.habit-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #fff1f2;
+  border: 1.5px solid #f43f5e;
+  box-shadow: 1.5px 1.5px 0px #f43f5e;
+  color: #be123c;
+  white-space: nowrap;
 }
 
 /* --- encomendas e tarefas --- */
@@ -2504,11 +2610,33 @@ footer {
   background: #250d3c;
   color: #f5d0fe;
   border-color: var(--black);
-  box-shadow: 5px 5px 0px var(--black);
+  box-shadow: 4px 4px 0px var(--black);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-card.completed {
+  background: #142e20;
+  border-color: #059669;
+  box-shadow: 4px 4px 0px var(--black);
 }
 
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-title {
   color: #ffffff;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-card.completed .habit-title {
+  color: #94a3b8;
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-btn-edit,
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-btn-delete {
+  background: #37145a;
+  border-color: var(--black);
+  color: #f5d0fe;
+  box-shadow: 1.5px 1.5px 0px var(--black);
+}
+
+:is([data-theme="dark"], [data-theme="roxo-numetalico"]) .habit-meta {
+  border-top-color: rgba(255, 255, 255, 0.12);
 }
 
 :is([data-theme="dark"], [data-theme="roxo-numetalico"]) .event-card {
@@ -13552,4 +13680,5 @@ img {
   background: rgba(0, 0, 0, 0.06);
   padding: 1px 6px;
   border-radius: 4px;
+  white-space: nowrap;
 }

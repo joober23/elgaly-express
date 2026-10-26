@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.1.1';
+const EEX_APP_VERSION = '1.1.2';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -1396,23 +1396,52 @@ const CargaMisteriosaManager = {
     { autor: 'C.E.O. Providente', texto: 'O Olho de Providente observa sua sequência. Continue firme na rota! 👁️✨' }
   ],
 
+  cloudClaimData: null,
+
   getTodayKey() {
     return new Date().toISOString().slice(0, 10);
   },
 
   isAvailable() {
     const today = this.getTodayKey();
+    if (this.cloudClaimData && this.cloudClaimData.lastDate === today) {
+      return false;
+    }
     const lastDate = localStorage.getItem('elgaly_carga_misteriosa_last_date');
     return lastDate !== today;
   },
 
   getTodayClaimData() {
+    const today = this.getTodayKey();
+    if (this.cloudClaimData && this.cloudClaimData.lastDate === today) {
+      return {
+        shells: typeof this.cloudClaimData.rewardShells === 'number' ? this.cloudClaimData.rewardShells : 5,
+        frase: this.cloudClaimData.frase || this.frasesProvidente[0],
+        date: today
+      };
+    }
     try {
       const raw = localStorage.getItem('elgaly_carga_misteriosa_data');
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
+  },
+
+  onCloudUpdated(data) {
+    if (!data) return;
+    this.cloudClaimData = data;
+    const today = this.getTodayKey();
+    if (data.lastDate === today) {
+      localStorage.setItem('elgaly_carga_misteriosa_last_date', today);
+      const claimObj = {
+        shells: typeof data.rewardShells === 'number' ? data.rewardShells : 5,
+        frase: data.frase || this.frasesProvidente[0],
+        date: today
+      };
+      localStorage.setItem('elgaly_carga_misteriosa_data', JSON.stringify(claimObj));
+    }
+    this.renderTrigger();
   },
 
   init() {
@@ -1540,6 +1569,12 @@ const CargaMisteriosaManager = {
       TudumManager.playSound('done');
     }
 
+    this.cloudClaimData = {
+      lastDate: today,
+      rewardShells: rewardShells,
+      frase: frase
+    };
+
     localStorage.setItem('elgaly_carga_misteriosa_last_date', today);
     localStorage.setItem('elgaly_carga_misteriosa_data', JSON.stringify({ shells: rewardShells, frase, date: today }));
 
@@ -1551,15 +1586,12 @@ const CargaMisteriosaManager = {
       AppUI.unlockAchievement('carga-misteriosa');
     }
 
-    if (typeof FirebaseService !== 'undefined' && FirebaseService.db && FirebaseService.auth && FirebaseService.auth.currentUser) {
-      try {
-        const uid = FirebaseService.auth.currentUser.uid;
-        FirebaseService.db.collection('users').doc(uid).collection('system').doc('daily_mystery').set({
-          lastDate: today,
-          rewardShells: rewardShells,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(() => {});
-      } catch (e) {}
+    if (typeof FirebaseService !== 'undefined') {
+      await FirebaseService.saveDailyMysteryToCloud({
+        lastDate: today,
+        rewardShells: rewardShells,
+        frase: frase
+      });
     }
 
     const content = document.getElementById('cargaMisteriosaContent');
@@ -9533,23 +9565,25 @@ const AppUI = {
       const card = document.createElement('div');
       card.className = `habit-card ${isDone ? 'completed' : ''}`;
       card.innerHTML = `
-        <div class="habit-check-box">${isDone ? '✓' : ''}</div>
-        <div class="habit-info">
-          <div class="habit-title">${habit.title}</div>
-          <div class="habit-meta">
-            <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? 'Faculdade' : (habit.category === 'trabalho' ? '💼 Trabalho' : 'Pessoal')}</span>
-            <span class="habit-days-badge">${formatDaysBadge(habit.days)}</span>
-            ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
+        <div class="habit-card-top">
+          <div class="habit-check-box" title="${isDone ? 'Concluído hoje' : 'Marcar como concluído'}">${isDone ? '✓' : ''}</div>
+          <div class="habit-title-wrap">
+            <div class="habit-title">${habit.title}</div>
+          </div>
+          <div class="habit-actions">
+            <button type="button" class="habit-btn-edit" title="Editar Rotina" data-id="${habit.id}">✏️</button>
+            <button type="button" class="habit-btn-delete" title="Remover Hábito" data-id="${habit.id}">✕</button>
           </div>
         </div>
-        <div class="habit-actions">
-          <button type="button" class="habit-btn-edit" title="Editar Rotina" data-id="${habit.id}">✏️</button>
-          <button type="button" class="habit-btn-delete" title="Remover Hábito" data-id="${habit.id}">✕</button>
+        <div class="habit-meta">
+          <span class="habit-tag ${habit.category}">${habit.category === 'faculdade' ? '🎓 Faculdade' : (habit.category === 'trabalho' ? '💼 Trabalho' : '⭐ Pessoal')}</span>
+          <span class="habit-days-badge">${formatDaysBadge(habit.days)}</span>
+          ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'}</span>` : ''}
         </div>
       `;
 
       card.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('habit-btn-delete')) return;
+        if (e.target.closest('.habit-actions')) return;
         const alreadyDone = HabitManager.isCompletedToday(habit.id);
         if (alreadyDone) {
           // Já concluído: avisa que é melhor mentir do que se dar mal!

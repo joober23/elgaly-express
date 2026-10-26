@@ -20,6 +20,7 @@ const FirebaseService = {
   unsubscribeHistory: null,
   unsubscribeEvents: null,
   unsubscribeTudumUsage: null,
+  unsubscribeDailyMystery: null,
 
   // VAPID key publica — firebase console > cloud messaging > web push certificates
   VAPID_KEY: 'BKzC1OgoCC1Vths73Ne40SVrWRTjGlOZVi0E-fSWYL1mndbITK-QdSM0mXkxkAmJRmBh8lC_BHuAfIYPLP9mahY',
@@ -251,7 +252,7 @@ const FirebaseService = {
           console.warn('Erro ao sincronizar temas da nuvem:', e);
         }
 
-        // primeiro acesso � abre o onboarding
+        // primeiro acesso — abre o onboarding
         // mas antes checa localStorage como duplo fallback (caso firestore tenha falhado)
         if (!userData.onboardingDone) {
           try {
@@ -600,6 +601,15 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar uso da Tudum do Firestore:', err);
     });
+
+    // 13. carga misteriosa / benção diária da providente — sincroniza pc e celular
+    this.unsubscribeDailyMystery = userDoc.collection('system').doc('daily_mystery').onSnapshot(doc => {
+      if (doc.exists && typeof CargaMisteriosaManager !== 'undefined') {
+        CargaMisteriosaManager.onCloudUpdated(doc.data());
+      }
+    }, err => {
+      console.warn('Erro ao escutar daily_mystery do Firestore:', err);
+    });
   },
 
   stopRealtimeSync() {
@@ -615,9 +625,23 @@ const FirebaseService = {
     if (this.unsubscribePackages) { this.unsubscribePackages(); this.unsubscribePackages = null; }
     if (this.unsubscribeProfile) { this.unsubscribeProfile(); this.unsubscribeProfile = null; }
     if (this.unsubscribeTudumUsage) { this.unsubscribeTudumUsage(); this.unsubscribeTudumUsage = null; }
+    if (this.unsubscribeDailyMystery) { this.unsubscribeDailyMystery(); this.unsubscribeDailyMystery = null; }
   },
 
   // --- escritas no firestore ---
+
+  async saveDailyMysteryToCloud(data) {
+    if (!this.db || !this.auth || !this.auth.currentUser) return;
+    try {
+      const uid = this.auth.currentUser.uid;
+      await this.db.collection('users').doc(uid).collection('system').doc('daily_mystery').set({
+        ...data,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn('Erro ao salvar daily_mystery na nuvem:', e);
+    }
+  },
 
   async syncTudumUsage(date, count, freeChipUsed) {
     if (!this.db || !this.auth || !this.auth.currentUser) return;
