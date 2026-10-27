@@ -122,7 +122,7 @@ const FirebaseService = {
           const body  = (payload.notification && payload.notification.body)  ? payload.notification.body  : '';
           const type  = (payload.data && payload.data.type) ? payload.data.type : '';
           if (typeof AppUI !== 'undefined' && AppUI.showToast) {
-            const icons = { package: '📦', friend_request: '🤝', poke: '📢' };
+            const icons = { package: '📦', friend_request: '🤝', poke: '📢', eex_mail: '💬' };
             const icon  = icons[type] || '🔔';
             AppUI.showToast(icon + ' ' + title + (body ? ': ' + body.substring(0, 60) : ''));
           }

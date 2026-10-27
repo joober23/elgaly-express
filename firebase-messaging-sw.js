@@ -23,17 +23,23 @@ messaging.onBackgroundMessage(function(payload) {
     ? payload.notification.title
     : 'Elgaly Express';
 
+  const notifType = (payload.data && payload.data.type) ? payload.data.type : 'eex-notif';
+  const isChat = notifType === 'eex_mail';
+
   const notificationOptions = {
     body: (payload.notification && payload.notification.body)
       ? payload.notification.body
       : 'Voce tem uma nova notificacao EEX!',
     icon: '/images/icon-192.png',
     badge: '/images/icon-192.png',
-    tag: (payload.data && payload.data.type) ? payload.data.type : 'eex-notif',
+    tag: isChat ? ('eex-chat-' + (payload.data.chatId || 'msg')) : notifType,
     data: payload.data || {},
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [250, 100, 250, 100, 250],
     requireInteraction: false,
-    actions: [
+    actions: isChat ? [
+      { action: 'chat', title: '💬 Responder no Chat' },
+      { action: 'dismiss', title: 'Dispensar' }
+    ] : [
       { action: 'open',    title: '⚡ Ver Rotina' },
       { action: 'dismiss', title: 'Dispensar' }
     ]
@@ -49,15 +55,21 @@ self.addEventListener('notificationclick', function(event) {
   const action = event.action;
   if (action === 'dismiss') return;
 
+  const notifData = event.notification.data || {};
+  const targetUrl = (notifData.type === 'eex_mail') ? '/#amigos' : '/';
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       for (var i = 0; i < clientList.length; i++) {
         if (clientList[i].url && clientList[i].focus) {
+          if (notifData.type === 'eex_mail' && clientList[i].navigate) {
+            clientList[i].navigate(targetUrl);
+          }
           return clientList[i].focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow(targetUrl);
       }
     })
   );

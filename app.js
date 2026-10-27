@@ -4396,6 +4396,48 @@ const NotificationManager = {
     return false;
   },
 
+  async sendInstantNotification(title, body, data = {}) {
+    try {
+      if (this.isNative() && this._plugin) {
+        await this._plugin.schedule({
+          notifications: [{
+            id: Math.floor(Date.now() % 100000) + 1,
+            title: title,
+            body: body,
+            sound: 'eex_notification.mp3',
+            extra: data
+          }]
+        });
+        return true;
+      } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator) {
+          try {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg && reg.showNotification) {
+              reg.showNotification(title, {
+                body: body,
+                icon: '/images/icon-192.png',
+                badge: '/images/icon-192.png',
+                data: data,
+                vibrate: [200, 100, 200]
+              });
+              return true;
+            }
+          } catch (swErr) {}
+        }
+        new Notification(title, {
+          body: body,
+          icon: '/images/icon-192.png',
+          data: data
+        });
+        return true;
+      }
+    } catch (e) {
+      console.warn('Erro ao disparar notificação instantânea:', e);
+    }
+    return false;
+  },
+
   /**
    * Agenda todas as notificações:
    * 1. Rotina Diária: a cada 3 horas (08h, 11h, 14h, 17h, 20h) para os próximos 7 dias
@@ -11782,6 +11824,15 @@ const EexMailManager = {
       nickname: chatData.lastSenderNick || 'agente',
       avatar: chatData.lastSenderAvatar || 'images/elgalylogo.png'
     };
+
+    // Dispara notificação no celular / desktop (estilo WhatsApp)
+    if (typeof NotificationManager !== 'undefined' && NotificationManager.sendInstantNotification) {
+      NotificationManager.sendInstantNotification(
+        `💬 ${chatData.lastSenderName || 'Parceiro'} (EEX-Mail)`,
+        chatData.lastMessage || 'Nova mensagem recebida!',
+        { type: 'eex_mail', chatId: chatData.id || this.activeChatId, senderUid: chatData.lastSenderUid }
+      );
+    }
 
     const toast = document.getElementById('eexMailIncomingToast');
     const senderEl = document.getElementById('eexMailToastSender');

@@ -134,6 +134,35 @@ exports.onPokeReceived = functions
     return null;
   });
 
+// --- trigger: nova mensagem no EEX-Mail ---
+// chats/{chatId}/messages/{messageId}
+exports.onChatMessageSent = functions
+  .region('southamerica-east1')
+  .firestore
+  .document('chats/{chatId}/messages/{messageId}')
+  .onCreate(async (snap, context) => {
+    const msg = snap.data();
+    if (!msg) return null;
+
+    const recipientUid = msg.recipientUid;
+    if (!recipientUid || recipientUid === msg.senderUid) return null;
+
+    const senderName = msg.senderName || msg.senderNick || 'Parceiro Express';
+    const textSnippet = (msg.text || '').substring(0, 100);
+
+    const title = `💬 ${senderName} (EEX-Mail)`;
+    const body  = textSnippet || 'Enviou uma nova mensagem!';
+
+    await sendFcmToUser(recipientUid, title, body, {
+      type: 'eex_mail',
+      chatId: context.params.chatId,
+      senderUid: msg.senderUid || '',
+      senderName: senderName
+    });
+
+    return null;
+  });
+
 // --- scheduled: lembretes de hábitos pendentes ---
 // roda nos horários 08, 11, 14, 17, 20 (BRT)
 exports.sendHabitReminders = functions
