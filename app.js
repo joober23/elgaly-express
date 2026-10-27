@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.2.1';
+const EEX_APP_VERSION = '1.2.2';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -323,6 +323,7 @@ const AuthManager = {
     localStorage.removeItem('elgaly_express_current_user');
     TaskManager.tasks = [];
     HabitManager.habits = [];
+    if (typeof EexMailManager !== 'undefined') EexMailManager.resetState();
     HabitManager.history = {};
     if (typeof MemoriesManager !== 'undefined') {
       MemoriesManager.memories = [];
@@ -2059,8 +2060,8 @@ const FriendsManager = {
               🪪 Ver Passaporte &amp; Rotina
             </button>
             <div class="friend-actions-row">
-              <button type="button" class="btn-comic btn-friend-chat" data-uid="${friend.uid}" title="Conversar no EEX-Mail (Chat)">
-                💬 Chat
+              <button type="button" class="btn-comic btn-friend-chat ${((typeof EexMailManager !== 'undefined') && EexMailManager.isFriendChatUnread(friend.uid)) ? 'has-unread' : ''}" data-uid="${friend.uid}" title="Conversar no EEX-Mail (Chat)">
+                💬 Chat ${((typeof EexMailManager !== 'undefined') && EexMailManager.isFriendChatUnread(friend.uid)) ? '<span class="friend-unread-dot">🔴</span>' : ''}
               </button>
               <button type="button" class="btn-comic btn-send-package" data-uid="${friend.uid}" title="Mandar Encomenda Express">
                 📦 Encomenda
@@ -2448,6 +2449,13 @@ const FriendsManager = {
     if (defBtn) defBtn.classList.add('active');
     const defSec = document.getElementById('friendTabRotina');
     if (defSec) defSec.classList.add('active');
+
+    const btnModalChat = document.getElementById('btnFriendModalChat');
+    if (btnModalChat) {
+      const hasUnread = (typeof EexMailManager !== 'undefined') && EexMailManager.isFriendChatUnread(friend.uid);
+      btnModalChat.classList.toggle('has-unread', hasUnread);
+      btnModalChat.innerHTML = `💬 EEX-Mail (Chat) ${hasUnread ? '<span class="friend-unread-dot">🔴</span>' : ''}`;
+    }
 
     modal.classList.add('active');
     } catch (err) {
@@ -11304,6 +11312,8 @@ const EexMailManager = {
   toastTimer: null,
   clockTimer: null,
   _pendingToastFriend: null,
+  _notifiedOfflineThisSession: false,
+  chats: new Map(),
 
   init() {
     // 1. Fechar telefone (botão voltar, barra home e clique fora)
@@ -11365,6 +11375,178 @@ const EexMailManager = {
     if (!this.clockTimer) {
       this.clockTimer = setInterval(() => this.updateClock(), 30000);
     }
+
+    // 6. Atualização inicial de selinhos não lidos
+    this.updateUnreadState({ skipToast: true });
+  },
+
+  resetState() {
+    this.chats.clear();
+    this.activeFriend = null;
+    this.activeChatId = null;
+    this._notifiedOfflineThisSession = false;
+    this.updateUnreadState({ skipToast: true });
+  },
+
+  playAudio(type) {
+    try {
+      // 40% de volume conforme solicitado
+      const file = (type === 'sent') ? 'message-sent.mp3' : 'message-received.mp3';
+      const audio = new Audio(file);
+      audio.volume = 0.4;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  },
+
+  getLastReadTimestamp(chatId) {
+    if (!chatId) return 0;
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid || 'guest';
+    const val = localStorage.getItem(`elgaly_eex_mail_last_read_${myUid}_${chatId}`);
+    return val ? parseInt(val, 10) : 0;
+  },
+
+  setLastReadTimestamp(chatId, timestamp = Date.now()) {
+    if (!chatId) return;
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid || 'guest';
+    localStorage.setItem(`elgaly_eex_mail_last_read_${myUid}_${chatId}`, String(timestamp));
+    this.updateUnreadState({ skipToast: true });
+  },
+
+  isFriendChatUnread(friendUid) {
+    if (!friendUid) return false;
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid;
+    if (!myUid) return false;
+    const chatId = [myUid, friendUid].sort().join('_');
+    const chat = this.chats.get(chatId);
+    if (!chat) return false;
+    const cutoff24h = Date.now() - (24 * 60 * 60 * 1000);
+    return (
+      chat.lastSenderUid &&
+      chat.lastSenderUid !== myUid &&
+      (chat.lastTimestamp || 0) >= cutoff24h &&
+      (chat.lastTimestamp || 0) > this.getLastReadTimestamp(chatId)
+    );
+  },
+
+  handleChatsSnapshot(snapshot, isInitialSync = false) {
+    if (!snapshot) return;
+
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'removed') {
+        this.chats.delete(change.doc.id);
+      } else {
+        this.chats.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+      }
+    });
+
+    this.updateUnreadState({
+      isInitialSync,
+      docChanges: snapshot.docChanges()
+    });
+  },
+
+  updateUnreadState(options = {}) {
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid;
+    if (!myUid) {
+      const b1 = document.getElementById('badgeAmigosBottom');
+      const b2 = document.getElementById('badgeAmigosNav');
+      const b3 = document.getElementById('badgeAmigosDrawer');
+      if (b1) b1.style.display = 'none';
+      if (b2) b2.style.display = 'none';
+      if (b3) b3.style.display = 'none';
+      return;
+    }
+
+    const cutoff24h = Date.now() - (24 * 60 * 60 * 1000);
+    const unreadChats = [];
+
+    this.chats.forEach(chat => {
+      if (
+        chat.lastSenderUid &&
+        chat.lastSenderUid !== myUid &&
+        (chat.lastTimestamp || 0) >= cutoff24h &&
+        (chat.lastTimestamp || 0) > this.getLastReadTimestamp(chat.id)
+      ) {
+        unreadChats.push(chat);
+      }
+    });
+
+    const hasUnread = unreadChats.length > 0;
+
+    // 1. Selinho vermelho nas abas de amigos
+    const b1 = document.getElementById('badgeAmigosBottom');
+    const b2 = document.getElementById('badgeAmigosNav');
+    const b3 = document.getElementById('badgeAmigosDrawer');
+    if (b1) b1.style.display = hasUnread ? 'block' : 'none';
+    if (b2) b2.style.display = hasUnread ? 'block' : 'none';
+    if (b3) b3.style.display = hasUnread ? 'block' : 'none';
+
+    // 2. Selinhos nos botões de chat da lista de amigos
+    document.querySelectorAll('.btn-friend-chat').forEach(btn => {
+      const uid = btn.dataset.uid;
+      const isUnread = this.isFriendChatUnread(uid);
+      btn.classList.toggle('has-unread', isUnread);
+      let dot = btn.querySelector('.friend-unread-dot');
+      if (isUnread) {
+        if (!dot) btn.insertAdjacentHTML('beforeend', ' <span class="friend-unread-dot">🔴</span>');
+      } else {
+        if (dot) dot.remove();
+      }
+    });
+
+    // 3. Selinho no modal de perfil do parceiro aberto
+    const btnModalChat = document.getElementById('btnFriendModalChat');
+    if (btnModalChat && typeof FriendsManager !== 'undefined' && FriendsManager.activeFriendForProfile) {
+      const isUnread = this.isFriendChatUnread(FriendsManager.activeFriendForProfile.uid);
+      btnModalChat.classList.toggle('has-unread', isUnread);
+      let dot = btnModalChat.querySelector('.friend-unread-dot');
+      if (isUnread) {
+        if (!dot) btnModalChat.insertAdjacentHTML('beforeend', ' <span class="friend-unread-dot">🔴</span>');
+      } else {
+        if (dot) dot.remove();
+      }
+    }
+
+    if (options.skipToast) return;
+
+    // 4. Notificação Offline / Inicial ao entrar no app
+    if (options.isInitialSync) {
+      if (hasUnread && !this._notifiedOfflineThisSession) {
+        this._notifiedOfflineThisSession = true;
+        unreadChats.sort((a, b) => (b.lastTimestamp || 0) - (a.lastTimestamp || 0));
+        const latest = unreadChats[0];
+        this.playAudio('received');
+        this.showIncomingToast(latest, true);
+      }
+      return;
+    }
+
+    // 5. Mensagens recebidas em tempo real
+    if (options.docChanges) {
+      options.docChanges.forEach(change => {
+        if (change.type === 'modified' || change.type === 'added') {
+          const chatData = change.doc.data();
+          const chatId = change.doc.id;
+          if (
+            chatData.lastSenderUid &&
+            chatData.lastSenderUid !== myUid &&
+            (chatData.lastTimestamp || 0) >= cutoff24h &&
+            (chatData.lastTimestamp || 0) > this.getLastReadTimestamp(chatId)
+          ) {
+            if (this.activeFriend && this.activeFriend.uid === chatData.lastSenderUid) {
+              this.setLastReadTimestamp(chatId, Date.now());
+              return;
+            }
+            this.playAudio('received');
+            this.showIncomingToast({ id: chatId, ...chatData }, false);
+          }
+        }
+      });
+    }
   },
 
   updateClock() {
@@ -11389,6 +11571,9 @@ const EexMailManager = {
 
     const myUid = myUser.id || myUser.uid;
     this.activeChatId = [myUid, friend.uid].sort().join('_');
+
+    // Marca esta conversa como lida imediatamente
+    this.setLastReadTimestamp(this.activeChatId, Date.now());
 
     // Preenche cabeçalho do smartphone
     const nameEl = document.getElementById('eexPhoneUserName');
@@ -11419,6 +11604,10 @@ const EexMailManager = {
     const modal = document.getElementById('modalEexPhone');
     if (modal) modal.classList.remove('active');
 
+    if (this.activeChatId) {
+      this.setLastReadTimestamp(this.activeChatId, Date.now());
+    }
+
     if (this.unsubscribeMessages) {
       this.unsubscribeMessages();
       this.unsubscribeMessages = null;
@@ -11445,7 +11634,6 @@ const EexMailManager = {
       </div>
     `;
 
-    // Filtro de 24 horas: apenas mensagens enviadas nas últimas 24h
     const cutoff24h = Date.now() - (24 * 60 * 60 * 1000);
 
     this.unsubscribeMessages = FirebaseService.db
@@ -11470,6 +11658,9 @@ const EexMailManager = {
         if (expiredDocs.length > 0) {
           expiredDocs.forEach(ref => ref.delete().catch(() => {}));
         }
+
+        // Se está com o chat aberto, marca como lido
+        this.setLastReadTimestamp(this.activeChatId, Date.now());
 
         this.renderMessages(msgs);
       }, err => {
@@ -11521,7 +11712,6 @@ const EexMailManager = {
       `;
     }).join('');
 
-    // Scroll suave até o final das mensagens
     container.scrollTop = container.scrollHeight;
   },
 
@@ -11531,12 +11721,8 @@ const EexMailManager = {
     const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
     if (!myUser) return;
 
-    // Efeito sonoro de envio express
-    try {
-      const snd = new Audio('tudum_sent.mp3');
-      snd.volume = 0.55;
-      snd.play().catch(() => {});
-    } catch {}
+    // Efeito sonoro de envio express a 40% de volume
+    this.playAudio('sent');
 
     const myUid = myUser.id || myUser.uid;
     const payload = {
@@ -11568,6 +11754,9 @@ const EexMailManager = {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
+      // Marca como lido por mim
+      this.setLastReadTimestamp(this.activeChatId, Date.now());
+
     } catch (err) {
       console.error('Erro ao enviar mensagem no EEX-Mail:', err);
       if (typeof AppUI !== 'undefined') {
@@ -11576,28 +11765,16 @@ const EexMailManager = {
     }
   },
 
-  onIncomingMessage(chatData) {
+  showIncomingToast(chatData, isOffline = false) {
     if (!chatData) return;
     const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
     const myUid = myUser?.id || myUser?.uid;
 
-    // Ignora se a mensagem foi enviada por mim mesmo
     if (chatData.lastSenderUid === myUid) return;
 
-    // Se o chat com esse amigo já estiver aberto na tela, não exibe toast flutuante
     if (this.activeFriend && this.activeFriend.uid === chatData.lastSenderUid) {
       return;
     }
-
-    // Ignora mensagens com mais de 25 segundos
-    if (Date.now() - (chatData.lastTimestamp || 0) > 25000) return;
-
-    // Efeito sonoro retrô de mensagem recebida
-    try {
-      const snd = new Audio('crostnotification-sound.mp3');
-      snd.volume = 0.65;
-      snd.play().catch(() => {});
-    } catch {}
 
     this._pendingToastFriend = {
       uid: chatData.lastSenderUid,
@@ -11611,9 +11788,17 @@ const EexMailManager = {
     const snippetEl = document.getElementById('eexMailToastSnippet');
     const avatarEl = document.getElementById('eexMailToastAvatar');
 
-    if (senderEl) senderEl.textContent = chatData.lastSenderName || 'Parceiro';
-    if (snippetEl) snippetEl.textContent = `"${(chatData.lastMessage || '').substring(0, 50)}"`;
-    if (avatarEl) avatarEl.src = chatData.lastSenderAvatar || 'images/elgalylogo.png';
+    if (senderEl) {
+      senderEl.textContent = isOffline 
+        ? `📬 ${chatData.lastSenderName || 'Parceiro'} mandou um EEX-Mail!`
+        : (chatData.lastSenderName || 'Parceiro Express');
+    }
+    if (snippetEl) {
+      snippetEl.textContent = `"${(chatData.lastMessage || '').substring(0, 50)}"`;
+    }
+    if (avatarEl) {
+      avatarEl.src = chatData.lastSenderAvatar || 'images/elgalylogo.png';
+    }
 
     if (toast) {
       toast.style.display = 'block';
@@ -11623,7 +11808,14 @@ const EexMailManager = {
       if (this.toastTimer) clearTimeout(this.toastTimer);
       this.toastTimer = setTimeout(() => {
         this.hideIncomingToast();
-      }, 7000);
+      }, isOffline ? 8500 : 7000);
+    }
+  },
+
+  onIncomingMessage(chatData) {
+    if (chatData) {
+      this.playAudio('received');
+      this.showIncomingToast(chatData, false);
     }
   },
 

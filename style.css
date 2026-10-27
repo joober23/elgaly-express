@@ -14384,3 +14384,82 @@ img {
 .eex-mail-toast-btn-close:hover {
   color: #dc2626;
 }
+
+/* ==========================================================================
+   EEX-MAIL: SELINHO VERMELHO / BADGE DE MENSAGENS NÃO LIDAS
+   ========================================================================== */
+
+.bottom-nav-item[data-tab="amigos"],
+.nav-link[data-tab="amigos"],
+.drawer-nav-link[data-tab="amigos"] {
+  position: relative;
+}
+
+.eex-mail-badge-dot {
+  position: absolute;
+  top: 4px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  background-color: #ef4444;
+  border: 2px solid var(--black, #000);
+  border-radius: 50%;
+  box-shadow: 1px 1px 0px var(--black, #000);
+  z-index: 20;
+  pointer-events: none;
+  animation: eexMailBadgePulse 1.6s infinite ease-in-out;
+}
+
+.bottom-nav-item[data-tab="amigos"] .eex-mail-badge-dot {
+  top: 5px;
+  right: 18px;
+}
+
+.nav-link[data-tab="amigos"] .eex-mail-badge-dot {
+  top: 4px;
+  right: 6px;
+}
+
+.drawer-nav-link[data-tab="amigos"] .eex-mail-badge-dot {
+  top: 12px;
+  right: 14px;
+}
+
+@keyframes eexMailBadgePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 1px 1px 0px var(--black, #000);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0), 1px 1px 0px var(--black, #000);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 1px 1px 0px var(--black, #000);
+  }
+}
+
+/* Indicador no botão de chat de cada amigo */
+.btn-friend-chat.has-unread {
+  background: #fbcfe8 !important;
+  color: #9d174d !important;
+  border-color: #e11d48 !important;
+  box-shadow: 3px 3px 0px #be123c !important;
+  font-weight: 800;
+}
+
+.friend-unread-dot {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 0.75rem;
+  line-height: 1;
+  vertical-align: middle;
+  animation: eexMailBadgePulse 1.4s infinite ease-in-out;
+}
+
+.btn-friend-action-chat.has-unread {
+  background: #ec4899 !important;
+  border-color: #be123c !important;
+  box-shadow: 3px 3px 0px #881337 !important;
+}

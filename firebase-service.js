@@ -613,17 +613,14 @@ const FirebaseService = {
     });
 
     // 14. chats do eex-mail — escuta mensagens recebidas em tempo real
+    let isInitialChatsLoad = true;
     this.unsubscribeChats = this.db.collection('chats')
       .where('participants', 'array-contains', uid)
       .onSnapshot(snapshot => {
-        snapshot.docChanges().forEach(change => {
-          if (change.type === 'modified' || change.type === 'added') {
-            const chatData = change.doc.data();
-            if (typeof EexMailManager !== 'undefined') {
-              EexMailManager.onIncomingMessage(chatData);
-            }
-          }
-        });
+        if (typeof EexMailManager !== 'undefined') {
+          EexMailManager.handleChatsSnapshot(snapshot, isInitialChatsLoad);
+        }
+        isInitialChatsLoad = false;
       }, err => {
         console.warn('Erro ao escutar chats do EEX-Mail:', err);
       });
