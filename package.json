@@ -1,6 +1,6 @@
 {
   "name": "elgaly-express",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Elgaly Express - Sistema de Rotinas e Despacho",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
     "@capacitor/android": "^6.0.0",
     "@capacitor/core": "^6.0.0",
     "@capacitor/local-notifications": "^6.0.0",
+    "@capawesome-team/capacitor-android-foreground-service": "^6.2.0",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4"
   },
   "devDependencies": {

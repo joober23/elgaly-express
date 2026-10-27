@@ -414,6 +414,7 @@ const FirebaseService = {
     if (!this.db) return;
     this.stopRealtimeSync();
 
+    if (typeof BackgroundServiceManager !== 'undefined') BackgroundServiceManager.start();
     const userDoc = this.db.collection('users').doc(uid);
 
     // 1. tarefas — qualquer mudança no pc reflete no celular
@@ -627,6 +628,7 @@ const FirebaseService = {
   },
 
   stopRealtimeSync() {
+    if (typeof BackgroundServiceManager !== 'undefined') BackgroundServiceManager.stop();
     if (this.unsubscribeTasks) { this.unsubscribeTasks(); this.unsubscribeTasks = null; }
     if (this.unsubscribeHabits) { this.unsubscribeHabits(); this.unsubscribeHabits = null; }
     if (this.unsubscribeHistory) { this.unsubscribeHistory(); this.unsubscribeHistory = null; }

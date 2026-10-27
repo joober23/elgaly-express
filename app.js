@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.2.2';
+const EEX_APP_VERSION = '1.2.3';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -324,6 +324,7 @@ const AuthManager = {
     TaskManager.tasks = [];
     HabitManager.habits = [];
     if (typeof EexMailManager !== 'undefined') EexMailManager.resetState();
+    if (typeof BackgroundServiceManager !== 'undefined') BackgroundServiceManager.stop();
     HabitManager.history = {};
     if (typeof MemoriesManager !== 'undefined') {
       MemoriesManager.memories = [];
@@ -4370,6 +4371,26 @@ const NotificationManager = {
         const status = await this._plugin.requestPermissions();
         this._ready = status && status.display === 'granted';
         console.log(`📱 Capacitor LocalNotifications ativo: ${this._ready ? 'Concedido' : 'Negado'}`);
+
+        // Canal de alta prioridade (Heads-up banner igual WhatsApp)
+        if (this._plugin.createChannel) {
+          try {
+            await this._plugin.createChannel({
+              id: 'eex_messages',
+              name: 'EEX-Mail & Mensagens',
+              description: 'Notificações de conversas no EEX-Mail',
+              importance: 5,
+              visibility: 1,
+              sound: 'eex_notification.mp3',
+              vibration: true,
+              lights: true,
+              lightColor: '#FFDD00'
+            });
+          } catch (chanErr) {
+            console.warn('Canal eex_messages:', chanErr);
+          }
+        }
+
         if (this._ready) {
           this.scheduleAll();
         }
@@ -4404,6 +4425,7 @@ const NotificationManager = {
             id: Math.floor(Date.now() % 100000) + 1,
             title: title,
             body: body,
+            channelId: 'eex_messages',
             sound: 'eex_notification.mp3',
             extra: data
           }]
@@ -7127,6 +7149,7 @@ const AppUI = {
     ProvidenteNewsManager.init();
     PWAManager.init();
     NotificationManager.init();
+    if (typeof BackgroundServiceManager !== 'undefined') BackgroundServiceManager.init();
     PomodoroManager.init();
     if (typeof NotesManager !== 'undefined') NotesManager.init();
     if (typeof ShellsManager !== 'undefined') ShellsManager.render();
@@ -8282,6 +8305,15 @@ const AppUI = {
     const btnPWANotify = document.getElementById('btnPWANotify');
     if (btnPWANotify) {
       btnPWANotify.addEventListener('click', () => NotificationManager.testNotification());
+    }
+
+    const btnToggleBg = document.getElementById('btnToggleBackgroundService');
+    if (btnToggleBg) {
+      btnToggleBg.addEventListener('click', () => {
+        if (typeof BackgroundServiceManager !== 'undefined') {
+          BackgroundServiceManager.setEnabled(!BackgroundServiceManager.isEnabled());
+        }
+      });
     }
 
     const btnTestUpdateAlert = document.getElementById('btnTestUpdateAlert');
