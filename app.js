@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.2.0';
+const EEX_APP_VERSION = '1.2.1';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -2056,20 +2056,22 @@ const FriendsManager = {
 
           <div class="friend-card-actions">
             <button type="button" class="btn-comic btn-view-profile" data-uid="${friend.uid}">
-              🪪 Ver Passaporte & Rotina
+              🪪 Ver Passaporte &amp; Rotina
             </button>
-            <button type="button" class="btn-comic btn-friend-chat" data-uid="${friend.uid}" title="Conversar no EEX-Mail (Chat)">
-              💬
-            </button>
-            <button type="button" class="btn-comic btn-send-package" data-uid="${friend.uid}" title="Mandar Encomenda Express">
-              📦
-            </button>
-            <button type="button" class="btn-comic btn-poke" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Dar uma Força!">
-              📢
-            </button>
-            <button type="button" class="btn-comic btn-secondary btn-del-friend" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Remover Parceiro">
-              ✕
-            </button>
+            <div class="friend-actions-row">
+              <button type="button" class="btn-comic btn-friend-chat" data-uid="${friend.uid}" title="Conversar no EEX-Mail (Chat)">
+                💬 Chat
+              </button>
+              <button type="button" class="btn-comic btn-send-package" data-uid="${friend.uid}" title="Mandar Encomenda Express">
+                📦 Encomenda
+              </button>
+              <button type="button" class="btn-comic btn-poke" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Dar uma Força!">
+                📢 Força
+              </button>
+              <button type="button" class="btn-comic btn-secondary btn-del-friend" data-uid="${friend.uid}" data-name="${friend.name || friend.nickname}" title="Remover Parceiro">
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       `;
