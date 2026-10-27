@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Crachás públicos de todos os agentes (para busca e crachá do perfil)
+    match /public_profiles/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Pedidos de amizade entre agentes da Rede EEX
+    match /friend_requests/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // EEX-Mail: Chat de mensagens em tempo real (24h)
+    match /chats/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Coleções dos usuários (hábitos, tarefas, encomendas, pokes, memórias, perfil)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
