@@ -1,6 +1,6 @@
 {
   "name": "elgaly-express",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Elgaly Express - Sistema de Rotinas e Despacho",
   "private": true,
   "scripts": {

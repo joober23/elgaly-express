@@ -2105,8 +2105,11 @@
 
       <!-- Ações rápidas no rodapé do perfil do amigo -->
       <div class="friend-modal-footer">
+        <button type="button" class="btn-comic btn-friend-action-chat" id="btnFriendModalChat">
+          💬 EEX-Mail (Chat)
+        </button>
         <button type="button" class="btn-comic btn-friend-action-package" id="btnFriendModalSendPackage">
-          📦 Enviar Encomenda Express
+          📦 Enviar Encomenda
         </button>
         <button type="button" class="btn-comic btn-friend-action-poke" id="btnFriendModalPoke">
           📢 Dar uma Força!
@@ -2899,6 +2902,107 @@
       <button type="button" class="btn-comic btn-secondary" id="btnCloseCargaMisteriosa" style="position: absolute; top: 12px; right: 12px; padding: 4px 10px; font-size: 0.9rem; border-radius: 10px;">✕</button>
       <div id="cargaMisteriosaContent">
         <!-- Preenchido dinamicamente por CargaMisteriosaManager -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==========================================================================
+       EEX-MAIL: O SMARTPHONE / CHAT DO ELGALY EXPRESS
+       ========================================================================== -->
+  <div class="modal-overlay eex-phone-overlay" id="modalEexPhone" style="z-index: 10100;">
+    <div class="eex-phone-device" id="eexPhoneDevice">
+      <!-- Câmera & Alto-falante do Celular (Notch) -->
+      <div class="eex-phone-notch">
+        <div class="eex-phone-speaker"></div>
+        <div class="eex-phone-cam"></div>
+      </div>
+
+      <!-- Barra de Status do Sistema Operacional EEX-OS -->
+      <div class="eex-phone-status-bar">
+        <span class="eex-phone-status-left">📶 EEX-NET 5G</span>
+        <span class="eex-phone-status-center" id="eexPhoneClock">21:00</span>
+        <span class="eex-phone-status-right">🔋 100% ⚡</span>
+      </div>
+
+      <!-- Cabeçalho do App de Mensagens (EEX-Mail) -->
+      <div class="eex-phone-header">
+        <button type="button" class="eex-phone-btn-back" id="btnCloseEexPhone" title="Voltar / Fechar">
+          ◀
+        </button>
+        <div class="eex-phone-user-info" id="eexPhoneUserInfo">
+          <div class="eex-phone-avatar-wrap">
+            <img src="images/elgalylogo.png" alt="Amigo" class="eex-phone-avatar" id="eexPhoneAvatar">
+            <span class="eex-phone-online-dot"></span>
+          </div>
+          <div class="eex-phone-user-text">
+            <div class="eex-phone-user-name" id="eexPhoneUserName">Nome do Parceiro</div>
+            <div class="eex-phone-user-nick" id="eexPhoneUserNick">@nick.express.com</div>
+          </div>
+        </div>
+        <div class="eex-phone-header-badge" title="Mensagens duram 24h a partir do envio">
+          ⏱️ 24h
+        </div>
+      </div>
+
+      <!-- Tela / Corpo das Mensagens -->
+      <div class="eex-phone-screen">
+        <div class="eex-phone-ephemeral-banner">
+          🔒 <strong>Canal EEX-Mail Seguro</strong> • Mensagens duram 24h e expiram no vácuo dimensional!
+        </div>
+
+        <div class="eex-phone-messages-list" id="eexPhoneMessagesList">
+          <!-- Mensagens renderizadas dinamicamente em tempo real -->
+        </div>
+      </div>
+
+      <!-- Barra de Reações Rápidas -->
+      <div class="eex-phone-quick-emojis">
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="👋">👋</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="📦">📦</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="☕">☕</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="🔥">🔥</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="🚀">🚀</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="✨">✨</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="❤️">❤️</button>
+        <button type="button" class="eex-quick-emoji-btn" data-emoji="👀">👀</button>
+      </div>
+
+      <!-- Barra de Digitação & Envio -->
+      <form class="eex-phone-input-bar" id="formEexPhoneChat">
+        <input type="text" class="eex-phone-input" id="inputEexPhoneMsg" placeholder="Enviar mensagem express..." maxlength="300" autocomplete="off" required>
+        <button type="submit" class="eex-phone-btn-send" id="btnSendEexPhoneMsg" title="Enviar Mensagem">
+          <span>📨</span>
+        </button>
+      </form>
+
+      <!-- Barra de Navegação Inferior (Home Indicator do Smartphone) -->
+      <div class="eex-phone-home-indicator" id="eexPhoneHomeBar"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       TOAST FLUTUANTE EM TEMPO REAL: NOTIFICAÇÃO DE NOVO EEX-MAIL
+       ========================================================================== -->
+  <div class="eex-mail-incoming-toast" id="eexMailIncomingToast" style="display: none;">
+    <div class="eex-mail-toast-content">
+      <div class="eex-mail-toast-avatar-box">
+        <img src="images/elgalylogo.png" alt="Avatar" id="eexMailToastAvatar" class="eex-mail-toast-avatar">
+        <span class="eex-mail-toast-badge">💌</span>
+      </div>
+      <div class="eex-mail-toast-text">
+        <div class="eex-mail-toast-title">
+          <strong id="eexMailToastSender">Amigo</strong> enviou um EEX-Mail!
+        </div>
+        <div class="eex-mail-toast-snippet" id="eexMailToastSnippet">"Mensagem aqui..."</div>
+      </div>
+      <div class="eex-mail-toast-actions">
+        <button type="button" class="btn-comic btn-sm eex-mail-toast-btn-open" id="btnOpenToastEexMail">
+          Abrir 💬
+        </button>
+        <button type="button" class="eex-mail-toast-btn-close" id="btnCloseToastEexMail" title="Fechar">
+          ✕
+        </button>
       </div>
     </div>
   </div>

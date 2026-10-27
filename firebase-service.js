@@ -21,6 +21,7 @@ const FirebaseService = {
   unsubscribeEvents: null,
   unsubscribeTudumUsage: null,
   unsubscribeDailyMystery: null,
+  unsubscribeChats: null,
 
   // VAPID key publica — firebase console > cloud messaging > web push certificates
   VAPID_KEY: 'BKzC1OgoCC1Vths73Ne40SVrWRTjGlOZVi0E-fSWYL1mndbITK-QdSM0mXkxkAmJRmBh8lC_BHuAfIYPLP9mahY',
@@ -610,6 +611,22 @@ const FirebaseService = {
     }, err => {
       console.warn('Erro ao escutar daily_mystery do Firestore:', err);
     });
+
+    // 14. chats do eex-mail — escuta mensagens recebidas em tempo real
+    this.unsubscribeChats = this.db.collection('chats')
+      .where('participants', 'array-contains', uid)
+      .onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'modified' || change.type === 'added') {
+            const chatData = change.doc.data();
+            if (typeof EexMailManager !== 'undefined') {
+              EexMailManager.onIncomingMessage(chatData);
+            }
+          }
+        });
+      }, err => {
+        console.warn('Erro ao escutar chats do EEX-Mail:', err);
+      });
   },
 
   stopRealtimeSync() {
@@ -626,6 +643,7 @@ const FirebaseService = {
     if (this.unsubscribeProfile) { this.unsubscribeProfile(); this.unsubscribeProfile = null; }
     if (this.unsubscribeTudumUsage) { this.unsubscribeTudumUsage(); this.unsubscribeTudumUsage = null; }
     if (this.unsubscribeDailyMystery) { this.unsubscribeDailyMystery(); this.unsubscribeDailyMystery = null; }
+    if (this.unsubscribeChats) { this.unsubscribeChats(); this.unsubscribeChats = null; }
   },
 
   // --- escritas no firestore ---

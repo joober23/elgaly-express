@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.1.2';
+const EEX_APP_VERSION = '1.2.0';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -2058,6 +2058,9 @@ const FriendsManager = {
             <button type="button" class="btn-comic btn-view-profile" data-uid="${friend.uid}">
               🪪 Ver Passaporte & Rotina
             </button>
+            <button type="button" class="btn-comic btn-friend-chat" data-uid="${friend.uid}" title="Conversar no EEX-Mail (Chat)">
+              💬
+            </button>
             <button type="button" class="btn-comic btn-send-package" data-uid="${friend.uid}" title="Mandar Encomenda Express">
               📦
             </button>
@@ -2078,6 +2081,17 @@ const FriendsManager = {
         e.stopPropagation();
         const uid = el.dataset.uid;
         if (uid) FriendsManager.openFriendProfile(uid);
+      });
+    });
+
+    grid.querySelectorAll('.btn-friend-chat').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uid = btn.dataset.uid;
+        const friend = FriendsManager.friends.find(f => f.uid === uid);
+        if (friend && typeof EexMailManager !== 'undefined') {
+          EexMailManager.openChat(friend);
+        }
       });
     });
 
@@ -7070,6 +7084,7 @@ const AppUI = {
     if (typeof VitrolaManager !== 'undefined') VitrolaManager.init();
     if (typeof ImpressoraManager !== 'undefined') ImpressoraManager.init();
     if (typeof CargaMisteriosaManager !== 'undefined') CargaMisteriosaManager.init();
+    if (typeof EexMailManager !== 'undefined') EexMailManager.init();
     if (typeof TypingSoundManager !== 'undefined') TypingSoundManager.init();
     if (typeof TerminalTelemetryManager !== 'undefined') TerminalTelemetryManager.init();
 
@@ -8788,6 +8803,17 @@ const AppUI = {
         if (FriendsManager.activeFriendForProfile) {
           if (modalFriendProfile) modalFriendProfile.classList.remove('active');
           FriendsManager.openSendPackageModal(FriendsManager.activeFriendForProfile);
+        }
+      });
+    }
+
+    const btnFriendModalChat = document.getElementById('btnFriendModalChat');
+    if (btnFriendModalChat) {
+      btnFriendModalChat.addEventListener('click', () => {
+        if (FriendsManager.activeFriendForProfile && typeof EexMailManager !== 'undefined') {
+          const modalFriendProfile = document.getElementById('modalFriendProfile');
+          if (modalFriendProfile) modalFriendProfile.classList.remove('active');
+          EexMailManager.openChat(FriendsManager.activeFriendForProfile);
         }
       });
     }
@@ -11264,3 +11290,360 @@ const AppUI = {
 document.addEventListener('DOMContentLoaded', () => {
   AppUI.init();
 });
+
+
+// ==========================================================================
+// EEX-MAIL: O CHAT DE CONVERSAS DO ELGALY EXPRESS (SMARTPHONE RETRÔ / 24H)
+// ==========================================================================
+const EexMailManager = {
+  activeFriend: null,
+  activeChatId: null,
+  unsubscribeMessages: null,
+  toastTimer: null,
+  clockTimer: null,
+  _pendingToastFriend: null,
+
+  init() {
+    // 1. Fechar telefone (botão voltar, barra home e clique fora)
+    const btnClose = document.getElementById('btnCloseEexPhone');
+    const homeBar = document.getElementById('eexPhoneHomeBar');
+    const overlay = document.getElementById('modalEexPhone');
+
+    if (btnClose) btnClose.addEventListener('click', () => this.closeChat());
+    if (homeBar) homeBar.addEventListener('click', () => this.closeChat());
+    if (overlay) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) this.closeChat();
+      });
+    }
+
+    // 2. Formulário de envio de mensagem
+    const form = document.getElementById('formEexPhoneChat');
+    const input = document.getElementById('inputEexPhoneMsg');
+    if (form && input) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        await this.sendMessage(text);
+      });
+    }
+
+    // 3. Reações rápidas (emojis)
+    document.querySelectorAll('.eex-quick-emoji-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const emoji = btn.dataset.emoji;
+        if (emoji && this.activeFriend) {
+          await this.sendMessage(emoji);
+        }
+      });
+    });
+
+    // 4. Toast flutuante de novo EEX-Mail
+    const btnOpenToast = document.getElementById('btnOpenToastEexMail');
+    const btnCloseToast = document.getElementById('btnCloseToastEexMail');
+    if (btnOpenToast) {
+      btnOpenToast.addEventListener('click', () => {
+        if (this._pendingToastFriend) {
+          const target = this._pendingToastFriend;
+          this.hideIncomingToast();
+          this.openChat(target);
+        }
+      });
+    }
+    if (btnCloseToast) {
+      btnCloseToast.addEventListener('click', () => {
+        this.hideIncomingToast();
+      });
+    }
+
+    // 5. Relógio do celular EEX-OS
+    this.updateClock();
+    if (!this.clockTimer) {
+      this.clockTimer = setInterval(() => this.updateClock(), 30000);
+    }
+  },
+
+  updateClock() {
+    const clockEl = document.getElementById('eexPhoneClock');
+    if (clockEl) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      clockEl.textContent = `${hours}:${mins}`;
+    }
+  },
+
+  async openChat(friend) {
+    if (!friend || !friend.uid) return;
+    this.activeFriend = friend;
+
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    if (!myUser) {
+      if (typeof AppUI !== 'undefined') AppUI.showToast('Faça login com sua conta para usar o EEX-Mail!');
+      return;
+    }
+
+    const myUid = myUser.id || myUser.uid;
+    this.activeChatId = [myUid, friend.uid].sort().join('_');
+
+    // Preenche cabeçalho do smartphone
+    const nameEl = document.getElementById('eexPhoneUserName');
+    const nickEl = document.getElementById('eexPhoneUserNick');
+    const avatarEl = document.getElementById('eexPhoneAvatar');
+
+    if (nameEl) nameEl.textContent = friend.name || friend.nickname || 'Parceiro';
+    if (nickEl) nickEl.textContent = friend.eexEmail ? `@${friend.eexEmail}` : `@${friend.nickname || 'agente'}.express.com`;
+    if (avatarEl) {
+      avatarEl.src = (typeof FirebaseService !== 'undefined') 
+        ? FirebaseService.getSafeAvatar(friend.avatar, friend) 
+        : (friend.avatar || 'images/elgalylogo.png');
+    }
+
+    // Abre o modal com animação de subida do celular
+    const modal = document.getElementById('modalEexPhone');
+    if (modal) modal.classList.add('active');
+
+    // Foca no input
+    const input = document.getElementById('inputEexPhoneMsg');
+    if (input) setTimeout(() => input.focus(), 350);
+
+    // Começa a escutar mensagens em tempo real
+    this.listenMessages();
+  },
+
+  closeChat() {
+    const modal = document.getElementById('modalEexPhone');
+    if (modal) modal.classList.remove('active');
+
+    if (this.unsubscribeMessages) {
+      this.unsubscribeMessages();
+      this.unsubscribeMessages = null;
+    }
+    this.activeFriend = null;
+    this.activeChatId = null;
+  },
+
+  listenMessages() {
+    if (this.unsubscribeMessages) {
+      this.unsubscribeMessages();
+      this.unsubscribeMessages = null;
+    }
+
+    if (typeof FirebaseService === 'undefined' || !FirebaseService.db) return;
+
+    const messagesListEl = document.getElementById('eexPhoneMessagesList');
+    if (!messagesListEl) return;
+
+    messagesListEl.innerHTML = `
+      <div class="eex-phone-loading">
+        <div class="eex-phone-spinner"></div>
+        <span>Sintonizando canal EEX-Mail...</span>
+      </div>
+    `;
+
+    // Filtro de 24 horas: apenas mensagens enviadas nas últimas 24h
+    const cutoff24h = Date.now() - (24 * 60 * 60 * 1000);
+
+    this.unsubscribeMessages = FirebaseService.db
+      .collection('chats')
+      .doc(this.activeChatId)
+      .collection('messages')
+      .orderBy('timestamp', 'asc')
+      .onSnapshot(snapshot => {
+        const msgs = [];
+        const expiredDocs = [];
+
+        snapshot.forEach(doc => {
+          const data = { id: doc.id, ...doc.data() };
+          if (data.timestamp && data.timestamp >= cutoff24h) {
+            msgs.push(data);
+          } else if (data.timestamp && data.timestamp < cutoff24h) {
+            expiredDocs.push(doc.ref);
+          }
+        });
+
+        // Limpeza automática de mensagens que passaram de 24h
+        if (expiredDocs.length > 0) {
+          expiredDocs.forEach(ref => ref.delete().catch(() => {}));
+        }
+
+        this.renderMessages(msgs);
+      }, err => {
+        console.warn('Erro ao escutar mensagens do chat:', err);
+        messagesListEl.innerHTML = `
+          <div class="eex-phone-empty">
+            <span style="font-size:2rem;">⚠️</span>
+            <p>Não foi possível carregar as mensagens. Verifique sua conexão!</p>
+          </div>
+        `;
+      });
+  },
+
+  renderMessages(messages) {
+    const container = document.getElementById('eexPhoneMessagesList');
+    if (!container) return;
+
+    if (messages.length === 0) {
+      container.innerHTML = `
+        <div class="eex-phone-empty">
+          <img src="images/elgalylogo.png" alt="EEX" class="eex-phone-empty-mascot">
+          <h4>Canal Limpo &amp; Seguro</h4>
+          <p>As mensagens neste canal duram <strong>24 horas</strong>. Mande um alô para <strong>${this.activeFriend?.name || 'seu parceiro'}</strong>!</p>
+        </div>
+      `;
+      return;
+    }
+
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid;
+
+    container.innerHTML = messages.map(msg => {
+      const isMine = msg.senderUid === myUid;
+      const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      return `
+        <div class="eex-msg-row ${isMine ? 'mine' : 'theirs'}">
+          ${!isMine ? `
+            <img src="${msg.senderAvatar || 'images/elgalylogo.png'}" alt="${msg.senderName || 'Amigo'}" class="eex-msg-bubble-avatar">
+          ` : ''}
+          <div class="eex-msg-bubble ${isMine ? 'mine' : 'theirs'}">
+            <div class="eex-msg-text">${this.escapeHtml(msg.text)}</div>
+            <div class="eex-msg-meta">
+              <span class="eex-msg-time">${timeStr}</span>
+              ${isMine ? '<span class="eex-msg-status" title="Entregue">✓✓</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Scroll suave até o final das mensagens
+    container.scrollTop = container.scrollHeight;
+  },
+
+  async sendMessage(text) {
+    if (!text || !this.activeFriend || !this.activeChatId) return;
+
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    if (!myUser) return;
+
+    // Efeito sonoro de envio express
+    try {
+      const snd = new Audio('tudum_sent.mp3');
+      snd.volume = 0.55;
+      snd.play().catch(() => {});
+    } catch {}
+
+    const myUid = myUser.id || myUser.uid;
+    const payload = {
+      senderUid: myUid,
+      senderName: myUser.name || 'Agente Express',
+      senderNick: myUser.nickname || 'agente',
+      senderAvatar: (typeof FirebaseService !== 'undefined') ? FirebaseService.getSafeAvatar(myUser.avatar, myUser) : (myUser.avatar || 'images/elgalylogo.png'),
+      recipientUid: this.activeFriend.uid,
+      text: text.trim(),
+      timestamp: Date.now(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      const chatRef = FirebaseService.db.collection('chats').doc(this.activeChatId);
+
+      // 1. Grava a mensagem na subcoleção messages
+      await chatRef.collection('messages').add(payload);
+
+      // 2. Atualiza o cabeçalho do chat compartilhado
+      await chatRef.set({
+        participants: [myUid, this.activeFriend.uid],
+        lastMessage: payload.text,
+        lastSenderUid: myUid,
+        lastSenderName: payload.senderName,
+        lastSenderNick: payload.senderNick,
+        lastSenderAvatar: payload.senderAvatar,
+        lastTimestamp: payload.timestamp,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+    } catch (err) {
+      console.error('Erro ao enviar mensagem no EEX-Mail:', err);
+      if (typeof AppUI !== 'undefined') {
+        AppUI.showToast('⚠️ Erro ao enviar mensagem. Verifique sua conexão!');
+      }
+    }
+  },
+
+  onIncomingMessage(chatData) {
+    if (!chatData) return;
+    const myUser = (typeof AuthManager !== 'undefined') ? AuthManager.getCurrentUser() : null;
+    const myUid = myUser?.id || myUser?.uid;
+
+    // Ignora se a mensagem foi enviada por mim mesmo
+    if (chatData.lastSenderUid === myUid) return;
+
+    // Se o chat com esse amigo já estiver aberto na tela, não exibe toast flutuante
+    if (this.activeFriend && this.activeFriend.uid === chatData.lastSenderUid) {
+      return;
+    }
+
+    // Ignora mensagens com mais de 25 segundos
+    if (Date.now() - (chatData.lastTimestamp || 0) > 25000) return;
+
+    // Efeito sonoro retrô de mensagem recebida
+    try {
+      const snd = new Audio('crostnotification-sound.mp3');
+      snd.volume = 0.65;
+      snd.play().catch(() => {});
+    } catch {}
+
+    this._pendingToastFriend = {
+      uid: chatData.lastSenderUid,
+      name: chatData.lastSenderName || 'Parceiro Express',
+      nickname: chatData.lastSenderNick || 'agente',
+      avatar: chatData.lastSenderAvatar || 'images/elgalylogo.png'
+    };
+
+    const toast = document.getElementById('eexMailIncomingToast');
+    const senderEl = document.getElementById('eexMailToastSender');
+    const snippetEl = document.getElementById('eexMailToastSnippet');
+    const avatarEl = document.getElementById('eexMailToastAvatar');
+
+    if (senderEl) senderEl.textContent = chatData.lastSenderName || 'Parceiro';
+    if (snippetEl) snippetEl.textContent = `"${(chatData.lastMessage || '').substring(0, 50)}"`;
+    if (avatarEl) avatarEl.src = chatData.lastSenderAvatar || 'images/elgalylogo.png';
+
+    if (toast) {
+      toast.style.display = 'block';
+      toast.classList.remove('eex-mail-toast-hide');
+      toast.classList.add('eex-mail-toast-show');
+
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => {
+        this.hideIncomingToast();
+      }, 7000);
+    }
+  },
+
+  hideIncomingToast() {
+    const toast = document.getElementById('eexMailIncomingToast');
+    if (toast) {
+      toast.classList.remove('eex-mail-toast-show');
+      toast.classList.add('eex-mail-toast-hide');
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
+    }
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+  },
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+};
