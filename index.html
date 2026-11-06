@@ -721,16 +721,40 @@
           <div class="notes-container">
             <!-- Criador de Nova Nota -->
             <div class="notes-creator-card">
-              <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: var(--purple-dark); display: flex; align-items: center; gap: 8px;">
-                <span>✏️</span> Nova Anotação
-              </h3>
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: var(--purple-dark); display: flex; align-items: center; gap: 8px;">
+                  <span>✏️</span> Nova Anotação
+                </h3>
+                <div class="notes-type-toggle" style="display: flex; gap: 6px;">
+                  <button type="button" class="btn-comic btn-note-type-toggle active" id="btnCreatorTypeText" data-type="text" style="padding: 4px 10px; font-size: 0.8rem;">
+                    📝 Texto
+                  </button>
+                  <button type="button" class="btn-comic btn-secondary btn-note-type-toggle" id="btnCreatorTypeChecklist" data-type="checklist" style="padding: 4px 10px; font-size: 0.8rem;">
+                    ☑️ Checklist
+                  </button>
+                </div>
+              </div>
               
               <div class="form-group" style="margin-bottom: 10px;">
                 <input type="text" id="noteTitleInput" placeholder="Título ou Assunto (opcional)" style="width: 100%; font-weight: 800;">
               </div>
 
-              <div class="form-group" style="margin-bottom: 12px;">
+              <!-- Modo Texto -->
+              <div class="form-group" id="noteTextGroup" style="margin-bottom: 12px;">
                 <textarea id="noteContentInput" rows="3" placeholder="Escreva o que quiser lembrar... (contatos, senhas temporárias, ideias, recados)" style="width: 100%; resize: vertical; min-height: 80px; font-family: var(--font-main);"></textarea>
+              </div>
+
+              <!-- Modo Checklist -->
+              <div id="noteChecklistGroup" style="display: none; margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                  <input type="text" id="noteChecklistInput" placeholder="Digite um item e aperte Enter (ex: Comprar café)..." style="flex: 1; font-size: 0.88rem; font-weight: 700;">
+                  <button type="button" id="btnAddChecklistItem" class="btn-comic btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; white-space: nowrap;">
+                    ➕ Adicionar
+                  </button>
+                </div>
+                <div id="noteChecklistItemsPreview" class="note-checklist-preview-list">
+                  <!-- Itens da lista inseridos aqui dinamicamente -->
+                </div>
               </div>
 
               <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -1814,7 +1838,28 @@
       <!-- Modo Visualização -->
       <div id="noteModalViewMode">
         <h2 id="noteModalViewTitle" class="note-modal-title"></h2>
+        
+        <!-- Para Notas de Texto -->
         <div id="noteModalViewBody" class="note-modal-body"></div>
+
+        <!-- Para Notas com Checklist -->
+        <div id="noteModalViewChecklistWrap" class="note-modal-checklist-wrap" style="display: none;">
+          <div class="note-modal-checklist-header">
+            <div class="note-modal-checklist-progress-track">
+              <div id="noteModalChecklistProgressFill" class="note-modal-checklist-progress-fill" style="width: 0%;"></div>
+            </div>
+            <span id="noteModalChecklistProgressText" class="note-modal-checklist-progress-text">0 de 0 concluídos</span>
+          </div>
+          <div id="noteModalChecklistItems" class="note-modal-checklist-items">
+            <!-- Itens de checklist renderizados dinamicamente -->
+          </div>
+          <!-- Adicionar rápido dentro da própria visualização -->
+          <div class="note-modal-quick-add">
+            <input type="text" id="noteModalQuickAddItemInput" placeholder="➕ Adicionar novo item à lista..." style="flex: 1; font-size: 0.88rem; font-weight: 700;">
+            <button type="button" id="btnNoteModalQuickAddItem" class="btn-comic btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap;">Adicionar</button>
+          </div>
+        </div>
+
         <div class="note-modal-footer">
           <small id="noteModalViewDate" class="note-modal-date"></small>
           <div style="display: flex; gap: 8px;">
@@ -1826,15 +1871,37 @@
 
       <!-- Modo Edição -->
       <div id="noteModalEditMode" style="display: none;">
-        <h3 style="margin: 0 0 10px; font-size: 1.15rem; color: var(--purple-dark);">✏️ Editar Anotação</h3>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+          <h3 style="margin: 0; font-size: 1.15rem; color: var(--purple-dark);">✏️ Editar Anotação</h3>
+          <div class="notes-type-toggle" style="display: flex; gap: 6px;">
+            <button type="button" class="btn-comic btn-modal-edit-type-toggle active" id="btnModalEditTypeText" data-type="text" style="padding: 4px 10px; font-size: 0.8rem;">
+              📝 Texto
+            </button>
+            <button type="button" class="btn-comic btn-secondary btn-modal-edit-type-toggle" id="btnModalEditTypeChecklist" data-type="checklist" style="padding: 4px 10px; font-size: 0.8rem;">
+              ☑️ Checklist
+            </button>
+          </div>
+        </div>
         <input type="hidden" id="noteModalEditId">
         <div class="form-group" style="margin-bottom: 10px;">
           <label style="font-weight: 800; font-size: 0.85rem; color: var(--purple-dark);">Título:</label>
           <input type="text" id="noteModalEditTitle" placeholder="Título (opcional)" style="width: 100%; font-weight: 800;">
         </div>
-        <div class="form-group" style="margin-bottom: 12px;">
+
+        <!-- Edição Modo Texto -->
+        <div class="form-group" id="noteModalEditTextGroup" style="margin-bottom: 12px;">
           <label style="font-weight: 800; font-size: 0.85rem; color: var(--purple-dark);">Conteúdo:</label>
           <textarea id="noteModalEditContent" rows="6" placeholder="Escreva a anotação..." style="width: 100%; resize: vertical; min-height: 120px; font-family: var(--font-main);"></textarea>
+        </div>
+
+        <!-- Edição Modo Checklist -->
+        <div id="noteModalEditChecklistGroup" style="display: none; margin-bottom: 12px;">
+          <label style="font-weight: 800; font-size: 0.85rem; color: var(--purple-dark);">Itens da Checklist:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="noteModalEditChecklistInput" placeholder="Adicionar item à checklist..." style="flex: 1; font-size: 0.88rem; font-weight: 700;">
+            <button type="button" id="btnNoteModalEditAddChecklistItem" class="btn-comic btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap;">➕ Inserir</button>
+          </div>
+          <div id="noteModalEditChecklistItems" class="note-checklist-preview-list"></div>
         </div>
         
         <div style="margin-bottom: 14px;">

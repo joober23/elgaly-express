@@ -5,7 +5,7 @@
  */
 
 // versão atual do app
-const EEX_APP_VERSION = '1.2.3';
+const EEX_APP_VERSION = '1.2.4';
 const EEX_GITHUB_REPO = 'joober23/elgaly-express';
 
 // --- atualizações ---
@@ -4075,6 +4075,22 @@ const WeatherManager = {
 
 const NotesManager = {
   notes: [],
+  _creatorType: 'text',
+  _creatorChecklistItems: [],
+  _modalNoteId: null,
+  _modalEditType: 'text',
+  _modalEditChecklistItems: [],
+  _modalEditColor: 'yellow',
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  },
 
   init() {
     try {
@@ -4091,30 +4107,122 @@ const NotesManager = {
     localStorage.setItem('elgaly_express_notes', JSON.stringify(this.notes));
   },
 
+  formatNoteAsText(note) {
+    if (!note) return '';
+    let out = '';
+    if (note.title) out += note.title + '\n\n';
+    if ((note.type === 'checklist' || Array.isArray(note.checklist)) && note.checklist && note.checklist.length > 0) {
+      out += note.checklist.map(i => `[${i.done ? 'x' : ' '}] ${i.text}`).join('\n');
+    } else {
+      out += note.content || '';
+    }
+    return out;
+  },
+
   onCloudSync(cloudNotes) {
     if (!Array.isArray(cloudNotes)) return;
     if (cloudNotes.length > 0) {
       this.notes = cloudNotes;
       localStorage.setItem('elgaly_express_notes', JSON.stringify(this.notes));
       this.render();
+      if (this._modalNoteId) {
+        const active = this.notes.find(n => n.id === this._modalNoteId);
+        if (active) this.renderModalChecklistView(active);
+      }
     } else if (this.notes.length > 0) {
-      // Se a nuvem estiver vazia mas houver notas locais salvas, sobe para o Firestore
       if (typeof FirebaseService !== 'undefined' && FirebaseService.saveAllNotesToCloud) {
         FirebaseService.saveAllNotesToCloud(this.notes);
       }
     }
   },
 
+  setCreatorType(type) {
+    this._creatorType = type;
+    const btnText = document.getElementById('btnCreatorTypeText');
+    const btnChecklist = document.getElementById('btnCreatorTypeChecklist');
+    const textGroup = document.getElementById('noteTextGroup');
+    const checklistGroup = document.getElementById('noteChecklistGroup');
+
+    if (btnText) {
+      btnText.classList.toggle('active', type === 'text');
+      btnText.classList.toggle('btn-secondary', type !== 'text');
+    }
+    if (btnChecklist) {
+      btnChecklist.classList.toggle('active', type === 'checklist');
+      btnChecklist.classList.toggle('btn-secondary', type !== 'checklist');
+    }
+    if (textGroup) textGroup.style.display = type === 'text' ? 'block' : 'none';
+    if (checklistGroup) checklistGroup.style.display = type === 'checklist' ? 'block' : 'none';
+
+    if (type === 'checklist') {
+      const input = document.getElementById('noteChecklistInput');
+      if (input) setTimeout(() => input.focus(), 60);
+    }
+  },
+
+  addCreatorChecklistItem(text) {
+    const val = (text || '').trim();
+    if (!val) return;
+    this._creatorChecklistItems.push({
+      id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      text: val,
+      done: false
+    });
+    const input = document.getElementById('noteChecklistInput');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    this.renderCreatorChecklistPreview();
+  },
+
+  removeCreatorChecklistItem(index) {
+    if (index >= 0 && index < this._creatorChecklistItems.length) {
+      this._creatorChecklistItems.splice(index, 1);
+      this.renderCreatorChecklistPreview();
+    }
+  },
+
+  renderCreatorChecklistPreview() {
+    const container = document.getElementById('noteChecklistItemsPreview');
+    if (!container) return;
+    if (this._creatorChecklistItems.length === 0) {
+      container.innerHTML = '<small style="color: #6b7280; font-style: italic; padding: 4px; display: block;">Nenhum item adicionado ainda. Digite acima e clique em Adicionar ou pressione Enter.</small>';
+      return;
+    }
+    container.innerHTML = this._creatorChecklistItems.map((item, idx) => `
+      <div class="note-checklist-preview-item">
+        <span class="note-checklist-preview-text">☑️ ${this.escapeHtml(item.text)}</span>
+        <button type="button" class="note-checklist-preview-del" data-idx="${idx}" title="Remover item">✕</button>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.note-checklist-preview-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        this.removeCreatorChecklistItem(idx);
+      });
+    });
+  },
+
   addNote(note) {
+    const isChecklist = note.type === 'checklist';
     const newNote = {
       id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      type: isChecklist ? 'checklist' : 'text',
       title: (note.title || '').trim(),
-      content: (note.content || '').trim(),
+      content: isChecklist ? '' : (note.content || '').trim(),
+      checklist: isChecklist ? (Array.isArray(note.checklist) ? note.checklist : []) : [],
       color: note.color || 'yellow',
       pinned: !!note.pinned,
       createdAt: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
-    if (!newNote.content && !newNote.title) return false;
+
+    if (isChecklist) {
+      if (!newNote.title && newNote.checklist.length === 0) return false;
+    } else {
+      if (!newNote.content && !newNote.title) return false;
+    }
 
     if (newNote.pinned) {
       this.notes.unshift(newNote);
@@ -4129,7 +4237,6 @@ const NotesManager = {
     this.save();
     this.render();
 
-    // Sincroniza em tempo real com o Firestore
     if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
       FirebaseService.saveNoteToCloud(newNote);
     }
@@ -4144,17 +4251,207 @@ const NotesManager = {
     this.save();
     this.render();
 
-    // Atualiza status do pin no Firestore
     if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
       FirebaseService.saveNoteToCloud(note);
     }
+  },
+
+  toggleChecklistItem(noteId, itemId) {
+    const note = this.notes.find(n => n.id === noteId);
+    if (!note || !Array.isArray(note.checklist)) return;
+    const item = note.checklist.find(i => i.id === itemId);
+    if (!item) return;
+    item.done = !item.done;
+    note.updatedAt = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.save();
+    this.render();
+
+    if (this._modalNoteId === noteId) {
+      this.renderModalChecklistView(note);
+    }
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(note);
+    }
+  },
+
+  addModalQuickChecklistItem(noteId, text) {
+    const note = this.notes.find(n => n.id === noteId);
+    if (!note) return;
+    const val = (text || '').trim();
+    if (!val) return;
+    if (!Array.isArray(note.checklist)) note.checklist = [];
+    note.checklist.push({
+      id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      text: val,
+      done: false
+    });
+    note.updatedAt = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.save();
+    this.render();
+    this.renderModalChecklistView(note);
+
+    const input = document.getElementById('noteModalQuickAddItemInput');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(note);
+    }
+  },
+
+  deleteModalChecklistItem(noteId, itemId) {
+    const note = this.notes.find(n => n.id === noteId);
+    if (!note || !Array.isArray(note.checklist)) return;
+    note.checklist = note.checklist.filter(i => i.id !== itemId);
+    note.updatedAt = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.save();
+    this.render();
+    this.renderModalChecklistView(note);
+
+    if (typeof FirebaseService !== 'undefined' && FirebaseService.saveNoteToCloud) {
+      FirebaseService.saveNoteToCloud(note);
+    }
+  },
+
+  renderModalChecklistView(note) {
+    const itemsEl = document.getElementById('noteModalChecklistItems');
+    const fillEl = document.getElementById('noteModalChecklistProgressFill');
+    const textEl = document.getElementById('noteModalChecklistProgressText');
+    if (!itemsEl || !note) return;
+
+    const list = Array.isArray(note.checklist) ? note.checklist : [];
+    const total = list.length;
+    const doneCount = list.filter(i => i.done).length;
+    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+    if (fillEl) fillEl.style.width = pct + '%';
+    if (textEl) textEl.textContent = `${doneCount} de ${total} concluídos (${pct}%)`;
+
+    if (total === 0) {
+      itemsEl.innerHTML = '<div style="color: #6b7280; font-style: italic; text-align: center; padding: 14px;">Sua lista está vazia! Digite abaixo para adicionar itens.</div>';
+      return;
+    }
+
+    itemsEl.innerHTML = list.map(item => `
+      <div class="note-modal-check-item ${item.done ? 'checked' : ''}" data-item-id="${item.id}">
+        <label class="note-modal-check-label-wrap">
+          <input type="checkbox" ${item.done ? 'checked' : ''} class="note-modal-checkbox" data-note-id="${note.id}" data-item-id="${item.id}">
+          <span class="note-modal-check-label">${this.escapeHtml(item.text)}</span>
+        </label>
+        <button type="button" class="note-modal-check-delete" data-note-id="${note.id}" data-item-id="${item.id}" title="Excluir item">✕</button>
+      </div>
+    `).join('');
+
+    itemsEl.querySelectorAll('.note-modal-checkbox').forEach(chk => {
+      chk.addEventListener('change', () => {
+        this.toggleChecklistItem(chk.dataset.noteId, chk.dataset.itemId);
+      });
+    });
+
+    itemsEl.querySelectorAll('.note-modal-check-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteModalChecklistItem(btn.dataset.noteId, btn.dataset.itemId);
+      });
+    });
+  },
+
+  setModalEditType(type) {
+    this._modalEditType = type;
+    const btnText = document.getElementById('btnModalEditTypeText');
+    const btnChecklist = document.getElementById('btnModalEditTypeChecklist');
+    const textGroup = document.getElementById('noteModalEditTextGroup');
+    const checklistGroup = document.getElementById('noteModalEditChecklistGroup');
+
+    if (btnText) {
+      btnText.classList.toggle('active', type === 'text');
+      btnText.classList.toggle('btn-secondary', type !== 'text');
+    }
+    if (btnChecklist) {
+      btnChecklist.classList.toggle('active', type === 'checklist');
+      btnChecklist.classList.toggle('btn-secondary', type !== 'checklist');
+    }
+    if (textGroup) textGroup.style.display = type === 'text' ? 'block' : 'none';
+    if (checklistGroup) checklistGroup.style.display = type === 'checklist' ? 'block' : 'none';
+
+    // Se mudou de texto para checklist e a lista está vazia, converte o texto em itens
+    if (type === 'checklist' && this._modalEditChecklistItems.length === 0) {
+      const currentText = document.getElementById('noteModalEditContent')?.value || '';
+      const lines = currentText.split('\n').map(l => l.replace(/^[•\-\*\[\]\(x\)\d\.]+\s*/i, '').trim()).filter(Boolean);
+      if (lines.length > 0) {
+        this._modalEditChecklistItems = lines.map(line => ({
+          id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          text: line,
+          done: false
+        }));
+      }
+      this.renderModalEditChecklistPreview();
+    }
+
+    // Se mudou de checklist para texto e o texto está vazio, junta os itens em linhas
+    if (type === 'text') {
+      const contentEl = document.getElementById('noteModalEditContent');
+      if (contentEl && !contentEl.value.trim() && this._modalEditChecklistItems.length > 0) {
+        contentEl.value = this._modalEditChecklistItems.map(i => i.text).join('\n');
+      }
+    }
+  },
+
+  addModalEditChecklistItem(text) {
+    const val = (text || '').trim();
+    if (!val) return;
+    this._modalEditChecklistItems.push({
+      id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      text: val,
+      done: false
+    });
+    const input = document.getElementById('noteModalEditChecklistInput');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    this.renderModalEditChecklistPreview();
+  },
+
+  removeModalEditChecklistItem(index) {
+    if (index >= 0 && index < this._modalEditChecklistItems.length) {
+      this._modalEditChecklistItems.splice(index, 1);
+      this.renderModalEditChecklistPreview();
+    }
+  },
+
+  renderModalEditChecklistPreview() {
+    const container = document.getElementById('noteModalEditChecklistItems');
+    if (!container) return;
+    if (this._modalEditChecklistItems.length === 0) {
+      container.innerHTML = '<small style="color: #6b7280; font-style: italic; padding: 4px; display: block;">Nenhum item na checklist ainda. Digite acima para inserir.</small>';
+      return;
+    }
+    container.innerHTML = this._modalEditChecklistItems.map((item, idx) => `
+      <div class="note-checklist-preview-item">
+        <span class="note-checklist-preview-text">☑️ ${this.escapeHtml(item.text)}</span>
+        <button type="button" class="note-checklist-preview-del" data-idx="${idx}" title="Remover item">✕</button>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.note-checklist-preview-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        this.removeModalEditChecklistItem(idx);
+      });
+    });
   },
 
   updateNote(id, updatedFields) {
     const note = this.notes.find(n => n.id === id);
     if (!note) return false;
     note.title = (updatedFields.title !== undefined ? updatedFields.title : note.title).trim();
-    note.content = (updatedFields.content !== undefined ? updatedFields.content : note.content).trim();
+    if (updatedFields.type) note.type = updatedFields.type;
+    if (updatedFields.content !== undefined) note.content = updatedFields.content.trim();
+    if (updatedFields.checklist !== undefined) note.checklist = updatedFields.checklist;
     if (updatedFields.color) note.color = updatedFields.color;
     if (updatedFields.pinned !== undefined) note.pinned = !!updatedFields.pinned;
     note.updatedAt = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -4173,10 +4470,10 @@ const NotesManager = {
 
   deleteNote(id) {
     this.notes = this.notes.filter(n => n.id !== id);
+    if (this._modalNoteId === id) this.closeNoteModal();
     this.save();
     this.render();
 
-    // Exclui do Firestore
     if (typeof FirebaseService !== 'undefined' && FirebaseService.deleteNoteFromCloud) {
       FirebaseService.deleteNoteFromCloud(id);
     }
@@ -4185,6 +4482,7 @@ const NotesManager = {
   openNoteModal(id, startEditing = false) {
     const note = this.notes.find(n => n.id === id);
     if (!note) return;
+    this._modalNoteId = id;
 
     const modal = document.getElementById('modalNoteView');
     const contentBox = document.getElementById('noteModalContent');
@@ -4196,15 +4494,33 @@ const NotesManager = {
     contentBox.className = `modal-content note-modal-box note-${note.color || 'yellow'}`;
     if (pinBadge) pinBadge.style.display = note.pinned ? 'inline-block' : 'none';
 
+    const isChecklist = note.type === 'checklist' || (Array.isArray(note.checklist) && note.checklist.length > 0);
+
     // Preenche Modo Visualização
     const titleEl = document.getElementById('noteModalViewTitle');
     const bodyEl = document.getElementById('noteModalViewBody');
+    const checklistWrap = document.getElementById('noteModalViewChecklistWrap');
     const dateEl = document.getElementById('noteModalViewDate');
+
     if (titleEl) {
-      titleEl.textContent = note.title || 'Anotação sem Título';
-      titleEl.style.display = note.title ? 'block' : 'none';
+      titleEl.textContent = note.title || (isChecklist ? '☑️ Checklist sem Título' : 'Anotação sem Título');
+      titleEl.style.display = 'block';
     }
-    if (bodyEl) bodyEl.textContent = note.content || '';
+
+    if (isChecklist) {
+      if (bodyEl) bodyEl.style.display = 'none';
+      if (checklistWrap) {
+        checklistWrap.style.display = 'block';
+        this.renderModalChecklistView(note);
+      }
+    } else {
+      if (checklistWrap) checklistWrap.style.display = 'none';
+      if (bodyEl) {
+        bodyEl.style.display = 'block';
+        bodyEl.textContent = note.content || '';
+      }
+    }
+
     if (dateEl) dateEl.textContent = note.updatedAt ? `Atualizado em ${note.updatedAt}` : (note.createdAt ? `Criado em ${note.createdAt}` : '');
 
     // Preenche Modo Edição
@@ -4225,6 +4541,12 @@ const NotesManager = {
       });
     }
 
+    this._modalEditChecklistItems = isChecklist && Array.isArray(note.checklist)
+      ? JSON.parse(JSON.stringify(note.checklist))
+      : [];
+    this.setModalEditType(isChecklist ? 'checklist' : 'text');
+    this.renderModalEditChecklistPreview();
+
     if (startEditing) {
       if (viewMode) viewMode.style.display = 'none';
       if (editMode) editMode.style.display = 'block';
@@ -4237,6 +4559,7 @@ const NotesManager = {
   },
 
   closeNoteModal() {
+    this._modalNoteId = null;
     const modal = document.getElementById('modalNoteView');
     if (modal) modal.classList.remove('active');
   },
@@ -4251,7 +4574,12 @@ const NotesManager = {
     let filtered = this.notes;
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
-      filtered = filtered.filter(n => (n.title && n.title.toLowerCase().includes(q)) || (n.content && n.content.toLowerCase().includes(q)));
+      filtered = filtered.filter(n => {
+        const inTitle = n.title && n.title.toLowerCase().includes(q);
+        const inContent = n.content && n.content.toLowerCase().includes(q);
+        const inChecklist = Array.isArray(n.checklist) && n.checklist.some(i => i.text && i.text.toLowerCase().includes(q));
+        return inTitle || inContent || inChecklist;
+      });
     }
 
     if (filtered.length === 0) {
@@ -4260,7 +4588,7 @@ const NotesManager = {
           <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">📝</span>
           <h3 style="margin: 0 0 6px; color: var(--purple-dark, #11220e); font-size: 1.2rem; font-weight: 900;">Nenhuma anotação por aqui!</h3>
           <p style="margin: 0; color: #4b5563; font-size: 0.92rem; font-weight: 600;">
-            Use o criador acima para salvar recados, senhas, lembretes de rotinas ou ideias rápidas.
+            Use o criador acima para salvar recados, senhas, listas de compras ou rotinas em post-its.
           </p>
         </div>
       `;
@@ -4270,12 +4598,47 @@ const NotesManager = {
     grid.innerHTML = filtered.map(note => {
       const colorClass = `note-${note.color || 'yellow'}`;
       const pinIcon = note.pinned ? `<span class="note-card-pin" title="Nota Fixada">📌</span>` : '';
+      const isChecklist = note.type === 'checklist' || (Array.isArray(note.checklist) && note.checklist.length > 0);
+
+      let bodyHtml = '';
+      if (isChecklist) {
+        const list = Array.isArray(note.checklist) ? note.checklist : [];
+        const total = list.length;
+        const doneCount = list.filter(i => i.done).length;
+        const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+        bodyHtml = `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+            ${note.title ? `<div class="note-card-title">${this.escapeHtml(note.title)}</div>` : '<div class="note-card-title" style="opacity: 0.85;">☑️ Checklist</div>'}
+            <span class="note-card-badge-checklist">☑️ ${doneCount}/${total}</span>
+          </div>
+          <div class="note-card-progress-bar">
+            <div class="note-card-progress-fill" style="width: ${pct}%;"></div>
+          </div>
+          <div class="note-card-items-preview">
+            ${list.slice(0, 3).map(item => `
+              <div class="note-card-check-row ${item.done ? 'checked' : ''}" data-note-id="${note.id}" data-item-id="${item.id}">
+                <input type="checkbox" ${item.done ? 'checked' : ''} class="note-card-checkbox" data-note-id="${note.id}" data-item-id="${item.id}">
+                <span class="note-card-check-text">${this.escapeHtml(item.text)}</span>
+              </div>
+            `).join('')}
+            ${list.length > 3 ? `
+              <div class="note-card-more-items">+ ${list.length - 3} itens a mais... (clique para abrir)</div>
+            ` : (list.length === 0 ? '<div style="font-size: 0.8rem; color: #6b7280; font-style: italic;">Lista vazia</div>' : '')}
+          </div>
+        `;
+      } else {
+        bodyHtml = `
+          ${note.title ? `<div class="note-card-title">${this.escapeHtml(note.title)}</div>` : ''}
+          <div class="note-card-content">${this.escapeHtml(note.content || '')}</div>
+        `;
+      }
+
       return `
         <div class="note-card ${colorClass}" data-note-id="${note.id}" title="Clique para expandir e editar esta nota">
           ${pinIcon}
           <div class="note-card-body-click">
-            ${note.title ? `<div class="note-card-title">${note.title}</div>` : ''}
-            <div class="note-card-content">${note.content}</div>
+            ${bodyHtml}
           </div>
           <div class="note-card-footer">
             <span>${note.createdAt || ''}</span>
@@ -4298,10 +4661,34 @@ const NotesManager = {
       `;
     }).join('');
 
+    // Clique nas checkboxes direto no card
+    grid.querySelectorAll('.note-card-checkbox').forEach(chk => {
+      chk.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      chk.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const noteId = chk.dataset.noteId;
+        const itemId = chk.dataset.itemId;
+        this.toggleChecklistItem(noteId, itemId);
+      });
+    });
+
+    // Clique na linha do item de checklist no card
+    grid.querySelectorAll('.note-card-check-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.classList.contains('note-card-checkbox')) return;
+        e.stopPropagation();
+        const noteId = row.dataset.noteId;
+        const itemId = row.dataset.itemId;
+        this.toggleChecklistItem(noteId, itemId);
+      });
+    });
+
     // Clique no corpo do card expande o modal com a nota completa
     grid.querySelectorAll('.note-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.note-card-actions') || e.target.closest('button')) return;
+        if (e.target.closest('.note-card-actions') || e.target.closest('button') || e.target.closest('.note-card-check-row')) return;
         const id = card.dataset.noteId;
         this.openNoteModal(id, false);
       });
@@ -4329,7 +4716,7 @@ const NotesManager = {
         const card = e.target.closest('.note-card');
         const note = this.notes.find(n => n.id === card.dataset.noteId);
         if (note) {
-          const text = (note.title ? note.title + '\n\n' : '') + note.content;
+          const text = this.formatNoteAsText(note);
           try {
             await navigator.clipboard.writeText(text);
             AppUI.showToast('📋 Anotação copiada para a área de transferência!');
@@ -8496,28 +8883,81 @@ const AppUI = {
     }
 
     // 21. Eventos do Bloquinho de Notas EEX
+    const btnCreatorTypeText = document.getElementById('btnCreatorTypeText');
+    const btnCreatorTypeChecklist = document.getElementById('btnCreatorTypeChecklist');
+    if (btnCreatorTypeText) {
+      btnCreatorTypeText.addEventListener('click', () => NotesManager.setCreatorType('text'));
+    }
+    if (btnCreatorTypeChecklist) {
+      btnCreatorTypeChecklist.addEventListener('click', () => NotesManager.setCreatorType('checklist'));
+    }
+
+    const noteChecklistInput = document.getElementById('noteChecklistInput');
+    const btnAddChecklistItem = document.getElementById('btnAddChecklistItem');
+    if (noteChecklistInput && btnAddChecklistItem) {
+      const handleAdd = () => {
+        const text = noteChecklistInput.value;
+        if (text && text.trim()) {
+          NotesManager.addCreatorChecklistItem(text);
+        }
+      };
+      btnAddChecklistItem.addEventListener('click', handleAdd);
+      noteChecklistInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAdd();
+        }
+      });
+    }
+
     const btnAddNote = document.getElementById('btnAddNote');
     if (btnAddNote) {
       btnAddNote.addEventListener('click', () => {
         const title = (document.getElementById('noteTitleInput')?.value || '').trim();
-        const content = (document.getElementById('noteContentInput')?.value || '').trim();
         const pinned = !!document.getElementById('notePinCheckbox')?.checked;
         const color = this._selectedNoteColor || 'yellow';
+        const type = NotesManager._creatorType || 'text';
 
-        if (!content && !title) {
-          this.showToast('⚠️ Escreva algo para salvar a sua anotação!');
-          return;
+        let ok = false;
+        if (type === 'checklist') {
+          const items = NotesManager._creatorChecklistItems;
+          if (!title && items.length === 0) {
+            this.showToast('⚠️ Adicione pelo menos um item ou título à checklist!');
+            return;
+          }
+          ok = NotesManager.addNote({
+            title,
+            type: 'checklist',
+            checklist: items,
+            content: '',
+            color,
+            pinned
+          });
+          if (ok) {
+            NotesManager._creatorChecklistItems = [];
+            NotesManager.renderCreatorChecklistPreview();
+            const chkInput = document.getElementById('noteChecklistInput');
+            if (chkInput) chkInput.value = '';
+          }
+        } else {
+          const content = (document.getElementById('noteContentInput')?.value || '').trim();
+          if (!content && !title) {
+            this.showToast('⚠️ Escreva algo para salvar a sua anotação!');
+            return;
+          }
+          ok = NotesManager.addNote({ title, content, type: 'text', color, pinned });
+          if (ok) {
+            const cInput = document.getElementById('noteContentInput');
+            if (cInput) cInput.value = '';
+          }
         }
 
-        const ok = NotesManager.addNote({ title, content, color, pinned });
         if (ok) {
           const tInput = document.getElementById('noteTitleInput');
-          const cInput = document.getElementById('noteContentInput');
           const pCheck = document.getElementById('notePinCheckbox');
           if (tInput) tInput.value = '';
-          if (cInput) cInput.value = '';
           if (pCheck) pCheck.checked = false;
-          this.showToast('📝 Anotação salva com sucesso no Bloquinho!');
+          this.showToast(type === 'checklist' ? '☑️ Checklist salva com sucesso no Bloquinho!' : '📝 Anotação salva com sucesso no Bloquinho!');
         }
       });
     }
@@ -8547,6 +8987,24 @@ const AppUI = {
       });
     }
 
+    // Adição rápida dentro do modal de visualização
+    const noteModalQuickAddItemInput = document.getElementById('noteModalQuickAddItemInput');
+    const btnNoteModalQuickAddItem = document.getElementById('btnNoteModalQuickAddItem');
+    if (noteModalQuickAddItemInput && btnNoteModalQuickAddItem) {
+      const handleQuickAdd = () => {
+        if (NotesManager._modalNoteId) {
+          NotesManager.addModalQuickChecklistItem(NotesManager._modalNoteId, noteModalQuickAddItemInput.value);
+        }
+      };
+      btnNoteModalQuickAddItem.addEventListener('click', handleQuickAdd);
+      noteModalQuickAddItemInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleQuickAdd();
+        }
+      });
+    }
+
     const btnNoteModalEdit = document.getElementById('btnNoteModalEdit');
     if (btnNoteModalEdit) {
       btnNoteModalEdit.addEventListener('click', () => {
@@ -8569,13 +9027,41 @@ const AppUI = {
         const id = document.getElementById('noteModalEditId')?.value;
         const note = NotesManager.notes.find(n => n.id === id);
         if (note) {
-          const text = (note.title ? note.title + '\n\n' : '') + note.content;
+          const text = NotesManager.formatNoteAsText(note);
           try {
             await navigator.clipboard.writeText(text);
             this.showToast('📋 Anotação copiada!');
           } catch {
             this.showToast('Nota copiada!');
           }
+        }
+      });
+    }
+
+    // Toggle de tipo no modal de edição
+    const btnModalEditTypeText = document.getElementById('btnModalEditTypeText');
+    const btnModalEditTypeChecklist = document.getElementById('btnModalEditTypeChecklist');
+    if (btnModalEditTypeText) {
+      btnModalEditTypeText.addEventListener('click', () => NotesManager.setModalEditType('text'));
+    }
+    if (btnModalEditTypeChecklist) {
+      btnModalEditTypeChecklist.addEventListener('click', () => NotesManager.setModalEditType('checklist'));
+    }
+
+    const noteModalEditChecklistInput = document.getElementById('noteModalEditChecklistInput');
+    const btnNoteModalEditAddChecklistItem = document.getElementById('btnNoteModalEditAddChecklistItem');
+    if (noteModalEditChecklistInput && btnNoteModalEditAddChecklistItem) {
+      const handleEditAdd = () => {
+        const text = noteModalEditChecklistInput.value;
+        if (text && text.trim()) {
+          NotesManager.addModalEditChecklistItem(text);
+        }
+      };
+      btnNoteModalEditAddChecklistItem.addEventListener('click', handleEditAdd);
+      noteModalEditChecklistInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleEditAdd();
         }
       });
     }
@@ -8601,16 +9087,31 @@ const AppUI = {
       btnNoteModalSaveEdit.addEventListener('click', () => {
         const id = document.getElementById('noteModalEditId')?.value;
         const title = document.getElementById('noteModalEditTitle')?.value || '';
-        const content = document.getElementById('noteModalEditContent')?.value || '';
         const pinned = !!document.getElementById('noteModalEditPinCheckbox')?.checked;
         const color = NotesManager._modalEditColor || 'yellow';
+        const type = NotesManager._modalEditType || 'text';
 
-        if (!content.trim() && !title.trim()) {
-          this.showToast('⚠️ A nota não pode ficar completamente vazia!');
-          return;
+        let updatePayload = { title, color, pinned, type };
+
+        if (type === 'checklist') {
+          const items = NotesManager._modalEditChecklistItems;
+          if (!title.trim() && items.length === 0) {
+            this.showToast('⚠️ A checklist não pode ficar completamente vazia!');
+            return;
+          }
+          updatePayload.checklist = items;
+          updatePayload.content = '';
+        } else {
+          const content = document.getElementById('noteModalEditContent')?.value || '';
+          if (!content.trim() && !title.trim()) {
+            this.showToast('⚠️ A nota não pode ficar completamente vazia!');
+            return;
+          }
+          updatePayload.content = content;
+          updatePayload.checklist = [];
         }
 
-        const ok = NotesManager.updateNote(id, { title, content, pinned, color });
+        const ok = NotesManager.updateNote(id, updatePayload);
         if (ok) {
           this.showToast('💾 Anotação atualizada com sucesso!');
           NotesManager.openNoteModal(id, false);
